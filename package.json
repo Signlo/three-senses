@@ -1,6 +1,6 @@
 {
   "name": "@ideafe/three-senses",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "description": "SDK for the Three Senses Alerting Standard: hazard-family alert rhythms rendered identically on touch, light, and tone. See it. Feel it. Hear it.",
   "license": "Apache-2.0",
   "type": "module",

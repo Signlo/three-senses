@@ -482,3 +482,19 @@ export declare function conformance(): {
     pass: boolean;
     results: ConformanceResult[];
 };
+/** A parsed Three Senses SMS-profile code (SMS-PROFILE.md, informative annex). */
+export interface SmsCode {
+    family: FamilyName;
+    /** The annex's 0..4 step digit, normalized to a severity name. */
+    severity: SeverityName;
+}
+/**
+ * Parse a Three Senses SMS-profile code out of free text (SMS-PROFILE.md):
+ * `3S:<FAMILY><SEVERITY>`, e.g. "Move to high ground now. 3S:W4". One
+ * regular expression, no language understanding, no network — the annex's
+ * whole point. Returns null when no well-formed code is present (rule 4:
+ * never guess from a broken code). Annex rules 2 and 3 are the renderer's
+ * job (`channelLevel` caps TEST; ALL_CLEAR's timeline is empty), so the
+ * parse reports exactly what the code said.
+ */
+export declare function parseSmsCode(text: string): SmsCode | null;

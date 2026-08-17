@@ -9,6 +9,9 @@ readable by sight, touch, or hearing alone, each channel enough to act on.
 - `vocabulary.json`: the normative, machine-readable rhythm vocabulary
 - `conformance/vectors.json`: machine-checkable conformance vectors (R1 to R8)
 - `conformance/validate.mjs`: checks a rendering log against the vectors
+- `SMS-PROFILE.md`: informative annex — a five-character code (`3S:W4`)
+  that lets SMS-based alerting (no cell broadcast, humanitarian settings)
+  drive the vocabulary with one regex, no AI; `parseSmsCode()` in the SDK
 - `src/`, `dist/`: the SDK (`@ideafe/three-senses`), TypeScript, zero
   dependencies, conformance-proven against the vectors in CI
 

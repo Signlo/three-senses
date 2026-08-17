@@ -269,3 +269,49 @@ export function conformance(): { pass: boolean; results: ConformanceResult[] } {
   });
   return { pass: results.every((r) => r.pass), results };
 }
+
+/** A parsed Three Senses SMS-profile code (SMS-PROFILE.md, informative annex). */
+export interface SmsCode {
+  family: FamilyName;
+  /** The annex's 0..4 step digit, normalized to a severity name. */
+  severity: SeverityName;
+}
+
+const SMS_FAMILY: Readonly<Record<string, FamilyName>> = {
+  G: "GROUND",
+  W: "WATER",
+  S: "STORM",
+  F: "FIRE",
+  H: "THREAT",
+  O: "OTHER",
+  T: "TEST",
+  A: "ALL_CLEAR",
+};
+
+const SMS_SEVERITY: readonly SeverityName[] = [
+  "allClear",
+  "Minor",
+  "Moderate",
+  "Severe",
+  "Extreme",
+];
+
+const SMS_CODE_RE = /\b3S:([GWSFHOTA])([0-4])\b/i;
+
+/**
+ * Parse a Three Senses SMS-profile code out of free text (SMS-PROFILE.md):
+ * `3S:<FAMILY><SEVERITY>`, e.g. "Move to high ground now. 3S:W4". One
+ * regular expression, no language understanding, no network — the annex's
+ * whole point. Returns null when no well-formed code is present (rule 4:
+ * never guess from a broken code). Annex rules 2 and 3 are the renderer's
+ * job (`channelLevel` caps TEST; ALL_CLEAR's timeline is empty), so the
+ * parse reports exactly what the code said.
+ */
+export function parseSmsCode(text: string): SmsCode | null {
+  const match = SMS_CODE_RE.exec(text);
+  if (!match) return null;
+  const family = SMS_FAMILY[match[1].toUpperCase()];
+  const severity = SMS_SEVERITY[Number(match[2])];
+  if (!family || !severity) return null;
+  return { family, severity };
+}
