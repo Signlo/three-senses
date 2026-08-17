@@ -8,6 +8,7 @@ authors:
     affiliation: "International Deaf Emergency"
 abstract: "Open rules that make every emergency warning readable by sight, touch, or hearing alone: the Five Alert Questions, a mimetic hazard-family rhythm vocabulary with severity as intensity, photosensitivity-safe light bounds, a machine-checkable conformance suite, and a TypeScript SDK."
 license: Apache-2.0
+doi: 10.5281/zenodo.21977982
 repository-code: "https://github.com/Signlo/three-senses"
 url: "https://ideafe.org/standard"
 keywords:

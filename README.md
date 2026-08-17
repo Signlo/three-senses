@@ -96,6 +96,11 @@ and will shape the next draft.
 
 ## Citing the standard
 
-Releases are archived on Zenodo with a DOI (the badge above resolves to the
-latest). Citation metadata ships in `CITATION.cff`; GitHub's "Cite this
-repository" button uses it.
+Every release is archived on Zenodo. Cite the concept DOI, which always
+resolves to the latest version:
+
+> Jacq, E. (2026). The Three Senses Alerting Standard. International Deaf
+> Emergency. Zenodo. https://doi.org/10.5281/zenodo.21977982
+
+Citation metadata ships in `CITATION.cff`; GitHub's "Cite this repository"
+button uses it.
