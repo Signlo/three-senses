@@ -1,6 +1,6 @@
 # The Three Senses Alerting Standard
 
-[![npm](https://img.shields.io/npm/v/%40ideafe%2Fthree-senses)](https://www.npmjs.com/package/@ideafe/three-senses) [![CI](https://github.com/Signlo/three-senses/actions/workflows/ci.yml/badge.svg)](https://github.com/Signlo/three-senses/actions/workflows/ci.yml)
+[![npm](https://img.shields.io/npm/v/%40ideafe%2Fthree-senses)](https://www.npmjs.com/package/@ideafe/three-senses) [![CI](https://github.com/Signlo/three-senses/actions/workflows/ci.yml/badge.svg)](https://github.com/Signlo/three-senses/actions/workflows/ci.yml) [![DOI](https://zenodo.org/badge/1336687968.svg)](https://zenodo.org/badge/latestdoi/1336687968)
 
 **See it. Feel it. Hear it.** Open rules that make every emergency warning
 readable by sight, touch, or hearing alone, each channel enough to act on.
@@ -93,3 +93,9 @@ boundary (two long waves became one). Every family except GROUND now ends
 in a trailing quiet (requirement R8). Draft 0.3.0 refined TEST to a
 quick grouped double tap. Deaf and DeafBlind user studies are beginning
 and will shape the next draft.
+
+## Citing the standard
+
+Releases are archived on Zenodo with a DOI (the badge above resolves to the
+latest). Citation metadata ships in `CITATION.cff`; GitHub's "Cite this
+repository" button uses it.

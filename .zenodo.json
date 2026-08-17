@@ -1,0 +1,12 @@
+{
+  "title": "The Three Senses Alerting Standard",
+  "description": "Open rules that make every emergency warning readable by sight, touch, or hearing alone. The repository holds the specification (CC BY-ND 4.0), the normative machine-readable rhythm vocabulary, conformance requirements R1 to R8 with a runnable validator, and the @ideafe/three-senses TypeScript SDK (Apache-2.0). Published by International Deaf Emergency, a Deaf-led US 501(c)(3) nonprofit. See it. Feel it. Hear it.",
+  "creators": [
+    { "name": "Jacq, Emmanuel", "affiliation": "International Deaf Emergency" }
+  ],
+  "license": "Apache-2.0",
+  "keywords": ["accessibility", "emergency alerts", "haptics", "deaf", "deafblind", "early warning", "WEA", "a11y"],
+  "related_identifiers": [
+    { "relation": "isSupplementTo", "identifier": "https://ideafe.org/standard" }
+  ]
+}
