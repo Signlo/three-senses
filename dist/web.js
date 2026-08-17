@@ -8,7 +8,7 @@
  * (R8). Severity arrives only as the one flat level (R2), already capped for
  * TEST (R6). ALL_CLEAR renders nothing on any channel (R3).
  */
-import { timeline, cycleMs, channelLevel, vibratePattern, } from "./index.js";
+import { timeline, cycleMs, lightSoundLevel, vibratePattern, } from "./index.js";
 function scheduleTimeline(name, t0, loop, onEdge, onCycleStart) {
     const t = timeline(name);
     const cycle = cycleMs(name);
@@ -50,7 +50,10 @@ function scheduleTimeline(name, t0, loop, onEdge, onCycleStart) {
  *   button.onclick = () => alert.stop(); // I UNDERSTAND
  */
 export function startAlert(name, options = {}) {
-    const level = channelLevel(name, options.severity ?? "Extreme");
+    // Light and sound render at the REACH level (full from DANGER COMING up);
+    // the Vibration API is binary, so the touch grading lives on real haptic
+    // hardware via the vocabulary's touchLevels.
+    const level = lightSoundLevel(name, options.severity ?? "Extreme");
     const loop = options.loop !== false;
     const t0 = Date.now();
     const pattern = vibratePattern(name);

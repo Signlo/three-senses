@@ -14,6 +14,7 @@ import {
   timeline,
   cycleMs,
   channelLevel,
+  lightSoundLevel,
   vibratePattern,
 } from "./index.js";
 
@@ -99,7 +100,10 @@ function scheduleTimeline(
  *   button.onclick = () => alert.stop(); // I UNDERSTAND
  */
 export function startAlert(name: FamilyName, options: StartOptions = {}): AlertHandle {
-  const level = channelLevel(name, options.severity ?? "Extreme");
+  // Light and sound render at the REACH level (full from DANGER COMING up);
+  // the Vibration API is binary, so the touch grading lives on real haptic
+  // hardware via the vocabulary's touchLevels.
+  const level = lightSoundLevel(name, options.severity ?? "Extreme");
   const loop = options.loop !== false;
   const t0 = Date.now();
   const pattern = vibratePattern(name);

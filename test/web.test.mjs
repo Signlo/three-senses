@@ -14,7 +14,7 @@ test("STORM edges fire on the published offsets across the loop boundary", (t) =
     vibrate: false,
     onFlash: (on) => edges.push(on),
   });
-  assert.equal(alert.level, 0.75);
+  assert.equal(alert.level, 1); // light+sound REACH: full from Moderate up
   let now = 0;
   const advance = (to) => {
     t.mock.timers.tick(to - now);

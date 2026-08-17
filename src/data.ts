@@ -2,14 +2,14 @@
 // vocabulary.json and conformance/vectors.json, the normative artifacts.
 export const VOCABULARY_DATA = {
   "standard": "Three Senses Alerting Standard",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "publisher": "International Deaf Emergency (ideafe.org)",
   "published": "2026-08-17",
   "license": "Apache-2.0",
   "units": "milliseconds",
   "principles": {
     "envelopeIsTheRhythm": "Every channel (touch, light, tone) renders the identical envelope. What the hand feels, the eye sees and the ear hears.",
-    "severityIsIntensity": "Severity NEVER changes a rhythm, only its strength/brightness/volume. A learned rhythm is identical at every severity.",
+    "severityIsIntensity": "Severity never changes a rhythm. Touch grades it in four distinct strengths so DeafBlind users read the level by hand; marks and color count the step for the eye; light and sound deliver at full power from DANGER COMING upward, because they exist to reach.",
     "allClearIsSilence": "The all-clear plays nothing on any channel. A quiet device means safe.",
     "mimetic": "Every rhythm is the hazard's own temporal signature, converging with the iconicity of sign languages. Future patterns MUST be mimetic.",
     "photosensitivity": "Light renderers never exceed 3 flashes per second (WCAG 2.3.1) or 6 state transitions per second, and MUST offer a steady-light path for users who identify as photosensitive.",
@@ -201,11 +201,10 @@ export const VOCABULARY_DATA = {
     "ladder": [
       "SAFE NOW (all clear)",
       "BE CAREFUL (Minor/Unknown)",
-      "DANGER COMING (Moderate)",
-      "ACT NOW (Severe)",
-      "ACT NOW (Extreme/Presidential)"
+      "DANGER COMING (Moderate/Amber)",
+      "ACT NOW (Severe/Extreme/Presidential)"
     ],
-    "levels": {
+    "touchLevels": {
       "allClear": 0,
       "Minor": 0.25,
       "Unknown": 0.25,
@@ -215,17 +214,27 @@ export const VOCABULARY_DATA = {
       "Extreme": 1,
       "Presidential": 1
     },
-    "marks": {
+    "reachLevels": {
       "allClear": 0,
-      "Minor": 0,
-      "Unknown": 0,
+      "Minor": 0.25,
+      "Unknown": 0.25,
       "Moderate": 1,
       "Amber": 1,
-      "Severe": 2,
+      "Severe": 1,
+      "Extreme": 1,
+      "Presidential": 1
+    },
+    "marks": {
+      "allClear": 0,
+      "Minor": 1,
+      "Unknown": 1,
+      "Moderate": 2,
+      "Amber": 2,
+      "Severe": 3,
       "Extreme": 3,
       "Presidential": 3
     },
-    "rule": "Level scales channel intensity (vibration strength, light brightness, tone volume). It never alters pulses. Color must never carry severity alone: pair it with the mark count and the felt intensity."
+    "rule": "Touch grades severity in four distinct strengths (25, 50, 75, 100 percent), so a DeafBlind user reads the level by touch alone. Light and sound exist to reach: from DANGER COMING (Moderate) upward they deliver at full power, and only BE CAREFUL stays gentle. The filled-mark count (one to three) and the color say the same thing for the eye; color never carries severity alone. The rhythm never changes."
   },
   "lightBounds": {
     "maxFlashesPerSecond": 3,
@@ -234,7 +243,7 @@ export const VOCABULARY_DATA = {
 } as const;
 
 export const VECTORS_DATA = {
-  "standardVersion": "0.3.0",
+  "standardVersion": "0.4.0",
   "description": "Machine-checkable conformance vectors. A conformant renderer executes exactly these on/off events, at these offsets from a single shared clock (t0), on every channel it renders. Tolerance: an event may fire late by scheduling jitter but its SCHEDULED time must equal the vector; a renderer must never reorder, merge, or drop events, and a late start must join mid-pattern in phase at t0 + offset, not shifted.",
   "requirements": [
     "R1 rhythm-identity: for each family, rendered on/off offsets equal the vector exactly.",

@@ -11,6 +11,7 @@ import {
   cycleMs,
   cycleStart,
   severityLevel,
+  reachLevel,
   severityMarks,
   channelLevel,
   vibratePattern,
@@ -58,12 +59,23 @@ test("R8 loop-seamlessness: totalMs equals the vector's, and cycles never overla
 
 test("R2 severity-invariance: severity is intensity, never a rhythm input", () => {
   assert.equal(timeline.length, 1); // no severity parameter exists
+  // TOUCH grades in four strengths (DeafBlind severity by hand)
   assert.equal(severityLevel("Extreme"), 1);
   assert.equal(severityLevel("Severe"), 0.75);
   assert.equal(severityLevel("Moderate"), 0.5);
   assert.equal(severityLevel("Minor"), 0.25);
   assert.equal(severityLevel("allClear"), 0);
   assert.equal(severityLevel(2), 1); // clamped
+  // LIGHT and SOUND reach: full from DANGER COMING upward
+  assert.equal(reachLevel("Extreme"), 1);
+  assert.equal(reachLevel("Severe"), 1);
+  assert.equal(reachLevel("Moderate"), 1);
+  assert.equal(reachLevel("Minor"), 0.25);
+  assert.equal(reachLevel("allClear"), 0);
+  // MARKS count the step: one to three
+  assert.equal(severityMarks("Minor"), 1);
+  assert.equal(severityMarks("Moderate"), 2);
+  assert.equal(severityMarks("Severe"), 3);
   assert.equal(severityMarks("Extreme"), 3);
   assert.equal(severityMarks("allClear"), 0);
 });

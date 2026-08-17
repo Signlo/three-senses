@@ -5,7 +5,7 @@
 **See it. Feel it. Hear it.** Open rules that make every emergency warning
 readable by sight, touch, or hearing alone, each channel enough to act on.
 
-- `THE-STANDARD.md`: the specification (draft 0.3.0)
+- `THE-STANDARD.md`: the specification (draft 0.4.0)
 - `vocabulary.json`: the normative, machine-readable rhythm vocabulary
 - `conformance/vectors.json`: machine-checkable conformance vectors (R1 to R8)
 - `conformance/validate.mjs`: checks a rendering log against the vectors
@@ -91,8 +91,11 @@ Draft 0.1.0 reflected field testing with the standard's Deaf author. Draft
 alerts loop with no pause, and the 0.1.0 patterns fused across the loop
 boundary (two long waves became one). Every family except GROUND now ends
 in a trailing quiet (requirement R8). Draft 0.3.0 refined TEST to a
-quick grouped double tap. Deaf and DeafBlind user studies are beginning
-and will shape the next draft.
+quick grouped double tap. Draft 0.4.0 split severity by channel purpose:
+touch grades in four strengths for DeafBlind reading, marks count the
+step, and light and sound deliver at full power from the middle tier.
+Deaf and DeafBlind user studies are beginning and will shape the next
+draft.
 
 ## Citing the standard
 

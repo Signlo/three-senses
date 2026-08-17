@@ -1,13 +1,13 @@
 export declare const VOCABULARY_DATA: {
     readonly standard: "Three Senses Alerting Standard";
-    readonly version: "0.3.0";
+    readonly version: "0.4.0";
     readonly publisher: "International Deaf Emergency (ideafe.org)";
     readonly published: "2026-08-17";
     readonly license: "Apache-2.0";
     readonly units: "milliseconds";
     readonly principles: {
         readonly envelopeIsTheRhythm: "Every channel (touch, light, tone) renders the identical envelope. What the hand feels, the eye sees and the ear hears.";
-        readonly severityIsIntensity: "Severity NEVER changes a rhythm, only its strength/brightness/volume. A learned rhythm is identical at every severity.";
+        readonly severityIsIntensity: "Severity never changes a rhythm. Touch grades it in four distinct strengths so DeafBlind users read the level by hand; marks and color count the step for the eye; light and sound deliver at full power from DANGER COMING upward, because they exist to reach.";
         readonly allClearIsSilence: "The all-clear plays nothing on any channel. A quiet device means safe.";
         readonly mimetic: "Every rhythm is the hazard's own temporal signature, converging with the iconicity of sign languages. Future patterns MUST be mimetic.";
         readonly photosensitivity: "Light renderers never exceed 3 flashes per second (WCAG 2.3.1) or 6 state transitions per second, and MUST offer a steady-light path for users who identify as photosensitive.";
@@ -69,8 +69,8 @@ export declare const VOCABULARY_DATA: {
         };
     };
     readonly severity: {
-        readonly ladder: readonly ["SAFE NOW (all clear)", "BE CAREFUL (Minor/Unknown)", "DANGER COMING (Moderate)", "ACT NOW (Severe)", "ACT NOW (Extreme/Presidential)"];
-        readonly levels: {
+        readonly ladder: readonly ["SAFE NOW (all clear)", "BE CAREFUL (Minor/Unknown)", "DANGER COMING (Moderate/Amber)", "ACT NOW (Severe/Extreme/Presidential)"];
+        readonly touchLevels: {
             readonly allClear: 0;
             readonly Minor: 0.25;
             readonly Unknown: 0.25;
@@ -80,17 +80,27 @@ export declare const VOCABULARY_DATA: {
             readonly Extreme: 1;
             readonly Presidential: 1;
         };
-        readonly marks: {
+        readonly reachLevels: {
             readonly allClear: 0;
-            readonly Minor: 0;
-            readonly Unknown: 0;
+            readonly Minor: 0.25;
+            readonly Unknown: 0.25;
             readonly Moderate: 1;
             readonly Amber: 1;
-            readonly Severe: 2;
+            readonly Severe: 1;
+            readonly Extreme: 1;
+            readonly Presidential: 1;
+        };
+        readonly marks: {
+            readonly allClear: 0;
+            readonly Minor: 1;
+            readonly Unknown: 1;
+            readonly Moderate: 2;
+            readonly Amber: 2;
+            readonly Severe: 3;
             readonly Extreme: 3;
             readonly Presidential: 3;
         };
-        readonly rule: "Level scales channel intensity (vibration strength, light brightness, tone volume). It never alters pulses. Color must never carry severity alone: pair it with the mark count and the felt intensity.";
+        readonly rule: "Touch grades severity in four distinct strengths (25, 50, 75, 100 percent), so a DeafBlind user reads the level by touch alone. Light and sound exist to reach: from DANGER COMING (Moderate) upward they deliver at full power, and only BE CAREFUL stays gentle. The filled-mark count (one to three) and the color say the same thing for the eye; color never carries severity alone. The rhythm never changes.";
     };
     readonly lightBounds: {
         readonly maxFlashesPerSecond: 3;
@@ -98,7 +108,7 @@ export declare const VOCABULARY_DATA: {
     };
 };
 export declare const VECTORS_DATA: {
-    readonly standardVersion: "0.3.0";
+    readonly standardVersion: "0.4.0";
     readonly description: "Machine-checkable conformance vectors. A conformant renderer executes exactly these on/off events, at these offsets from a single shared clock (t0), on every channel it renders. Tolerance: an event may fire late by scheduling jitter but its SCHEDULED time must equal the vector; a renderer must never reorder, merge, or drop events, and a late start must join mid-pattern in phase at t0 + offset, not shifted.";
     readonly requirements: readonly ["R1 rhythm-identity: for each family, rendered on/off offsets equal the vector exactly.", "R2 severity-invariance: the vector is identical at every severity; only intensity changes.", "R3 all-clear-silence: ALL_CLEAR renders zero events on every channel.", "R4 one-clock: all channels schedule from one shared t0; a late channel joins in phase.", "R5 photosensitivity: no light renderer exceeds 3 flashes/second or 6 transitions/second, and a steady-light path exists.", "R6 test-gentleness: the TEST family never exceeds intensity level 0.3 on any channel at any severity.", "R7 no-dialects: implementations must not add, remove, or alter family patterns and still claim conformance.", "R8 loop-seamlessness: totalMs includes the family's trailing quiet and is normative; a repeating renderer schedules the next cycle's first event at exactly t0 + totalMs, never earlier, so pulses never fuse across the loop boundary."];
     readonly vectors: {

@@ -1,6 +1,6 @@
 # The Three Senses Alerting Standard
 
-Draft 0.3.0 (August 2026). Published by International Deaf Emergency (IDE),
+Draft 0.4.0 (August 2026). Published by International Deaf Emergency (IDE),
 a Deaf-led United States 501(c)(3) nonprofit. Contact: Emmanuel Jacq,
 President, emmanuel.jacq@ideafe.org. Canonical page: https://ideafe.org/standard
 (also reachable at https://alertsforall.org).
@@ -44,9 +44,14 @@ definition of every hazard family rhythm. Its core rules:
 - ENVELOPE IS THE RHYTHM. Touch, light, and tone render the identical
   pulse envelope from one shared clock. A late-starting channel joins the
   rhythm mid-pattern in phase; it never plays the rhythm shifted.
-- SEVERITY IS INTENSITY. Severity scales strength, brightness, and volume.
-  It never changes a rhythm. A person who learned "two long waves means
-  water" feels two long waves at every severity.
+- SEVERITY GRADES THE HAND; LIGHT AND SOUND REACH. Touch carries the level
+  in four distinct strengths (25, 50, 75, 100 percent), so a DeafBlind user
+  reads severity by touch alone; the filled-mark count (one to three) and
+  the color say the same thing for the eye, and color never carries
+  severity alone. Light and sound exist to reach: from DANGER COMING (the
+  middle tier) upward they deliver at full power. Severity never changes a
+  rhythm: a person who learned "two long waves means water" feels two long
+  waves at every severity.
 - THE ALL-CLEAR IS SILENCE. No channel plays anything. Quiet means safe.
 - RHYTHMS ARE MIMETIC. Every pattern is the hazard's own temporal
   signature, converging with the iconicity of sign languages: the ground
@@ -103,13 +108,15 @@ and no one may change what FIRE feels like and still call it Three Senses.
 
 ## 7. Status and lineage
 
-Draft 0.3.0 is implemented end to end in Deaflare (the reference
+Draft 0.4.0 is implemented end to end in Deaflare (the reference
 implementation) and field-tested on consumer devices. 0.2.0 revised
 0.1.0 after a repetition review: every family except GROUND now ends in
 a trailing quiet so that back-to-back repetition preserves each rhythm
-exactly (requirement R8). 0.3.0 refines the TEST family to a quick
-grouped double tap (tap, tap, long quiet, twice per cycle), by the
-author's same-day ruling. The standard is offered
+exactly (requirement R8). 0.3.0 refined the TEST family to a quick
+grouped double tap. 0.4.0 splits severity by channel purpose, by the
+author's ruling after the WFD 75th anniversary webinar: touch grades in
+four strengths, marks count the step one to three, and light and sound
+deliver at full power from the middle tier upward. The standard is offered
 as comments to the United States FCC alerting-modernization proceeding
 (PS Dockets 15-91, 15-94, 25-224; August 2026), proposed as input to the
 UN Early Warnings for All initiative, and being adapted for the European

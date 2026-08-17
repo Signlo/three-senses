@@ -29,7 +29,7 @@ export type FamilyName =
   | "OTHER"
   | "ALL_CLEAR";
 
-export type SeverityName = keyof typeof VOCABULARY_DATA.severity.levels;
+export type SeverityName = keyof typeof VOCABULARY_DATA.severity.touchLevels;
 
 /** One envelope block: [durationMs, gapAfterMs]. */
 export type Pulse = readonly [number, number];
@@ -69,7 +69,8 @@ export const VECTORS = VECTORS_DATA;
 export const STANDARD_VERSION: string = VOCABULARY_DATA.version;
 
 export const LIGHT_BOUNDS = VOCABULARY_DATA.lightBounds;
-export const SEVERITY_LEVELS = VOCABULARY_DATA.severity.levels;
+export const SEVERITY_TOUCH_LEVELS = VOCABULARY_DATA.severity.touchLevels;
+export const SEVERITY_REACH_LEVELS = VOCABULARY_DATA.severity.reachLevels;
 export const SEVERITY_MARKS = VOCABULARY_DATA.severity.marks;
 
 const FAMILY_NAMES = Object.keys(VOCABULARY_DATA.families) as FamilyName[];
@@ -113,10 +114,25 @@ export function cycleStart(t0: number, n: number, name: FamilyName): number {
   return t0 + n * cycleMs(name);
 }
 
-/** The severity ladder's flat level for a severity name, or a clamped number. */
+/**
+ * The TOUCH level for a severity: the hand grades in four distinct strengths
+ * (25/50/75/100) so DeafBlind users read the level by touch alone.
+ */
 export function severityLevel(severity: SeverityName | number): number {
   if (typeof severity === "number") return Math.min(1, Math.max(0, severity));
-  const level = (SEVERITY_LEVELS as Record<string, number>)[severity];
+  const level = (SEVERITY_TOUCH_LEVELS as Record<string, number>)[severity];
+  if (level === undefined) throw new Error(`Unknown severity "${severity}"`);
+  return level;
+}
+
+/**
+ * The REACH level for light and sound: full power from DANGER COMING
+ * (Moderate) upward, gentle only at BE CAREFUL. Light and sound exist to
+ * reach the person; the hand carries the fine-grained severity.
+ */
+export function reachLevel(severity: SeverityName | number): number {
+  if (typeof severity === "number") return Math.min(1, Math.max(0, severity));
+  const level = (SEVERITY_REACH_LEVELS as Record<string, number>)[severity];
   if (level === undefined) throw new Error(`Unknown severity "${severity}"`);
   return level;
 }
@@ -129,12 +145,22 @@ export function severityMarks(severity: SeverityName): number {
 }
 
 /**
- * The ONE flat level every channel plays this alert at: the severity level,
+ * The TOUCH channel's flat level for this alert: the graded severity level,
  * capped by the family's fixedLevel (R6: TEST never exceeds 0.3).
  */
 export function channelLevel(name: FamilyName, severity: SeverityName | number): number {
   const f = family(name);
   const level = severityLevel(severity);
+  return f.fixedLevel !== undefined ? Math.min(f.fixedLevel, level) : level;
+}
+
+/**
+ * The LIGHT and SOUND flat level for this alert: the reach ladder (full from
+ * DANGER COMING upward), still capped by the family's fixedLevel (R6).
+ */
+export function lightSoundLevel(name: FamilyName, severity: SeverityName | number): number {
+  const f = family(name);
+  const level = reachLevel(severity);
   return f.fixedLevel !== undefined ? Math.min(f.fixedLevel, level) : level;
 }
 
@@ -239,7 +265,7 @@ export function conformance(): { pass: boolean; results: ConformanceResult[] } {
   results.push({
     family: "TEST",
     requirement: "R6 test-gentleness",
-    pass: channelLevel("TEST", "Extreme") <= 0.3,
+    pass: channelLevel("TEST", "Extreme") <= 0.3 && lightSoundLevel("TEST", "Extreme") <= 0.3,
   });
   return { pass: results.every((r) => r.pass), results };
 }
