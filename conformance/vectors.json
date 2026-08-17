@@ -1,5 +1,5 @@
 {
-  "standardVersion": "0.1.0",
+  "standardVersion": "0.2.0",
   "description": "Machine-checkable conformance vectors. A conformant renderer executes exactly these on/off events, at these offsets from a single shared clock (t0), on every channel it renders. Tolerance: an event may fire late by scheduling jitter but its SCHEDULED time must equal the vector; a renderer must never reorder, merge, or drop events, and a late start must join mid-pattern in phase at t0 + offset, not shifted.",
   "requirements": [
     "R1 rhythm-identity: for each family, rendered on/off offsets equal the vector exactly.",
@@ -8,7 +8,8 @@
     "R4 one-clock: all channels schedule from one shared t0; a late channel joins in phase.",
     "R5 photosensitivity: no light renderer exceeds 3 flashes/second or 6 transitions/second, and a steady-light path exists.",
     "R6 test-gentleness: the TEST family never exceeds intensity level 0.3 on any channel at any severity.",
-    "R7 no-dialects: implementations must not add, remove, or alter family patterns and still claim conformance."
+    "R7 no-dialects: implementations must not add, remove, or alter family patterns and still claim conformance.",
+    "R8 loop-seamlessness: totalMs includes the family's trailing quiet and is normative; a repeating renderer schedules the next cycle's first event at exactly t0 + totalMs, never earlier, so pulses never fuse across the loop boundary."
   ],
   "vectors": {
     "GROUND": {
@@ -31,19 +32,19 @@
           "event": "on"
         },
         {
-          "at": 3000,
+          "at": 2000,
           "event": "off"
         },
         {
-          "at": 5000,
+          "at": 3000,
           "event": "on"
         },
         {
-          "at": 8000,
+          "at": 5000,
           "event": "off"
         }
       ],
-      "totalMs": 8000
+      "totalMs": 6000
     },
     "STORM": {
       "steps": [
@@ -72,7 +73,7 @@
           "event": "off"
         }
       ],
-      "totalMs": 3500
+      "totalMs": 4500
     },
     "FIRE": {
       "steps": [
@@ -174,51 +175,51 @@
           "event": "on"
         },
         {
-          "at": 4000,
+          "at": 3000,
           "event": "off"
         },
         {
-          "at": 5000,
+          "at": 3500,
           "event": "on"
         },
         {
-          "at": 5200,
+          "at": 3700,
           "event": "off"
         },
         {
-          "at": 5400,
+          "at": 3900,
           "event": "on"
         },
         {
-          "at": 5600,
+          "at": 4100,
           "event": "off"
         },
         {
-          "at": 5800,
+          "at": 4300,
           "event": "on"
         },
         {
-          "at": 6000,
+          "at": 4500,
           "event": "off"
         },
         {
-          "at": 6200,
+          "at": 4700,
           "event": "on"
         },
         {
-          "at": 6400,
+          "at": 4900,
           "event": "off"
         },
         {
-          "at": 6600,
+          "at": 5100,
           "event": "on"
         },
         {
-          "at": 6800,
+          "at": 5300,
           "event": "off"
         }
       ],
-      "totalMs": 7300
+      "totalMs": 6300
     },
     "TEST": {
       "steps": [
@@ -231,15 +232,15 @@
           "event": "off"
         },
         {
-          "at": 2500,
+          "at": 1000,
           "event": "on"
         },
         {
-          "at": 3000,
+          "at": 1500,
           "event": "off"
         }
       ],
-      "totalMs": 3000
+      "totalMs": 5000
     },
     "OTHER": {
       "steps": [
@@ -268,7 +269,7 @@
           "event": "off"
         }
       ],
-      "totalMs": 7000
+      "totalMs": 9000
     },
     "ALL_CLEAR": {
       "steps": [],

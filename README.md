@@ -3,9 +3,9 @@
 **See it. Feel it. Hear it.** Open rules that make every emergency warning
 readable by sight, touch, or hearing alone, each channel enough to act on.
 
-- `THE-STANDARD.md`: the specification (draft 0.1.0)
+- `THE-STANDARD.md`: the specification (draft 0.2.0)
 - `vocabulary.json`: the normative, machine-readable rhythm vocabulary
-- `conformance/vectors.json`: machine-checkable conformance vectors (R1 to R7)
+- `conformance/vectors.json`: machine-checkable conformance vectors (R1 to R8)
 - `conformance/validate.mjs`: checks a rendering log against the vectors
 
 Published by [International Deaf Emergency](https://ideafe.org), a Deaf-led
@@ -30,5 +30,9 @@ Render the vocabulary, log your events as JSON, then:
 ## Versioning
 
 Rhythm changes are major versions and governance events, never code tweaks.
-Draft 0.1.0 reflects field testing with the standard's Deaf author; Deaf
-and DeafBlind user studies are beginning and will shape 0.2.
+Draft 0.1.0 reflected field testing with the standard's Deaf author. Draft
+0.2.0 (the day after) came from the author's repetition review: urgent
+alerts loop with no pause, and the 0.1.0 patterns fused across the loop
+boundary (two long waves became one). Every family except GROUND now ends
+in a trailing quiet (requirement R8), and TEST became a grouped double
+tap. Deaf and DeafBlind user studies are beginning and will shape 0.3.

@@ -1,6 +1,6 @@
 # The Three Senses Alerting Standard
 
-Draft 0.1.0 (August 2026). Published by International Deaf Emergency (IDE),
+Draft 0.2.0 (August 2026). Published by International Deaf Emergency (IDE),
 a Deaf-led United States 501(c)(3) nonprofit. Contact: Emmanuel Jacq,
 President, emmanuel.jacq@ideafe.org. Canonical page: https://ideafe.org/standard
 (also reachable at https://alertsforall.org).
@@ -61,6 +61,12 @@ definition of every hazard family rhythm. Its core rules:
   duration.
 - TESTS ARE GENTLE. The TEST family never exceeds intensity 0.3 on any
   channel. A drill must never feel like an emergency.
+- LOOPS ARE SEAMLESS. Urgent alerts repeat with no pause, so every family
+  except GROUND ends in a trailing quiet, part of the pattern and counted
+  in its total, sized so the looped stream keeps the family's cadence
+  exactly. A repeat begins at t0 plus the pattern's total; pulses never
+  fuse across the loop boundary. GROUND is the deliberate exception:
+  looped, it fuses into one continuous unbroken hold, which is its mimesis.
 - FALLBACK IS GRACEFUL. A device that cannot render a pattern falls back
   to its platform's common cadence, never to silence.
 
@@ -78,7 +84,7 @@ draft.
 ## 5. Conformance
 
 `conformance/vectors.json` contains the machine-checkable event vectors and
-requirements R1 through R7. An implementation may describe itself as
+requirements R1 through R8. An implementation may describe itself as
 conformant with this standard only if it renders the vectors exactly,
 passes all requirements, and alters no pattern. `conformance/validate.mjs`
 checks a rendering log against the vectors.
@@ -97,8 +103,12 @@ and no one may change what FIRE feels like and still call it Three Senses.
 
 ## 7. Status and lineage
 
-Draft 0.1.0 is implemented end to end in Deaflare (the reference
-implementation), field-tested on consumer devices, filed as comments in
+Draft 0.2.0 is implemented end to end in Deaflare (the reference
+implementation) and field-tested on consumer devices. It revises 0.1.0
+after a repetition review: every family except GROUND now ends in a
+trailing quiet so that back-to-back repetition preserves each rhythm
+exactly (requirement R8), and the TEST family became a grouped double
+tap. The standard is filed as comments in
 the United States FCC alerting-modernization proceeding (PS Dockets 15-91,
 15-94, 25-224), and offered to the European Union public-warning review
 and the UN Early Warnings for All initiative. Structured testing with Deaf
