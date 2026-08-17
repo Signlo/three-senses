@@ -1,0 +1,278 @@
+{
+  "standardVersion": "0.1.0",
+  "description": "Machine-checkable conformance vectors. A conformant renderer executes exactly these on/off events, at these offsets from a single shared clock (t0), on every channel it renders. Tolerance: an event may fire late by scheduling jitter but its SCHEDULED time must equal the vector; a renderer must never reorder, merge, or drop events, and a late start must join mid-pattern in phase at t0 + offset, not shifted.",
+  "requirements": [
+    "R1 rhythm-identity: for each family, rendered on/off offsets equal the vector exactly.",
+    "R2 severity-invariance: the vector is identical at every severity; only intensity changes.",
+    "R3 all-clear-silence: ALL_CLEAR renders zero events on every channel.",
+    "R4 one-clock: all channels schedule from one shared t0; a late channel joins in phase.",
+    "R5 photosensitivity: no light renderer exceeds 3 flashes/second or 6 transitions/second, and a steady-light path exists.",
+    "R6 test-gentleness: the TEST family never exceeds intensity level 0.3 on any channel at any severity.",
+    "R7 no-dialects: implementations must not add, remove, or alter family patterns and still claim conformance."
+  ],
+  "vectors": {
+    "GROUND": {
+      "steps": [
+        {
+          "at": 0,
+          "event": "on"
+        },
+        {
+          "at": 4000,
+          "event": "off"
+        }
+      ],
+      "totalMs": 4000
+    },
+    "WATER": {
+      "steps": [
+        {
+          "at": 0,
+          "event": "on"
+        },
+        {
+          "at": 3000,
+          "event": "off"
+        },
+        {
+          "at": 5000,
+          "event": "on"
+        },
+        {
+          "at": 8000,
+          "event": "off"
+        }
+      ],
+      "totalMs": 8000
+    },
+    "STORM": {
+      "steps": [
+        {
+          "at": 0,
+          "event": "on"
+        },
+        {
+          "at": 500,
+          "event": "off"
+        },
+        {
+          "at": 1500,
+          "event": "on"
+        },
+        {
+          "at": 2000,
+          "event": "off"
+        },
+        {
+          "at": 3000,
+          "event": "on"
+        },
+        {
+          "at": 3500,
+          "event": "off"
+        }
+      ],
+      "totalMs": 3500
+    },
+    "FIRE": {
+      "steps": [
+        {
+          "at": 0,
+          "event": "on"
+        },
+        {
+          "at": 200,
+          "event": "off"
+        },
+        {
+          "at": 400,
+          "event": "on"
+        },
+        {
+          "at": 600,
+          "event": "off"
+        },
+        {
+          "at": 800,
+          "event": "on"
+        },
+        {
+          "at": 1000,
+          "event": "off"
+        },
+        {
+          "at": 1200,
+          "event": "on"
+        },
+        {
+          "at": 1400,
+          "event": "off"
+        },
+        {
+          "at": 1600,
+          "event": "on"
+        },
+        {
+          "at": 1800,
+          "event": "off"
+        },
+        {
+          "at": 2000,
+          "event": "on"
+        },
+        {
+          "at": 2200,
+          "event": "off"
+        },
+        {
+          "at": 2400,
+          "event": "on"
+        },
+        {
+          "at": 2600,
+          "event": "off"
+        },
+        {
+          "at": 2800,
+          "event": "on"
+        },
+        {
+          "at": 3000,
+          "event": "off"
+        },
+        {
+          "at": 3200,
+          "event": "on"
+        },
+        {
+          "at": 3400,
+          "event": "off"
+        },
+        {
+          "at": 3600,
+          "event": "on"
+        },
+        {
+          "at": 3800,
+          "event": "off"
+        }
+      ],
+      "totalMs": 4000
+    },
+    "THREAT": {
+      "steps": [
+        {
+          "at": 0,
+          "event": "on"
+        },
+        {
+          "at": 500,
+          "event": "off"
+        },
+        {
+          "at": 1000,
+          "event": "on"
+        },
+        {
+          "at": 4000,
+          "event": "off"
+        },
+        {
+          "at": 5000,
+          "event": "on"
+        },
+        {
+          "at": 5200,
+          "event": "off"
+        },
+        {
+          "at": 5400,
+          "event": "on"
+        },
+        {
+          "at": 5600,
+          "event": "off"
+        },
+        {
+          "at": 5800,
+          "event": "on"
+        },
+        {
+          "at": 6000,
+          "event": "off"
+        },
+        {
+          "at": 6200,
+          "event": "on"
+        },
+        {
+          "at": 6400,
+          "event": "off"
+        },
+        {
+          "at": 6600,
+          "event": "on"
+        },
+        {
+          "at": 6800,
+          "event": "off"
+        }
+      ],
+      "totalMs": 7300
+    },
+    "TEST": {
+      "steps": [
+        {
+          "at": 0,
+          "event": "on"
+        },
+        {
+          "at": 500,
+          "event": "off"
+        },
+        {
+          "at": 2500,
+          "event": "on"
+        },
+        {
+          "at": 3000,
+          "event": "off"
+        }
+      ],
+      "totalMs": 3000
+    },
+    "OTHER": {
+      "steps": [
+        {
+          "at": 0,
+          "event": "on"
+        },
+        {
+          "at": 1000,
+          "event": "off"
+        },
+        {
+          "at": 3000,
+          "event": "on"
+        },
+        {
+          "at": 4000,
+          "event": "off"
+        },
+        {
+          "at": 6000,
+          "event": "on"
+        },
+        {
+          "at": 7000,
+          "event": "off"
+        }
+      ],
+      "totalMs": 7000
+    },
+    "ALL_CLEAR": {
+      "steps": [],
+      "totalMs": 0
+    }
+  }
+}
