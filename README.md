@@ -1,5 +1,7 @@
 # The Three Senses Alerting Standard
 
+[![npm](https://img.shields.io/npm/v/%40ideafe%2Fthree-senses)](https://www.npmjs.com/package/@ideafe/three-senses) [![CI](https://github.com/Signlo/three-senses/actions/workflows/ci.yml/badge.svg)](https://github.com/Signlo/three-senses/actions/workflows/ci.yml)
+
 **See it. Feel it. Hear it.** Open rules that make every emergency warning
 readable by sight, touch, or hearing alone, each channel enough to act on.
 
@@ -26,9 +28,11 @@ feels like, it is not Three Senses anymore.
 ## The SDK
 
 TypeScript, zero runtime dependencies, works in Node (18+) and browsers.
-Install straight from this repository (npm publication to follow):
 
-    npm install github:Signlo/three-senses
+    npm install @ideafe/three-senses
+
+(Installing straight from this repository also works:
+`npm install github:Signlo/three-senses`.)
 
 Timelines, severity, and conformance (Node or browser):
 
