@@ -109,10 +109,11 @@ implementation) and field-tested on consumer devices. 0.2.0 revised
 a trailing quiet so that back-to-back repetition preserves each rhythm
 exactly (requirement R8). 0.3.0 refines the TEST family to a quick
 grouped double tap (tap, tap, long quiet, twice per cycle), by the
-author's same-day ruling. The standard is filed as comments in
-the United States FCC alerting-modernization proceeding (PS Dockets 15-91,
-15-94, 25-224), and offered to the European Union public-warning review
-and the UN Early Warnings for All initiative. Structured testing with Deaf
+author's same-day ruling. The standard is offered
+as comments to the United States FCC alerting-modernization proceeding
+(PS Dockets 15-91, 15-94, 25-224; August 2026), proposed as input to the
+UN Early Warnings for All initiative, and being adapted for the European
+Union public-warning framework. Structured testing with Deaf
 and DeafBlind users is beginning. The standard continues the line of the
 2015 WFD and WASLI statement on emergency communication, and its intended
 destination is a Deaf-led working group under Early Warnings for All,
