@@ -1,0 +1,62 @@
+{
+  "name": "@ideafe/three-senses",
+  "version": "0.3.0",
+  "description": "SDK for the Three Senses Alerting Standard: hazard-family alert rhythms rendered identically on touch, light, and tone. See it. Feel it. Hear it.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./web": {
+      "types": "./dist/web.d.ts",
+      "default": "./dist/web.js"
+    },
+    "./vocabulary.json": "./vocabulary.json",
+    "./conformance/vectors.json": "./conformance/vectors.json"
+  },
+  "bin": {
+    "three-senses": "dist/cli.js"
+  },
+  "files": [
+    "dist",
+    "vocabulary.json",
+    "conformance",
+    "THE-STANDARD.md",
+    "LICENSE",
+    "LICENSE-SPEC.md"
+  ],
+  "scripts": {
+    "embed": "node scripts/embed-data.mjs",
+    "build": "npm run embed && tsc -p tsconfig.json && node scripts/mark-cli-executable.mjs",
+    "test": "npm run build && node --test",
+    "prepare": "npm run build"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Signlo/three-senses.git"
+  },
+  "homepage": "https://ideafe.org/standard",
+  "author": "International Deaf Emergency (https://ideafe.org)",
+  "keywords": [
+    "accessibility",
+    "emergency-alerts",
+    "haptics",
+    "deaf",
+    "deafblind",
+    "vibration",
+    "wea",
+    "early-warning",
+    "a11y"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "typescript": "^5.6.0"
+  }
+}

@@ -7,6 +7,8 @@ readable by sight, touch, or hearing alone, each channel enough to act on.
 - `vocabulary.json`: the normative, machine-readable rhythm vocabulary
 - `conformance/vectors.json`: machine-checkable conformance vectors (R1 to R8)
 - `conformance/validate.mjs`: checks a rendering log against the vectors
+- `src/`, `dist/`: the SDK (`@ideafe/three-senses`), TypeScript, zero
+  dependencies, conformance-proven against the vectors in CI
 
 Published by [International Deaf Emergency](https://ideafe.org), a Deaf-led
 US 501(c)(3) nonprofit. Canonical page: [ideafe.org/standard](https://ideafe.org/standard).
@@ -21,11 +23,61 @@ and published only here, and the standard's names identify conformant
 implementations only. Fork the code all you like; if you change what FIRE
 feels like, it is not Three Senses anymore.
 
+## The SDK
+
+TypeScript, zero runtime dependencies, works in Node (18+) and browsers.
+Install straight from this repository (npm publication to follow):
+
+    npm install github:Signlo/three-senses
+
+Timelines, severity, and conformance (Node or browser):
+
+```js
+import {
+  timeline, cycleMs, cycleStart, channelLevel, vibratePattern, conformance,
+} from "@ideafe/three-senses";
+
+timeline("FIRE");            // { steps: [{at: 0, event: "on"}, ...], totalMs: 4000 }
+cycleMs("WATER");            // 6000 — the normative repeat interval (R8)
+channelLevel("TEST", "Extreme"); // 0.3 — a drill is capped, always (R6)
+vibratePattern("STORM");     // [500, 1000, 500, 1000, 500]
+conformance().pass;          // true — this SDK, proven against the vectors
+```
+
+Play an alert in a browser, all channels on one clock:
+
+```js
+import { startAlert } from "@ideafe/three-senses/web";
+
+const alert = startAlert("FIRE", {
+  severity: "Extreme",
+  onFlash: (on) => beacon.classList.toggle("lit", on), // any light you own
+  tone: true,      // 520 Hz, gated on the same envelope
+  vibrate: true,   // Vibration API where available
+});
+acknowledgeButton.onclick = () => alert.stop(); // I UNDERSTAND
+```
+
+The renderer callback design is deliberate: the SDK owns the clock and the
+rhythm; you own the surface — a DOM element, a torch, a smart bulb, a
+building beacon. Severity only ever changes the level. ALL_CLEAR renders
+nothing.
+
+And a CLI:
+
+    npx three-senses list
+    npx three-senses show FIRE
+    npx three-senses conformance   # proves the SDK against the vectors
+
 ## Conformance in one command
 
 Render the vocabulary, log your events as JSON, then:
 
     node conformance/validate.mjs your-render-log.json
+
+An SDK-based implementation can emit that log directly with
+`renderLog(family)`; the SDK's own test suite runs exactly this check, plus
+negative controls (a wrong rhythm and a trimmed loop both fail).
 
 ## Versioning
 
