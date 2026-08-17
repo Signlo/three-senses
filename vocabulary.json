@@ -1,6 +1,6 @@
 {
   "standard": "Three Senses Alerting Standard",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "publisher": "International Deaf Emergency (ideafe.org)",
   "published": "2026-08-17",
   "license": "Apache-2.0",
@@ -148,16 +148,24 @@
     },
     "TEST": {
       "meaning": "test or drill, never a real emergency",
-      "mimesis": "A gentle shoulder tap, twice, close together, then a long quiet: checking, not warning. A drill must never feel like an emergency.",
+      "mimesis": "A quick gentle double tap, a long quiet, then the double tap again: checking, not warning. A drill must never feel like an emergency.",
       "edge": "soft",
       "fixedLevel": 0.3,
       "pulses": [
         [
-          500,
-          500
+          200,
+          200
         ],
         [
-          500,
+          200,
+          3500
+        ],
+        [
+          200,
+          200
+        ],
+        [
+          200,
           3500
         ]
       ]

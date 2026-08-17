@@ -1,6 +1,6 @@
 # The Three Senses Alerting Standard
 
-Draft 0.2.0 (August 2026). Published by International Deaf Emergency (IDE),
+Draft 0.3.0 (August 2026). Published by International Deaf Emergency (IDE),
 a Deaf-led United States 501(c)(3) nonprofit. Contact: Emmanuel Jacq,
 President, emmanuel.jacq@ideafe.org. Canonical page: https://ideafe.org/standard
 (also reachable at https://alertsforall.org).
@@ -103,12 +103,13 @@ and no one may change what FIRE feels like and still call it Three Senses.
 
 ## 7. Status and lineage
 
-Draft 0.2.0 is implemented end to end in Deaflare (the reference
-implementation) and field-tested on consumer devices. It revises 0.1.0
-after a repetition review: every family except GROUND now ends in a
-trailing quiet so that back-to-back repetition preserves each rhythm
-exactly (requirement R8), and the TEST family became a grouped double
-tap. The standard is filed as comments in
+Draft 0.3.0 is implemented end to end in Deaflare (the reference
+implementation) and field-tested on consumer devices. 0.2.0 revised
+0.1.0 after a repetition review: every family except GROUND now ends in
+a trailing quiet so that back-to-back repetition preserves each rhythm
+exactly (requirement R8). 0.3.0 refines the TEST family to a quick
+grouped double tap (tap, tap, long quiet, twice per cycle), by the
+author's same-day ruling. The standard is filed as comments in
 the United States FCC alerting-modernization proceeding (PS Dockets 15-91,
 15-94, 25-224), and offered to the European Union public-warning review
 and the UN Early Warnings for All initiative. Structured testing with Deaf
