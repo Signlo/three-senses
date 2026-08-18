@@ -1,6 +1,6 @@
 {
   "standard": "Three Senses Alerting Standard",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "publisher": "International Deaf Emergency (ideafe.org)",
   "published": "2026-08-17",
   "license": "Apache-2.0",
@@ -191,8 +191,21 @@
     },
     "ALL_CLEAR": {
       "meaning": "the danger has ended (an affirmative, authenticated update)",
-      "mimesis": "Calm. An affirmative message that names what ended, presented without any alarm rhythm. The absence of an alert is never evidence of safety.",
-      "pulses": []
+      "mimesis": "The release: one long soft press, then a shorter one, settling. Like a breath out. Converging with the settling motion of FINISH signs in many sign languages (a hypothesis under human testing, like all mimesis claims).",
+      "pulses": [
+        [
+          1200,
+          400
+        ],
+        [
+          500,
+          0
+        ]
+      ],
+      "edge": "soft",
+      "fixedLevel": 0.25,
+      "presentation": "once",
+      "rule": "Plays exactly ONCE per all-clear message, then rests: repetition is reserved for danger, so not-repeating is itself part of the meaning. The cue accompanies, and never replaces, the affirmative words naming what ended. The absence of an alert is never evidence of safety."
     }
   },
   "severity": {
@@ -203,7 +216,7 @@
       "ACT NOW (Severe/Extreme/Presidential)"
     ],
     "touchLevels": {
-      "allClear": 0,
+      "allClear": 0.25,
       "Minor": 0.25,
       "Unknown": 0.25,
       "Moderate": 0.5,
@@ -213,7 +226,7 @@
       "Presidential": 1
     },
     "reachLevels": {
-      "allClear": 0,
+      "allClear": 0.25,
       "Minor": 0.25,
       "Unknown": 0.25,
       "Moderate": 1,

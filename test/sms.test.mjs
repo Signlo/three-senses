@@ -31,9 +31,11 @@ test("rule 4: malformed or absent codes are null, never a guess", () => {
   assert.equal(parseSmsCode("A3S:W4"), null); // word boundary required
 });
 
-test("rules 2 and 3 hold at the renderer: TEST stays gentle, ALL_CLEAR stays silent", () => {
+test("rules 2 and 3 hold at the renderer: TEST stays gentle, ALL_CLEAR plays the release once", () => {
   const drill = parseSmsCode("Drill message 3S:T4");
   assert.equal(channelLevel(drill.family, drill.severity), 0.3);
   const clear = parseSmsCode("Danger over 3S:A0");
-  assert.equal(timeline(clear.family).steps.length, 0);
+  // The all-clear renders its gentle release cue (once), never an alarm loop.
+  assert.equal(timeline(clear.family).totalMs, 2100);
+  assert.equal(channelLevel(clear.family, "Extreme"), 0.25);
 });

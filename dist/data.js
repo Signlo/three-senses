@@ -2,7 +2,7 @@
 // vocabulary.json and conformance/vectors.json, the normative artifacts.
 export const VOCABULARY_DATA = {
     "standard": "Three Senses Alerting Standard",
-    "version": "0.6.0",
+    "version": "0.7.0",
     "publisher": "International Deaf Emergency (ideafe.org)",
     "published": "2026-08-17",
     "license": "Apache-2.0",
@@ -193,8 +193,21 @@ export const VOCABULARY_DATA = {
         },
         "ALL_CLEAR": {
             "meaning": "the danger has ended (an affirmative, authenticated update)",
-            "mimesis": "Calm. An affirmative message that names what ended, presented without any alarm rhythm. The absence of an alert is never evidence of safety.",
-            "pulses": []
+            "mimesis": "The release: one long soft press, then a shorter one, settling. Like a breath out. Converging with the settling motion of FINISH signs in many sign languages (a hypothesis under human testing, like all mimesis claims).",
+            "pulses": [
+                [
+                    1200,
+                    400
+                ],
+                [
+                    500,
+                    0
+                ]
+            ],
+            "edge": "soft",
+            "fixedLevel": 0.25,
+            "presentation": "once",
+            "rule": "Plays exactly ONCE per all-clear message, then rests: repetition is reserved for danger, so not-repeating is itself part of the meaning. The cue accompanies, and never replaces, the affirmative words naming what ended. The absence of an alert is never evidence of safety."
         }
     },
     "severity": {
@@ -205,7 +218,7 @@ export const VOCABULARY_DATA = {
             "ACT NOW (Severe/Extreme/Presidential)"
         ],
         "touchLevels": {
-            "allClear": 0,
+            "allClear": 0.25,
             "Minor": 0.25,
             "Unknown": 0.25,
             "Moderate": 0.5,
@@ -215,7 +228,7 @@ export const VOCABULARY_DATA = {
             "Presidential": 1
         },
         "reachLevels": {
-            "allClear": 0,
+            "allClear": 0.25,
             "Minor": 0.25,
             "Unknown": 0.25,
             "Moderate": 1,
@@ -242,12 +255,12 @@ export const VOCABULARY_DATA = {
     }
 };
 export const VECTORS_DATA = {
-    "standardVersion": "0.4.0",
+    "standardVersion": "0.7.0",
     "description": "Machine-checkable conformance vectors. A conformant renderer executes exactly these on/off events, at these offsets from a single shared clock (t0), on every channel it renders. Tolerance: an event may fire late by scheduling jitter but its SCHEDULED time must equal the vector; a renderer must never reorder, merge, or drop events, and a late start must join mid-pattern in phase at t0 + offset, not shifted.",
     "requirements": [
         "R1 rhythm-identity: for each family, rendered on/off offsets equal the vector exactly.",
         "R2 severity-invariance: the vector is identical at every severity; only intensity changes.",
-        "R3 all-clear-silence: ALL_CLEAR renders zero events on every channel.",
+        "R3 all-clear-release: ALL_CLEAR renders its release cue exactly once per message (never looping), at its fixed gentle level, alongside affirmative words naming what ended; silence alone is never presented as an all-clear.",
         "R4 one-clock: all channels schedule from one shared t0; a late channel joins in phase.",
         "R5 photosensitivity: no light renderer exceeds 3 flashes/second or 6 transitions/second, and a steady-light path exists.",
         "R6 test-gentleness: the TEST family never exceeds intensity level 0.3 on any channel at any severity.",
@@ -531,8 +544,25 @@ export const VECTORS_DATA = {
             "totalMs": 9000
         },
         "ALL_CLEAR": {
-            "steps": [],
-            "totalMs": 0
+            "steps": [
+                {
+                    "at": 0,
+                    "event": "on"
+                },
+                {
+                    "at": 1200,
+                    "event": "off"
+                },
+                {
+                    "at": 1600,
+                    "event": "on"
+                },
+                {
+                    "at": 2100,
+                    "event": "off"
+                }
+            ],
+            "totalMs": 2100
         }
     }
 };

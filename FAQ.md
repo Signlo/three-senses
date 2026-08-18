@@ -6,11 +6,14 @@ implementers. Short answers; the specification is the authority.
 ## Does a quiet phone mean I am safe?
 
 No, and the standard now says so in as many words. Silence can also mean a
-dead battery, no coverage, a disabled channel, or a failed device. An
-all-clear is an affirmative, authenticated message that names what ended
-(for example "FLOOD WARNING ENDED"), presented calmly, with no alarm
-rhythm. The calm is the presentation; the words are the message. Never
-treat the absence of an alert as proof that danger has passed.
+dead battery, no coverage, a disabled channel, or a failed device. When a
+siren merely stops, nobody can tell whether the danger ended or the siren
+broke. So the all-clear is an affirmative, authenticated message that
+names what ended (for example "FLOOD WARNING ENDED") and plays the RELEASE
+cue: one long soft press, a breath, a shorter settling press, once, gently,
+on every channel. Repetition is reserved for danger, so a cue that plays
+once and rests is itself part of the meaning. Never treat the absence of
+an alert as proof that danger has passed.
 
 ## How does an app get alerts if the internet is shut down?
 

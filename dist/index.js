@@ -6,7 +6,10 @@
  *    on every channel (touch, light, tone) from one shared clock.
  *  - SEVERITY IS INTENSITY: severity scales strength/brightness/volume and
  *    never alters a rhythm. `timeline()` therefore takes no severity.
- *  - THE ALL-CLEAR IS SILENCE: ALL_CLEAR's timeline is empty.
+ *  - THE ALL-CLEAR IS A RELEASE, ONCE: ALL_CLEAR plays a short gentle
+ *    release cue exactly once per message (its `presentation` is "once"),
+ *    at its fixed gentle level, beside affirmative words naming what
+ *    ended. Silence alone is never an all-clear.
  *  - TESTS ARE GENTLE: the TEST family's channel level is capped (R6).
  *  - LOOPS ARE SEAMLESS (R8): a repeat begins at exactly t0 + totalMs; the
  *    trailing quiet is part of the pattern. Use `cycleStart()`.
@@ -188,8 +191,12 @@ export function conformance() {
     }
     results.push({
         family: "ALL_CLEAR",
-        requirement: "R3 all-clear-silence",
-        pass: timeline("ALL_CLEAR").steps.length === 0,
+        requirement: "R3 all-clear-release",
+        // The release cue exists, matches its vector, is capped gentle, and is
+        // declared play-once. Repetition is reserved for danger.
+        pass: timeline("ALL_CLEAR").steps.length > 0 &&
+            family("ALL_CLEAR").presentation === "once" &&
+            channelLevel("ALL_CLEAR", "Extreme") <= 0.25,
     });
     results.push({
         family: "TEST",
@@ -222,7 +229,7 @@ const SMS_CODE_RE = /\b3S:([GWSFHOTA])([0-4])\b/i;
  * regular expression, no language understanding, no network — the annex's
  * whole point. Returns null when no well-formed code is present (rule 4:
  * never guess from a broken code). Annex rules 2 and 3 are the renderer's
- * job (`channelLevel` caps TEST; ALL_CLEAR's timeline is empty), so the
+ * job (`channelLevel` caps TEST; ALL_CLEAR plays once at its fixed gentle level), so the
  * parse reports exactly what the code said.
  */
 export function parseSmsCode(text) {

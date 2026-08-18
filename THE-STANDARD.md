@@ -1,6 +1,6 @@
 # The Three Senses Alerting Standard
 
-Draft 0.6.0 (August 2026). Published by International Deaf Emergency (IDE),
+Draft 0.7.0 (August 2026). Published by International Deaf Emergency (IDE),
 a Deaf-led United States 501(c)(3) nonprofit. Contact: Emmanuel Jacq,
 President, emmanuel.jacq@ideafe.org. Canonical page: https://ideafe.org/standard
 (also reachable at https://alertsforall.org).
@@ -78,12 +78,20 @@ definition of every hazard family rhythm. Its core rules:
   COMING (the middle tier) upward they deliver at full power. Severity
   never changes a rhythm: a person who learned "two long waves means
   water" feels two long waves at every severity.
-- THE ALL-CLEAR IS AN AFFIRMATIVE MESSAGE, PRESENTED CALMLY. An all-clear
-  is an authenticated update or cancellation, linked to the alert it ends,
-  that says in words what has ended (for example "FLOOD WARNING ENDED").
-  Its presentation plays no alarm rhythm on any channel: the calm is the
-  presentation, and the words are the message. The absence of an alert is
-  NEVER evidence of safety, and a device MUST NOT present silence, a dead
+- THE ALL-CLEAR IS AN AFFIRMATIVE RELEASE, PLAYED ONCE. An all-clear is an
+  authenticated update or cancellation, linked to the alert it ends, that
+  says in words what has ended (for example "FLOOD WARNING ENDED"), and
+  plays the RELEASE cue: one long soft press, a breath, a shorter settling
+  press (1200 ms on, 400 ms quiet, 500 ms on), at its fixed gentle level
+  (0.25) on every channel, exactly ONCE per message, never looping.
+  Repetition is reserved for danger, so not-repeating is itself part of
+  the meaning. The cue exists because ABSENCE cannot be told apart from
+  FAILURE: when a siren merely stops, a person cannot know whether the
+  danger ended or the siren broke, and the same is true of a phone that
+  simply falls quiet. Relief is information, and it is delivered
+  affirmatively, to every sense: a gentle release on the skin, a calm
+  light, a soft tone, and the words. The absence of an alert is NEVER
+  evidence of safety, and a device MUST NOT present silence, a dead
   battery, a disabled channel, or missing coverage as an all-clear.
 - RHYTHMS ARE MIMETIC WHERE THE HAZARD HAS A SIGNATURE. WATER, GROUND,
   STORM, and FIRE are drawn from the hazard's own temporal pattern,
@@ -224,12 +232,17 @@ nothing in the licensing blocks a standards body from doing its work.
 
 ## 8. Status and lineage
 
-Draft 0.6.0 is implemented end to end in Deaflare (the reference
+Draft 0.7.0 is implemented end to end in Deaflare (the reference
 implementation). Evaluation to date: expert panel review and engineering
 testing on consumer devices. Structured usability testing with Deaf and
 DeafBlind participants is underway through IDE's network; completed,
 quality-reviewed results will be published and filed where relevant.
-0.6.0 reframed the all-clear as an affirmative message with calm
+0.7.0 gave the all-clear its own RELEASE cue (long press, breath, settling
+press, once, gentle), by the author's ruling: a signal that merely stops
+cannot be told apart from a signal that broke, in a building's siren or in
+a pocket, so relief is delivered affirmatively to every sense. The cue is
+distinct from every alarm rhythm on both design axes and additionally by
+never repeating. 0.6.0 reframed the all-clear as an affirmative message with calm
 presentation (absence of signal is never evidence of safety), split the
 five questions across attention and language channels, added the
 originator-suppression rule, timing tolerances, amplitude capability

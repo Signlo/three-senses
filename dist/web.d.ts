@@ -6,7 +6,8 @@
  * drift correction — never `setTimeout(previousGap)` chains — and repeats at
  * exactly `cycleStart(t0, n)` so pulses never fuse across the loop boundary
  * (R8). Severity arrives only as the one flat level (R2), already capped for
- * TEST (R6). ALL_CLEAR renders nothing on any channel (R3).
+ * TEST (R6). ALL_CLEAR plays its release cue exactly once and never loops,
+ * whatever `loop` says (R3): repetition is reserved for danger.
  */
 import { type FamilyName, type SeverityName } from "./index.js";
 export interface StartOptions {

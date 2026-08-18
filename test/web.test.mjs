@@ -59,11 +59,19 @@ test("loop: false plays exactly one cycle", (t) => {
   alert.stop();
 });
 
-test("ALL_CLEAR renders nothing on any channel (R3)", (t) => {
+test("ALL_CLEAR plays the release exactly once and never loops (R3)", (t) => {
   t.mock.timers.enable({ apis: ["setTimeout", "Date"], now: 0 });
   const edges = [];
-  const alert = startAlert("ALL_CLEAR", { vibrate: false, onFlash: (on) => edges.push(on) });
+  const levels = [];
+  const alert = startAlert("ALL_CLEAR", {
+    vibrate: false,
+    loop: true, // even asked to loop, a play-once family refuses
+    onFlash: (on, level) => { edges.push(on); levels.push(level); },
+  });
   t.mock.timers.tick(60_000);
-  assert.equal(edges.filter((on) => on === true).length, 0);
+  // One cycle only: two on-edges (the long press and the settling press).
+  assert.equal(edges.filter((on) => on === true).length, 2);
+  // At the fixed gentle level: relief must never blast.
+  assert.ok(levels.every((l) => l === 0.25));
   alert.stop();
 });

@@ -5,7 +5,7 @@
 **See it. Feel it. Hear it.** Open rules that make every emergency warning
 readable by sight, touch, or hearing alone, each channel enough to act on.
 
-- `THE-STANDARD.md`: the specification (draft 0.6.0)
+- `THE-STANDARD.md`: the specification (draft 0.7.0)
 - `vocabulary.json`: the normative, machine-readable rhythm vocabulary
 - `conformance/vectors.json`: machine-checkable conformance vectors (R1 to R8)
 - `conformance/validate.mjs`: checks a rendering log against the vectors
@@ -67,8 +67,8 @@ acknowledgeButton.onclick = () => alert.stop(); // I UNDERSTAND
 
 The renderer callback design is deliberate: the SDK owns the clock and the
 rhythm; you own the surface — a DOM element, a torch, a smart bulb, a
-building beacon. Severity only ever changes the level. ALL_CLEAR is an affirmative update presented calmly: it renders
-nothing.
+building beacon. Severity only ever changes the level. ALL_CLEAR plays its gentle release
+cue exactly once and never loops.
 
 And a CLI:
 
@@ -97,7 +97,7 @@ in a trailing quiet (requirement R8). Draft 0.3.0 refined TEST to a
 quick grouped double tap. Draft 0.4.0 split severity by channel purpose:
 touch grades in four strengths for DeafBlind reading, marks count the
 step, and light and sound deliver at full power from the middle tier.
-Draft 0.6.0, after an external FCC-style audit, reframed the all-clear as
+Draft 0.7.0, after an external FCC-style audit, reframed the all-clear as
 an affirmative calmly-presented message (silence is never evidence of
 safety), split the five questions across attention and language channels,
 and added originator-suppression, timing-tolerance, amplitude-capability,

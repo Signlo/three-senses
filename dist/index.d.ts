@@ -6,7 +6,10 @@
  *    on every channel (touch, light, tone) from one shared clock.
  *  - SEVERITY IS INTENSITY: severity scales strength/brightness/volume and
  *    never alters a rhythm. `timeline()` therefore takes no severity.
- *  - THE ALL-CLEAR IS SILENCE: ALL_CLEAR's timeline is empty.
+ *  - THE ALL-CLEAR IS A RELEASE, ONCE: ALL_CLEAR plays a short gentle
+ *    release cue exactly once per message (its `presentation` is "once"),
+ *    at its fixed gentle level, beside affirmative words naming what
+ *    ended. Silence alone is never an all-clear.
  *  - TESTS ARE GENTLE: the TEST family's channel level is capped (R6).
  *  - LOOPS ARE SEAMLESS (R8): a repeat begins at exactly t0 + totalMs; the
  *    trailing quiet is part of the pattern. Use `cycleStart()`.
@@ -32,6 +35,8 @@ export interface Family {
     readonly pulseEdgeOverrides?: Readonly<Record<string, "soft" | "hard">>;
     /** The R6 cap: this family's channel level never exceeds this. */
     readonly fixedLevel?: number;
+    /** "once": played a single time per message, never looped (ALL_CLEAR). */
+    readonly presentation?: "once";
     readonly pulses: readonly Pulse[];
 }
 export interface TimelineStep {
@@ -51,7 +56,7 @@ export interface Timeline {
 }
 export declare const VOCABULARY: {
     readonly standard: "Three Senses Alerting Standard";
-    readonly version: "0.6.0";
+    readonly version: "0.7.0";
     readonly publisher: "International Deaf Emergency (ideafe.org)";
     readonly published: "2026-08-17";
     readonly license: "Apache-2.0";
@@ -115,14 +120,18 @@ export declare const VOCABULARY: {
         };
         readonly ALL_CLEAR: {
             readonly meaning: "the danger has ended (an affirmative, authenticated update)";
-            readonly mimesis: "Calm. An affirmative message that names what ended, presented without any alarm rhythm. The absence of an alert is never evidence of safety.";
-            readonly pulses: readonly [];
+            readonly mimesis: "The release: one long soft press, then a shorter one, settling. Like a breath out. Converging with the settling motion of FINISH signs in many sign languages (a hypothesis under human testing, like all mimesis claims).";
+            readonly pulses: readonly [readonly [1200, 400], readonly [500, 0]];
+            readonly edge: "soft";
+            readonly fixedLevel: 0.25;
+            readonly presentation: "once";
+            readonly rule: "Plays exactly ONCE per all-clear message, then rests: repetition is reserved for danger, so not-repeating is itself part of the meaning. The cue accompanies, and never replaces, the affirmative words naming what ended. The absence of an alert is never evidence of safety.";
         };
     };
     readonly severity: {
         readonly ladder: readonly ["SAFE NOW (all clear)", "BE CAREFUL (Minor/Unknown)", "DANGER COMING (Moderate/Amber)", "ACT NOW (Severe/Extreme/Presidential)"];
         readonly touchLevels: {
-            readonly allClear: 0;
+            readonly allClear: 0.25;
             readonly Minor: 0.25;
             readonly Unknown: 0.25;
             readonly Moderate: 0.5;
@@ -132,7 +141,7 @@ export declare const VOCABULARY: {
             readonly Presidential: 1;
         };
         readonly reachLevels: {
-            readonly allClear: 0;
+            readonly allClear: 0.25;
             readonly Minor: 0.25;
             readonly Unknown: 0.25;
             readonly Moderate: 1;
@@ -159,9 +168,9 @@ export declare const VOCABULARY: {
     };
 };
 export declare const VECTORS: {
-    readonly standardVersion: "0.4.0";
+    readonly standardVersion: "0.7.0";
     readonly description: "Machine-checkable conformance vectors. A conformant renderer executes exactly these on/off events, at these offsets from a single shared clock (t0), on every channel it renders. Tolerance: an event may fire late by scheduling jitter but its SCHEDULED time must equal the vector; a renderer must never reorder, merge, or drop events, and a late start must join mid-pattern in phase at t0 + offset, not shifted.";
-    readonly requirements: readonly ["R1 rhythm-identity: for each family, rendered on/off offsets equal the vector exactly.", "R2 severity-invariance: the vector is identical at every severity; only intensity changes.", "R3 all-clear-silence: ALL_CLEAR renders zero events on every channel.", "R4 one-clock: all channels schedule from one shared t0; a late channel joins in phase.", "R5 photosensitivity: no light renderer exceeds 3 flashes/second or 6 transitions/second, and a steady-light path exists.", "R6 test-gentleness: the TEST family never exceeds intensity level 0.3 on any channel at any severity.", "R7 no-dialects: implementations must not add, remove, or alter family patterns and still claim conformance.", "R8 loop-seamlessness: totalMs includes the family's trailing quiet and is normative; a repeating renderer schedules the next cycle's first event at exactly t0 + totalMs, never earlier, so pulses never fuse across the loop boundary."];
+    readonly requirements: readonly ["R1 rhythm-identity: for each family, rendered on/off offsets equal the vector exactly.", "R2 severity-invariance: the vector is identical at every severity; only intensity changes.", "R3 all-clear-release: ALL_CLEAR renders its release cue exactly once per message (never looping), at its fixed gentle level, alongside affirmative words naming what ended; silence alone is never presented as an all-clear.", "R4 one-clock: all channels schedule from one shared t0; a late channel joins in phase.", "R5 photosensitivity: no light renderer exceeds 3 flashes/second or 6 transitions/second, and a steady-light path exists.", "R6 test-gentleness: the TEST family never exceeds intensity level 0.3 on any channel at any severity.", "R7 no-dialects: implementations must not add, remove, or alter family patterns and still claim conformance.", "R8 loop-seamlessness: totalMs includes the family's trailing quiet and is normative; a repeating renderer schedules the next cycle's first event at exactly t0 + totalMs, never earlier, so pulses never fuse across the loop boundary."];
     readonly vectors: {
         readonly GROUND: {
             readonly steps: readonly [{
@@ -372,8 +381,20 @@ export declare const VECTORS: {
             readonly totalMs: 9000;
         };
         readonly ALL_CLEAR: {
-            readonly steps: readonly [];
-            readonly totalMs: 0;
+            readonly steps: readonly [{
+                readonly at: 0;
+                readonly event: "on";
+            }, {
+                readonly at: 1200;
+                readonly event: "off";
+            }, {
+                readonly at: 1600;
+                readonly event: "on";
+            }, {
+                readonly at: 2100;
+                readonly event: "off";
+            }];
+            readonly totalMs: 2100;
         };
     };
 };
@@ -383,7 +404,7 @@ export declare const LIGHT_BOUNDS: {
     readonly maxTransitionsPerSecond: 6;
 };
 export declare const SEVERITY_TOUCH_LEVELS: {
-    readonly allClear: 0;
+    readonly allClear: 0.25;
     readonly Minor: 0.25;
     readonly Unknown: 0.25;
     readonly Moderate: 0.5;
@@ -393,7 +414,7 @@ export declare const SEVERITY_TOUCH_LEVELS: {
     readonly Presidential: 1;
 };
 export declare const SEVERITY_REACH_LEVELS: {
-    readonly allClear: 0;
+    readonly allClear: 0.25;
     readonly Minor: 0.25;
     readonly Unknown: 0.25;
     readonly Moderate: 1;
@@ -494,7 +515,7 @@ export interface SmsCode {
  * regular expression, no language understanding, no network — the annex's
  * whole point. Returns null when no well-formed code is present (rule 4:
  * never guess from a broken code). Annex rules 2 and 3 are the renderer's
- * job (`channelLevel` caps TEST; ALL_CLEAR's timeline is empty), so the
+ * job (`channelLevel` caps TEST; ALL_CLEAR plays once at its fixed gentle level), so the
  * parse reports exactly what the code said.
  */
 export declare function parseSmsCode(text: string): SmsCode | null;

@@ -6,9 +6,10 @@
  * drift correction — never `setTimeout(previousGap)` chains — and repeats at
  * exactly `cycleStart(t0, n)` so pulses never fuse across the loop boundary
  * (R8). Severity arrives only as the one flat level (R2), already capped for
- * TEST (R6). ALL_CLEAR renders nothing on any channel (R3).
+ * TEST (R6). ALL_CLEAR plays its release cue exactly once and never loops,
+ * whatever `loop` says (R3): repetition is reserved for danger.
  */
-import { timeline, cycleMs, lightSoundLevel, vibratePattern, } from "./index.js";
+import { family, timeline, cycleMs, lightSoundLevel, vibratePattern, } from "./index.js";
 function scheduleTimeline(name, t0, loop, onEdge, onCycleStart) {
     const t = timeline(name);
     const cycle = cycleMs(name);
@@ -54,7 +55,8 @@ export function startAlert(name, options = {}) {
     // the Vibration API is binary, so the touch grading lives on real haptic
     // hardware via the vocabulary's touchLevels.
     const level = lightSoundLevel(name, options.severity ?? "Extreme");
-    const loop = options.loop !== false;
+    // R3: a play-once family never loops, whatever the caller asked for.
+    const loop = options.loop !== false && family(name).presentation !== "once";
     const t0 = Date.now();
     const pattern = vibratePattern(name);
     const canVibrate = options.vibrate !== false &&
