@@ -56,7 +56,10 @@ Examples:
    digit, case-insensitive, matched at a word boundary. First match wins.
 2. `T` (TEST) renders at the TEST family's fixed gentle level whatever the
    digit says: a drill must never feel like an emergency.
-3. `A` (ALL_CLEAR) renders silence whatever the digit says.
+3. `A` (ALL_CLEAR) renders no alarm rhythm whatever the digit says. An
+   all-clear code MUST accompany an affirmative textual all-clear in the
+   message body; a bare code, and silence generally, is never evidence of
+   safety.
 4. A malformed or absent code means this profile does not apply: fall back
    to the message's plain text. Never guess a family from a broken code.
 5. The code grants no authority. Receivers decide which SENDERS to trust

@@ -3,6 +3,15 @@
 Questions from the WFD 75th Anniversary webinar (17 August 2026) and from
 implementers. Short answers; the specification is the authority.
 
+## Does a quiet phone mean I am safe?
+
+No, and the standard now says so in as many words. Silence can also mean a
+dead battery, no coverage, a disabled channel, or a failed device. An
+all-clear is an affirmative, authenticated message that names what ended
+(for example "FLOOD WARNING ENDED"), presented calmly, with no alarm
+rhythm. The calm is the presentation; the words are the message. Never
+treat the absence of an alert as proof that danger has passed.
+
 ## How does an app get alerts if the internet is shut down?
 
 Government alerts do not travel by internet or SMS. They use CELL

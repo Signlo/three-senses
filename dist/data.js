@@ -2,7 +2,7 @@
 // vocabulary.json and conformance/vectors.json, the normative artifacts.
 export const VOCABULARY_DATA = {
     "standard": "Three Senses Alerting Standard",
-    "version": "0.4.0",
+    "version": "0.6.0",
     "publisher": "International Deaf Emergency (ideafe.org)",
     "published": "2026-08-17",
     "license": "Apache-2.0",
@@ -192,8 +192,8 @@ export const VOCABULARY_DATA = {
             ]
         },
         "ALL_CLEAR": {
-            "meaning": "the danger has ended",
-            "mimesis": "Silence. Quiet means safe.",
+            "meaning": "the danger has ended (an affirmative, authenticated update)",
+            "mimesis": "Calm. An affirmative message that names what ended, presented without any alarm rhythm. The absence of an alert is never evidence of safety.",
             "pulses": []
         }
     },

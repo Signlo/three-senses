@@ -1,6 +1,6 @@
 export declare const VOCABULARY_DATA: {
     readonly standard: "Three Senses Alerting Standard";
-    readonly version: "0.4.0";
+    readonly version: "0.6.0";
     readonly publisher: "International Deaf Emergency (ideafe.org)";
     readonly published: "2026-08-17";
     readonly license: "Apache-2.0";
@@ -63,8 +63,8 @@ export declare const VOCABULARY_DATA: {
             readonly pulses: readonly [readonly [1000, 2000], readonly [1000, 2000], readonly [1000, 2000]];
         };
         readonly ALL_CLEAR: {
-            readonly meaning: "the danger has ended";
-            readonly mimesis: "Silence. Quiet means safe.";
+            readonly meaning: "the danger has ended (an affirmative, authenticated update)";
+            readonly mimesis: "Calm. An affirmative message that names what ended, presented without any alarm rhythm. The absence of an alert is never evidence of safety.";
             readonly pulses: readonly [];
         };
     };
