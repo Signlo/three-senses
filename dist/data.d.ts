@@ -1,19 +1,20 @@
 export declare const VOCABULARY_DATA: {
     readonly standard: "Three Senses Alerting Standard";
-    readonly version: "0.8.0";
+    readonly version: "0.9.0";
     readonly publisher: "International Deaf Emergency (ideafe.org)";
     readonly published: "2026-08-17";
     readonly license: "Apache-2.0";
     readonly units: "milliseconds";
     readonly principles: {
         readonly envelopeIsTheRhythm: "Every channel (touch, light, tone) renders the identical envelope. What the hand feels, the eye sees and the ear hears.";
-        readonly severityIsIntensity: "Severity never changes a rhythm. Touch grades it in four distinct strengths so DeafBlind users read the level by hand; marks and color count the step for the eye; light and sound deliver at full power from DANGER COMING upward, because they exist to reach.";
-        readonly allClearIsSilence: "The all-clear plays nothing on any channel. A quiet device means safe.";
-        readonly mimetic: "Every rhythm is the hazard's own temporal signature, converging with the iconicity of sign languages. Future patterns MUST be mimetic.";
-        readonly photosensitivity: "Light renderers never exceed 3 flashes per second (WCAG 2.3.1) or 6 state transitions per second, and MUST offer a steady-light path for users who identify as photosensitive.";
-        readonly repetition: "Urgent alerts repeat the full pattern back to back, with no pause, until the person acknowledges.";
-        readonly fallback: "A device that cannot render a pattern falls back to its platform's common cadence, never to silence.";
-        readonly loopSeamlessness: "Urgent alerts repeat with no pause, so every family except GROUND ends in a trailing quiet, part of the pattern and counted in its total, sized so the looped stream keeps the family's cadence exactly. A repeat begins at t0 + total; pulses never fuse across the loop boundary. GROUND is the deliberate exception: looped, it fuses into one continuous unbroken hold, which is its mimesis.";
+        readonly severityIsIntensity: "Severity never changes a rhythm. Where the device has validated amplitude control, touch grades the level in four distinct strengths so DeafBlind users read it by hand; marks and color count the step for the eye; light and sound deliver at full power from DANGER COMING upward, because they exist to reach. A device without amplitude control renders the rhythm unchanged and lets marks, color and words carry the level.";
+        readonly unknownPresumedDangerous: "A warning whose severity cannot be read is presumed dangerous: Unknown is stated as unknown in language and presented at Severe-equivalent intensity, never gentle.";
+        readonly allClearIsAffirmativeRelease: "The all-clear is an affirmative, authenticated message naming what ended, presented calmly with the gentle self-terminating release cue. The absence of an alert is never evidence of safety: silence can equally mean a dead battery, no coverage, or a failed device.";
+        readonly mimetic: "WATER, GROUND, STORM and FIRE are drawn from the hazard's own temporal signature, converging with the iconicity of sign languages; THREAT, TEST and OTHER are deliberately abstract. Mimesis is a design hypothesis under human testing. Future patterns MUST differ from every existing pattern on at least two axes and SHOULD be mimetic where the hazard offers a signature.";
+        readonly photosensitivity: "Light renderers never exceed 3 flashes per second or 6 state transitions per second (bounds drawn from WCAG 2.3.1, whose full thresholds also cover area, luminance and red flash), and MUST offer a steady-light path for users who identify as photosensitive.";
+        readonly repetition: "Urgent alerts repeat the full pattern back to back for a bounded, human-factors-validated interval or until acknowledged, whichever comes first, subject to alert-originator suppression instructions, the user's accessibility settings and device safety limits; the alert then persists as an accessible status with periodic reminders at validated intervals. Presentation is never indefinite. The all-clear release is the inverse carrier: it self-terminates on its own.";
+        readonly fallback: "A device that cannot render a pattern falls back to its platform's common cadence, never to silence, except where the alert originator has validly suppressed that modality.";
+        readonly loopSeamlessness: "Within the bounded presentation window, repeats begin at t0 plus the pattern's total; every family except GROUND ends in a trailing quiet sized so the looped stream keeps the family's cadence exactly, and pulses never fuse across the loop boundary. GROUND is the deliberate exception: within its window it fuses into one continuous hold, which is its mimesis; the window's bound is what keeps that hold finite.";
     };
     readonly families: {
         readonly GROUND: {
@@ -83,7 +84,7 @@ export declare const VOCABULARY_DATA: {
         readonly touchLevels: {
             readonly allClear: 0.25;
             readonly Minor: 0.25;
-            readonly Unknown: 0.25;
+            readonly Unknown: 0.75;
             readonly Moderate: 0.5;
             readonly Amber: 0.5;
             readonly Severe: 0.75;
@@ -93,7 +94,7 @@ export declare const VOCABULARY_DATA: {
         readonly reachLevels: {
             readonly allClear: 0.25;
             readonly Minor: 0.25;
-            readonly Unknown: 0.25;
+            readonly Unknown: 1;
             readonly Moderate: 1;
             readonly Amber: 1;
             readonly Severe: 1;
@@ -103,14 +104,14 @@ export declare const VOCABULARY_DATA: {
         readonly marks: {
             readonly allClear: 0;
             readonly Minor: 1;
-            readonly Unknown: 1;
+            readonly Unknown: 3;
             readonly Moderate: 2;
             readonly Amber: 2;
             readonly Severe: 3;
             readonly Extreme: 3;
             readonly Presidential: 3;
         };
-        readonly rule: "Touch grades severity in four distinct strengths (25, 50, 75, 100 percent), so a DeafBlind user reads the level by touch alone. Light and sound exist to reach: from DANGER COMING (Moderate) upward they deliver at full power, and only BE CAREFUL stays gentle. The filled-mark count (one to three) and the color say the same thing for the eye; color never carries severity alone. The rhythm never changes.";
+        readonly rule: "Touch grades severity in four distinct strengths (25, 50, 75, 100 percent), so a DeafBlind user reads the level by touch alone. Light and sound exist to reach: from DANGER COMING (Moderate) upward they deliver at full power, and only BE CAREFUL stays gentle. The filled-mark count (one to three) and the color say the same thing for the eye; color never carries severity alone. The rhythm never changes. A warning whose severity cannot be read is presumed dangerous: Unknown is stated as unknown in language and presented at Severe-equivalent intensity.";
     };
     readonly lightBounds: {
         readonly maxFlashesPerSecond: 3;
@@ -121,7 +122,7 @@ export declare const VOCABULARY_DATA: {
     };
 };
 export declare const VECTORS_DATA: {
-    readonly standardVersion: "0.8.0";
+    readonly standardVersion: "0.9.0";
     readonly description: "Machine-checkable conformance vectors. A conformant renderer executes exactly these on/off events, at these offsets from a single shared clock (t0), on every channel it renders. Tolerance: an event may fire late by scheduling jitter but its SCHEDULED time must equal the vector; a renderer must never reorder, merge, or drop events, and a late start must join mid-pattern in phase at t0 + offset, not shifted.";
     readonly requirements: readonly ["R1 rhythm-identity: for each family, rendered on/off offsets equal the vector exactly.", "R2 severity-invariance: the vector is identical at every severity; only intensity changes.", "R3 all-clear-release: ALL_CLEAR renders its release cue self-terminating and never escalating (at most three presentations at 0, 45 and 120 seconds, never louder, canceled by any interaction; never repeat-until-acknowledged), at its fixed gentle level with falling intensity, alongside affirmative words naming what ended; tone-only sirens never sound it; silence alone is never presented as an all-clear.", "R4 one-clock: all channels schedule from one shared t0; a late channel joins in phase.", "R5 photosensitivity: no light renderer exceeds 3 flashes/second or 6 transitions/second, and a steady-light path exists.", "R6 test-gentleness: the TEST family never exceeds intensity level 0.3 on any channel at any severity.", "R7 no-dialects: implementations must not add, remove, or alter family patterns and still claim conformance.", "R8 loop-seamlessness: totalMs includes the family's trailing quiet and is normative; a repeating renderer schedules the next cycle's first event at exactly t0 + totalMs, never earlier, so pulses never fuse across the loop boundary."];
     readonly vectors: {

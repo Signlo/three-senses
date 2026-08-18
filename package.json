@@ -1,6 +1,6 @@
 {
   "name": "@ideafe/three-senses",
-  "version": "0.8.0",
+  "version": "0.9.0",
   "description": "SDK for the Three Senses Alerting Standard: hazard-family alert rhythms rendered identically on touch, light, and tone. See it. Feel it. Hear it.",
   "license": "Apache-2.0",
   "type": "module",
@@ -32,8 +32,9 @@
   "scripts": {
     "embed": "node scripts/embed-data.mjs",
     "build": "npm run embed && tsc -p tsconfig.json && node scripts/mark-cli-executable.mjs",
-    "test": "npm run build && node --test",
-    "prepare": "npm run build"
+    "test": "node scripts/check-consistency.mjs && npm run build && node --test",
+    "prepare": "npm run build",
+    "check": "node scripts/check-consistency.mjs"
   },
   "repository": {
     "type": "git",

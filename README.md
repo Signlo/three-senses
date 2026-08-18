@@ -3,9 +3,10 @@
 [![npm](https://img.shields.io/npm/v/%40ideafe%2Fthree-senses)](https://www.npmjs.com/package/@ideafe/three-senses) [![CI](https://github.com/Signlo/three-senses/actions/workflows/ci.yml/badge.svg)](https://github.com/Signlo/three-senses/actions/workflows/ci.yml) [![DOI](https://zenodo.org/badge/1336687968.svg)](https://zenodo.org/badge/latestdoi/1336687968)
 
 **See it. Feel it. Hear it.** Open rules that make every emergency warning
-readable by sight, touch, or hearing alone, each channel enough to act on.
+detectable by sight, touch, or hearing alone, with the full warning,
+including the action, guaranteed in accessible language.
 
-- `THE-STANDARD.md`: the specification (draft 0.8.0)
+- `THE-STANDARD.md`: the specification (draft 0.9.0)
 - `vocabulary.json`: the normative, machine-readable rhythm vocabulary
 - `conformance/vectors.json`: machine-checkable conformance vectors (R1 to R8)
 - `conformance/validate.mjs`: checks a rendering log against the vectors
@@ -97,7 +98,7 @@ in a trailing quiet (requirement R8). Draft 0.3.0 refined TEST to a
 quick grouped double tap. Draft 0.4.0 split severity by channel purpose:
 touch grades in four strengths for DeafBlind reading, marks count the
 step, and light and sound deliver at full power from the middle tier.
-Draft 0.8.0, after an external FCC-style audit, reframed the all-clear as
+Draft 0.9.0, after an external FCC-style audit, reframed the all-clear as
 an affirmative calmly-presented message (silence is never evidence of
 safety), split the five questions across attention and language channels,
 and added originator-suppression, timing-tolerance, amplitude-capability,

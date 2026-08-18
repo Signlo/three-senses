@@ -1,6 +1,6 @@
 # The Three Senses Alerting Standard
 
-Draft 0.8.0 (August 2026). Published by International Deaf Emergency (IDE),
+Draft 0.9.0 (August 2026). Published by International Deaf Emergency (IDE),
 a Deaf-led United States 501(c)(3) nonprofit. Contact: Emmanuel Jacq,
 President, emmanuel.jacq@ideafe.org. Canonical page: https://ideafe.org/standard
 (also reachable at https://alertsforall.org).
@@ -55,9 +55,6 @@ normative:
   immediate provisional prompt, the way a learned fire-alarm tone means
   evacuate; training materials MUST teach the association, and the
   language channel remains authoritative.
-
-Questions 1 through 4 MUST each be answerable through sight alone, touch
-alone, and hearing alone.
 
 ## 3. The vocabulary (normative)
 
@@ -169,9 +166,10 @@ public alerting, and this standard maps onto it rather than beside it:
 
 - SEVERITY. CAP severity values map to the ladder: Minor maps to BE
   CAREFUL, Moderate to DANGER COMING, Severe and Extreme to ACT NOW
-  (touch, where graded, separates them at 75 and 100 percent). Unknown
-  presents as Severe: a warning whose level cannot be read is presumed
-  dangerous, never gentle.
+  (touch, where graded, separates them at 75 and 100 percent). Unknown is
+  stated as unknown in language and presented at Severe-equivalent
+  intensity: a warning whose level cannot be read is presumed dangerous,
+  never gentle, and never given false semantic precision.
 - URGENCY is not severity. CAP urgency (Immediate, Expected, Future, Past,
   Unknown) governs WHEN to act and SHOULD modulate presentation priority
   and repetition, not the severity ladder. An Extreme-but-Future alert
@@ -255,8 +253,15 @@ nothing in the licensing blocks a standards body from doing its work.
 
 ## 8. Status and lineage
 
-Draft 0.8.0 is implemented in Deaflare (the reference implementation);
-the per-channel character refinements land in the current release cycle. Evaluation to date: expert panel review and engineering
+Draft 0.9.0 is implemented in Deaflare (the reference implementation).
+0.9.0 is the alignment release, after a second external FCC-style audit:
+it removed a leftover sentence contradicting the attention/language split,
+replaced the machine-readable principles block (which still carried the
+retired quiet-means-safe model) with text matching this specification,
+raised Unknown to Severe-equivalent intensity while keeping its language
+honest, and bounded repetition expressly (never indefinite). A repo-wide
+consistency gate (scripts/check-consistency.mjs) now fails the build on
+any recurrence. Evaluation to date: expert panel review and engineering
 testing on consumer devices. Structured usability testing with Deaf and
 DeafBlind participants is underway through IDE's network; completed,
 quality-reviewed results will be published and filed where relevant.
