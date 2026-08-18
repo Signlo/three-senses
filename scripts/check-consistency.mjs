@@ -14,6 +14,7 @@ const BANNED = [
   /MUST each be answerable through sight/i,
   /each channel enough to act on/i,
   /field.tested/i,
+  /readable by sight, touch, or hearing alone, each/i,
 ];
 const root = process.cwd();
 const files = [];
@@ -47,6 +48,9 @@ const readme = readFileSync("README.md", "utf8");
 if (!readme.includes(`draft ${v}`) && !readme.includes(`Draft ${v}`)) { console.error(`VERSION README missing ${v}`); failures++; }
 const vectors = JSON.parse(readFileSync("conformance/vectors.json", "utf8"));
 if (vectors.standardVersion !== v) { console.error(`VERSION vectors ${vectors.standardVersion} != ${v}`); failures++; }
+const cff = readFileSync("CITATION.cff", "utf8");
+if (!cff.includes("cff-version: 1.2.0")) { console.error("CITATION.cff cff-version corrupted"); failures++; }
+if (!cff.includes(`version: ${v}`)) { console.error(`CITATION.cff software version != ${v}`); failures++; }
 const data = readFileSync("src/data.ts", "utf8");
 if (!data.includes(`"version": "${v}"`)) { console.error(`VERSION src/data.ts stale (run npm run embed)`); failures++; }
 

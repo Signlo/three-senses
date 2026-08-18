@@ -6,7 +6,7 @@
 detectable by sight, touch, or hearing alone, with the full warning,
 including the action, guaranteed in accessible language.
 
-- `THE-STANDARD.md`: the specification (draft 0.9.0)
+- `THE-STANDARD.md`: the specification (draft 0.9.1)
 - `vocabulary.json`: the normative, machine-readable rhythm vocabulary
 - `conformance/vectors.json`: machine-checkable conformance vectors (R1 to R8)
 - `conformance/validate.mjs`: checks a rendering log against the vectors
@@ -98,7 +98,7 @@ in a trailing quiet (requirement R8). Draft 0.3.0 refined TEST to a
 quick grouped double tap. Draft 0.4.0 split severity by channel purpose:
 touch grades in four strengths for DeafBlind reading, marks count the
 step, and light and sound deliver at full power from the middle tier.
-Draft 0.9.0, after an external FCC-style audit, reframed the all-clear as
+Draft 0.9.1, after an external FCC-style audit, reframed the all-clear as
 an affirmative calmly-presented message (silence is never evidence of
 safety), split the five questions across attention and language channels,
 and added originator-suppression, timing-tolerance, amplitude-capability,
