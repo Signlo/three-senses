@@ -1,6 +1,6 @@
 # The Three Senses Alerting Standard
 
-Draft 0.7.0 (August 2026). Published by International Deaf Emergency (IDE),
+Draft 0.8.0 (August 2026). Published by International Deaf Emergency (IDE),
 a Deaf-led United States 501(c)(3) nonprofit. Contact: Emmanuel Jacq,
 President, emmanuel.jacq@ideafe.org. Canonical page: https://ideafe.org/standard
 (also reachable at https://alertsforall.org).
@@ -78,19 +78,42 @@ definition of every hazard family rhythm. Its core rules:
   COMING (the middle tier) upward they deliver at full power. Severity
   never changes a rhythm: a person who learned "two long waves means
   water" feels two long waves at every severity.
-- THE ALL-CLEAR IS AN AFFIRMATIVE RELEASE, PLAYED ONCE. An all-clear is an
-  authenticated update or cancellation, linked to the alert it ends, that
-  says in words what has ended (for example "FLOOD WARNING ENDED"), and
-  plays the RELEASE cue: one long soft press, a breath, a shorter settling
-  press (1200 ms on, 400 ms quiet, 500 ms on), at its fixed gentle level
-  (0.25) on every channel, exactly ONCE per message, never looping.
-  Repetition is reserved for danger, so not-repeating is itself part of
-  the meaning. The cue exists because ABSENCE cannot be told apart from
-  FAILURE: when a siren merely stops, a person cannot know whether the
-  danger ended or the siren broke, and the same is true of a phone that
-  simply falls quiet. Relief is information, and it is delivered
-  affirmatively, to every sense: a gentle release on the skin, a calm
-  light, a soft tone, and the words. The absence of an alert is NEVER
+- THE ALL-CLEAR IS AN AFFIRMATIVE RELEASE, SELF-TERMINATING. An all-clear
+  is an authenticated update or cancellation, linked to the alert it ends,
+  that says in words what has ended (for example "FLOOD WARNING ENDED"),
+  and plays the RELEASE cue: one long soft press easing away, a real
+  breath, a short settling press (1200 ms on, 800 ms quiet, 400 ms on), at
+  its fixed gentle level with FALLING intensity inside each press (25 to
+  15 percent; two steps where hardware cannot ramp; floor 15 percent).
+  The cue is presented at most three times, at 0, 45 and 120 seconds,
+  never louder, and any user interaction cancels the rest. The carrier is
+  behavioral and absolute: DANGER INSISTS UNTIL ACKNOWLEDGED; SAFETY LETS
+  GO ON ITS OWN. The release never escalates and never repeats until
+  acknowledged, so it is recognizable by its behavior before its shape.
+  Its long-then-short skeleton is exclusive: no pattern except GROUND and
+  ALL_CLEAR may contain a unit of one second or longer, which makes the
+  release truncation-proof (a partly-missed alarm can never manufacture a
+  false all-clear). The cue exists because ABSENCE cannot be told apart
+  from FAILURE: when a siren merely stops, a person cannot know whether
+  the danger ended or the siren broke, and the same is true of a phone
+  that simply falls quiet. The all-clear is the permission to come out,
+  and permission cannot be carried by absence. Per-channel character
+  (normative; identity stays in the timing alone and must be decodable on
+  a pitchless piezo; character encodes valence, never identity, and never
+  adds onsets): TOUCH falls inside each press and replays once if the
+  device detects wrist-don, wake, or unlock within 10 minutes of an
+  undelivered release. LIGHT swells and eases (never a square flash) and
+  then holds an AFTERGLOW: steady calm green at the same gentle level for
+  10 minutes, fading over a minute; on a phone the calm wash holds until
+  dismissed; in a building the beacons that strobed hold steady green and
+  room lighting returns to full. A held state is not repetition. SOUND is
+  a falling chime, never the alert voice: the long press glides from about
+  880 to 660 Hz, the settle rests at 440 Hz, decaying inside each unit;
+  on phones the cue is followed, never overlapped, by speech naming what
+  ended; voice-capable building systems present cue-then-speech at most
+  three times at 60 second spacing; and tone-only outdoor sirens MUST NOT
+  sound the release at all, because a siren speaking means danger; they
+  route the all-clear to other channels. The absence of an alert is NEVER
   evidence of safety, and a device MUST NOT present silence, a dead
   battery, a disabled channel, or missing coverage as an all-clear.
 - RHYTHMS ARE MIMETIC WHERE THE HAZARD HAS A SIGNATURE. WATER, GROUND,
@@ -232,17 +255,26 @@ nothing in the licensing blocks a standards body from doing its work.
 
 ## 8. Status and lineage
 
-Draft 0.7.0 is implemented end to end in Deaflare (the reference
-implementation). Evaluation to date: expert panel review and engineering
+Draft 0.8.0 is implemented in Deaflare (the reference implementation);
+the per-channel character refinements land in the current release cycle. Evaluation to date: expert panel review and engineering
 testing on consumer devices. Structured usability testing with Deaf and
 DeafBlind participants is underway through IDE's network; completed,
 quality-reviewed results will be published and filed where relevant.
-0.7.0 gave the all-clear its own RELEASE cue (long press, breath, settling
-press, once, gentle), by the author's ruling: a signal that merely stops
-cannot be told apart from a signal that broke, in a building's siren or in
-a pocket, so relief is delivered affirmatively to every sense. The cue is
-distinct from every alarm rhythm on both design axes and additionally by
-never repeating. 0.6.0 reframed the all-clear as an affirmative message with calm
+0.8.0 refined the release after a three-expert panel (blind
+psychoacoustics, Deaf visual design, DeafBlind haptics), convened at the
+author's request: the breath widened to 800 ms and the settle shortened to
+400 ms (a felt gap through a pillow; asymmetry sharpened against WATER),
+intensity now falls inside each press, sound became a falling chime that
+tone-only sirens never render, light gained the afterglow, and play-once
+matured into self-terminating (at most three ever-gentler-never
+presentations, canceled by any interaction). The panel unanimously
+rejected two sketched alternatives: a 2-versus-3-pulse SAFE/TEST sibling
+pair (count-only distinctions collapse in reverberant sound, peripheral
+vision, and half-asleep touch, and the commonest error manufactures a
+false all-clear) and a single bip (indistinguishable from an ordinary
+notification). 0.7.0 gave the all-clear its own RELEASE cue by the
+author's ruling: a signal that merely stops cannot be told apart from a
+signal that broke, so relief is delivered affirmatively to every sense. 0.6.0 reframed the all-clear as an affirmative message with calm
 presentation (absence of signal is never evidence of safety), split the
 five questions across attention and language channels, added the
 originator-suppression rule, timing tolerances, amplitude capability

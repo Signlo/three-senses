@@ -10,10 +10,14 @@ dead battery, no coverage, a disabled channel, or a failed device. When a
 siren merely stops, nobody can tell whether the danger ended or the siren
 broke. So the all-clear is an affirmative, authenticated message that
 names what ended (for example "FLOOD WARNING ENDED") and plays the RELEASE
-cue: one long soft press, a breath, a shorter settling press, once, gently,
-on every channel. Repetition is reserved for danger, so a cue that plays
-once and rests is itself part of the meaning. Never treat the absence of
-an alert as proof that danger has passed.
+cue: one long soft press easing away, a breath, a short settling press,
+gently, at most three times, never louder, and it stops on its own. Danger
+insists until you acknowledge it; safety lets go by itself, so the release
+is recognizable by its behavior. On light it leaves an afterglow (steady
+calm green for ten minutes), because a lamp you can glance at answers "is
+it over?" in a way a moment that passed cannot. Tone-only sirens never
+sound it: a siren speaking means danger. Never treat the absence of an
+alert as proof that danger has passed.
 
 ## How does an app get alerts if the internet is shut down?
 

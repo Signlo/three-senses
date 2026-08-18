@@ -2,7 +2,7 @@
 // vocabulary.json and conformance/vectors.json, the normative artifacts.
 export const VOCABULARY_DATA = {
     "standard": "Three Senses Alerting Standard",
-    "version": "0.7.0",
+    "version": "0.8.0",
     "publisher": "International Deaf Emergency (ideafe.org)",
     "published": "2026-08-17",
     "license": "Apache-2.0",
@@ -193,21 +193,27 @@ export const VOCABULARY_DATA = {
         },
         "ALL_CLEAR": {
             "meaning": "the danger has ended (an affirmative, authenticated update)",
-            "mimesis": "The release: one long soft press, then a shorter one, settling. Like a breath out. Converging with the settling motion of FINISH signs in many sign languages (a hypothesis under human testing, like all mimesis claims).",
+            "mimesis": "The release: one long soft press easing away, a real breath, a short settling press. Like a breath out, easing pressure meaning done (protactile-native). A hypothesis under human testing, like all mimesis claims.",
             "pulses": [
                 [
                     1200,
-                    400
+                    800
                 ],
                 [
-                    500,
+                    400,
                     0
                 ]
             ],
             "edge": "soft",
             "fixedLevel": 0.25,
             "presentation": "once",
-            "rule": "Plays exactly ONCE per all-clear message, then rests: repetition is reserved for danger, so not-repeating is itself part of the meaning. The cue accompanies, and never replaces, the affirmative words naming what ended. The absence of an alert is never evidence of safety."
+            "rule": "Self-terminating and never escalating: the release is presented at most three times (at 0, 45 and 120 seconds), never louder, and any user interaction cancels the rest; danger insists until acknowledged, safety lets go on its own. Inside each press the intensity FALLS (25 to 15 percent; two steps where hardware cannot ramp; floor 15 percent, below which bed shakers and bedding-damped actuators go dead). The cue accompanies, never replaces, the affirmative words naming what ended. The absence of an alert is never evidence of safety.",
+            "character": {
+                "principle": "Identity lives in the timing alone and must be decodable on a pitchless piezo. Spectral and intensity character is channel-idiomatic, encodes valence (falling means over), never identity, and may never add onsets.",
+                "touch": "Intensity falls inside each press, 25 to 15 percent (two steps where no ramp; floor 15). On-body replay: if the device detects wrist-don, wake, or unlock within 10 minutes of an undelivered release, replay once.",
+                "light": "A ramped swell (about 300 ms ease-in, 400 ms ease-out), never a square flash. AFTERGLOW: after the cue, light holds steady calm green at the same gentle level for 10 minutes, then fades over a minute; a held state is not repetition. Phone: the calm wash holds until dismissed. Building: the beacons that strobed hold steady green, and room lighting returns to full.",
+                "sound": "A falling chime, not the alert voice: the long press glides about 880 to 660 Hz, the settle rests at 440 Hz, intensity decaying inside each unit; never the flat alert carrier. Phones: the cue once, then speech (for example FLOOD WARNING ENDED) starting about 1.5 s after, never overlapping. Voice-capable building systems: cue then spoken all-clear, at most three times at 60 s spacing. Tone-only outdoor sirens MUST NOT sound the release at all: a siren speaking means danger; route the all-clear to other channels."
+            }
         }
     },
     "severity": {
@@ -252,15 +258,18 @@ export const VOCABULARY_DATA = {
     "lightBounds": {
         "maxFlashesPerSecond": 3,
         "maxTransitionsPerSecond": 6
+    },
+    "rules": {
+        "longUnitExclusive": "No pattern other than GROUND and ALL_CLEAR may contain a unit of 1000 ms or longer, and no future pattern may gain one: the release's long-then-short skeleton stays truncation-proof."
     }
 };
 export const VECTORS_DATA = {
-    "standardVersion": "0.7.0",
+    "standardVersion": "0.8.0",
     "description": "Machine-checkable conformance vectors. A conformant renderer executes exactly these on/off events, at these offsets from a single shared clock (t0), on every channel it renders. Tolerance: an event may fire late by scheduling jitter but its SCHEDULED time must equal the vector; a renderer must never reorder, merge, or drop events, and a late start must join mid-pattern in phase at t0 + offset, not shifted.",
     "requirements": [
         "R1 rhythm-identity: for each family, rendered on/off offsets equal the vector exactly.",
         "R2 severity-invariance: the vector is identical at every severity; only intensity changes.",
-        "R3 all-clear-release: ALL_CLEAR renders its release cue exactly once per message (never looping), at its fixed gentle level, alongside affirmative words naming what ended; silence alone is never presented as an all-clear.",
+        "R3 all-clear-release: ALL_CLEAR renders its release cue self-terminating and never escalating (at most three presentations at 0, 45 and 120 seconds, never louder, canceled by any interaction; never repeat-until-acknowledged), at its fixed gentle level with falling intensity, alongside affirmative words naming what ended; tone-only sirens never sound it; silence alone is never presented as an all-clear.",
         "R4 one-clock: all channels schedule from one shared t0; a late channel joins in phase.",
         "R5 photosensitivity: no light renderer exceeds 3 flashes/second or 6 transitions/second, and a steady-light path exists.",
         "R6 test-gentleness: the TEST family never exceeds intensity level 0.3 on any channel at any severity.",
@@ -554,15 +563,15 @@ export const VECTORS_DATA = {
                     "event": "off"
                 },
                 {
-                    "at": 1600,
+                    "at": 2000,
                     "event": "on"
                 },
                 {
-                    "at": 2100,
+                    "at": 2400,
                     "event": "off"
                 }
             ],
-            "totalMs": 2100
+            "totalMs": 2400
         }
     }
 };

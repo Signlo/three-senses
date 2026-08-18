@@ -36,6 +36,6 @@ test("rules 2 and 3 hold at the renderer: TEST stays gentle, ALL_CLEAR plays the
   assert.equal(channelLevel(drill.family, drill.severity), 0.3);
   const clear = parseSmsCode("Danger over 3S:A0");
   // The all-clear renders its gentle release cue (once), never an alarm loop.
-  assert.equal(timeline(clear.family).totalMs, 2100);
+  assert.equal(timeline(clear.family).totalMs, 2400);
   assert.equal(channelLevel(clear.family, "Extreme"), 0.25);
 });

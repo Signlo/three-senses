@@ -83,14 +83,15 @@ test("R2 severity-invariance: severity is intensity, never a rhythm input", () =
 });
 
 test("R3 all-clear-release: the cue plays once, gentle, and is never a loop", () => {
-  // The release: one long soft press, a breath, a shorter settling press.
+  // The release, panel-refined (0.8.0): one long soft press, a REAL breath
+  // (800 ms, a felt gap through a pillow), a short settling press.
   const t = timeline("ALL_CLEAR");
   assert.deepEqual(
     t.steps.map((s) => `${s.at}:${s.event}`),
-    ["0:on", "1200:off", "1600:on", "2100:off"],
+    ["0:on", "1200:off", "2000:on", "2400:off"],
   );
-  assert.equal(t.totalMs, 2100);
-  assert.deepEqual(vibratePattern("ALL_CLEAR"), [1200, 400, 500]);
+  assert.equal(t.totalMs, 2400);
+  assert.deepEqual(vibratePattern("ALL_CLEAR"), [1200, 800, 400]);
   // Declared play-once: repetition is reserved for danger.
   assert.equal(family("ALL_CLEAR").presentation, "once");
   // Fixed gentle level at EVERY severity: relief must never blast.
