@@ -1,0 +1,89 @@
+# ===========================================
+# Signlo Shared Prettier Ignore Configuration
+# Managed by: Signlo/signlo-platform-ops
+# ===========================================
+
+# GitHub configuration directory (autofix-ci blocks .github modifications)
+.github/
+
+# Helm charts and Kubernetes templates (contain Go templates that break Prettier)
+helm/
+**/templates/**/*.yaml
+**/templates/**/*.yml
+*.tpl
+charts/
+Chart.yaml
+Chart.lock
+
+# Kustomize (may contain templating or generated content)
+overlays/
+kustomization.yaml
+kustomization.yml
+
+# Dependencies
+node_modules/
+vendor/
+.venv/
+venv/
+ENV/
+env/
+__pycache__/
+
+# Build outputs
+dist/
+build/
+out/
+*.min.js
+*.min.css
+
+# Generated files
+*.lock
+# Supabase-generated DB types. These are DERIVED artifacts regenerated from
+# supabase/migrations/ and gated by `git diff --exit-code` in CI (iptorian rls job,
+# signlo-app db-test.yml). Prettier reformats the generator's output (~3300 lines
+# gain semicolons), so leaving it unignored means `npm run format` — or an autofix
+# push to main — silently reds a REQUIRED check, with an error blaming the
+# migrations. Found 2026-08-07 audit; autofix had already produced the reformat and
+# was stopped only by the branch ruleset.
+**/database.types.ts
+# Machine-generated repo inventory with a byte-for-byte CI gate (claude-config
+# bin/build-directory.py --check, oss-borrow W1.4). Its own banner says
+# DO-NOT-HAND-EDIT, and a formatter rewrite IS a hand edit: prettier re-aligns the
+# markdown tables, after which `--check` reports the file as stale and every PR to
+# that repo fails the gate. Found 2026-08-12 — the gate had ALREADY been red on
+# claude-config main since the previous autofix style commit, unnoticed because the
+# gate only runs on pull_request. Exact same shape as database.types.ts above: a
+# generator and a formatter cannot both own one file.
+DIRECTORY.md
+# claude-config's claude-md/*.md are VERBATIM MIRRORS of each repo's CLAUDE.md, republished
+# by its sync rail whenever a provably-current clone differs. Prettier rewriting the mirror
+# GUARANTEES it differs, so autofix and sync ping-pong two commits per cycle forever —
+# measured live 2026-08-13 (deep audit): iptorian.md and diplosint.md each flipped between
+# the same two md5s five times in under 12 h. Fixed in claude-config (56d996e1, with a
+# prettier-semantics test); mirrored here so the next autofix template sync keeps the fence.
+claude-md/
+
+# Coverage and test artifacts
+coverage/
+.coverage
+htmlcov/
+.pytest_cache/
+.mypy_cache/
+
+# Reports directory
+reports/
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+tmp/
+*.tmp
+*.bak
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
