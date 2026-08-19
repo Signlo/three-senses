@@ -279,7 +279,7 @@ jobs:
       - name: Detect image files
         id: detect_images
         run: |
-          if find . \( -name "*.png" -o -name "*.jpg" -o -name "*.jpeg" -o -name "*.svg" \) \
+          if find . \( -name "*.png" -o -name "*.jpg" -o -name "*.jpeg" \) \
             -not -path "./.git/*" -not -path "./.github/*" -not -path "./node_modules/*" -not -path "./vendor/*" | head -1 | grep -q .; then
             echo "detected=yes" >> "$GITHUB_OUTPUT"
             echo "Image files detected in repository" | tee -a /tmp/signlo_diagnostics/session.log
@@ -294,7 +294,6 @@ jobs:
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y -qq optipng jpegoptim
-          npm install -g svgo@3.3.2
           echo "status=ok" >> "$GITHUB_OUTPUT"
         continue-on-error: true
 
@@ -318,15 +317,13 @@ jobs:
           echo "$COUNT" > /tmp/signlo_diagnostics/tool_count.txt
         continue-on-error: true
 
-      - name: Optimize SVG images
-        if: steps.detect_images.outputs.detected == 'yes' && steps.install_image_tools.outputs.status == 'ok'
-        run: |
-          echo "Optimizing SVG files..." | tee -a /tmp/signlo_diagnostics/session.log
-          find . -name "*.svg" -not -path "./.git/*" -not -path "./.github/*" -not -path "./node_modules/*" -not -path "./vendor/*" \
-            -exec svgo --quiet {} \; || echo "svgo encountered issues"
-          COUNT=$(($(cat /tmp/signlo_diagnostics/tool_count.txt 2>/dev/null || echo 0) + 1))
-          echo "$COUNT" > /tmp/signlo_diagnostics/tool_count.txt
-        continue-on-error: true
+      # SVG optimization REMOVED (2026-08-19). svgo REWRITES authored vector
+      # sources — brand marks, logo kits, hand-drawn figures — which is asset
+      # mutation, not formatting. On its first App-token run it minified
+      # signlo-app's design/logo-kit/*.svg inside a sync PR and broke the
+      # icons-lock gate (the [skip ci] era had only been hiding this).
+      # Lossless PNG/JPEG optimization above is kept: it does not rewrite
+      # sources anyone authors by hand.
 
       # ===================================================================
       # PRE-COMMIT HOOKS - If configured
