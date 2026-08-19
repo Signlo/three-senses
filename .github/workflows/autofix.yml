@@ -1,0 +1,513 @@
+name: 🔧 Autofix Code Formatting
+# v7 - Signlo Organization Multi-Language Auto-Formatting System
+# This workflow is distributed to all Signlo repositories via sync_autofix.py
+# Note: For .github/ directory lint fixes (YAML trailing spaces, JS quote style),
+# see code-quality.yml which handles these via PR-based remediation.
+
+on:
+  pull_request:
+    paths:
+      - '**.py'
+      - '**.go'
+      - '**.js'
+      - '**.ts'
+      - '**.yaml'
+      - '**.yml'
+      - '**.json'
+  push:
+    branches: [main]
+    paths:
+      - '**.py'
+      - '**.go'
+      - '**.js'
+      - '**.ts'
+      - '**.yaml'
+      - '**.yml'
+      - '**.json'
+  workflow_dispatch:  # Manual execution with configurable options
+    inputs:
+      ref:
+        description: 'Branch, tag, or SHA to run autofix on (leave empty for current branch)'
+        required: false
+        type: string
+      dry_run:
+        description: 'Preview changes without committing'
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  autofix:
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 15
+
+    steps:
+      # Mint a GitHub App token so the formatting commit (below) is pushed as
+      # the App, not GITHUB_TOKEN — GITHUB_TOKEN pushes do NOT trigger workflows,
+      # so the required CI/Test checks never ran on the format commit and
+      # auto-merge stayed blocked. The App token re-triggers them.
+      - name: Mint GitHub App token
+        id: app-token
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          app-id: ${{ secrets.SIGNLO_BOT_APP_ID }}
+          private-key: ${{ secrets.SIGNLO_BOT_PRIVATE_KEY }}
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ inputs.ref || github.head_ref || github.sha }}
+          token: ${{ steps.app-token.outputs.token }}
+          persist-credentials: true
+
+      # Initialize diagnostic tracking system for Signlo reporting
+      - name: Initialize Signlo diagnostic system
+        run: |
+          mkdir -p /tmp/signlo_diagnostics
+          echo "0" > /tmp/signlo_diagnostics/tool_count.txt
+          echo "" > /tmp/signlo_diagnostics/github_dir_issues.txt
+          echo "Signlo Autofix Diagnostic System Initialized" > /tmp/signlo_diagnostics/session.log
+
+      # ===================================================================
+      # PYTHON ECOSYSTEM - Ruff Analysis & Formatting
+      # ===================================================================
+      - name: Detect Python codebase
+        id: detect_python
+        run: |
+          if find . -name "*.py" -not -path "./.git/*" -not -path "./.github/*" | head -1 | grep -q .; then
+            echo "detected=yes" >> $GITHUB_OUTPUT
+            echo "Python files detected in repository" | tee -a /tmp/signlo_diagnostics/session.log
+          else
+            echo "detected=no" >> $GITHUB_OUTPUT
+            echo "No Python files found - skipping Python toolchain" | tee -a /tmp/signlo_diagnostics/session.log
+          fi
+
+      - name: Setup Python runtime environment
+        if: steps.detect_python.outputs.detected == 'yes'
+        id: setup_py_runtime
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.13"
+          # No pip cache: this workflow is synced to every Signlo repo and Ruff
+          # is installed from a pinned version below (not from a manifest). Keying
+          # a pip cache on **/pyproject.toml etc. hard-fails setup-python on repos
+          # that have .py files but no dependency manifest (e.g. claude-config).
+
+      - name: Install Ruff linter/formatter
+        if: steps.detect_python.outputs.detected == 'yes'
+        id: install_ruff
+        run: |
+          pip install ruff==0.15.12
+          echo "status=ok" >> $GITHUB_OUTPUT
+        continue-on-error: true
+
+      - name: Execute Ruff on codebase (excluding .github)
+        if: steps.detect_python.outputs.detected == 'yes' && steps.install_ruff.outputs.status == 'ok'
+        run: |
+          echo "Running Ruff linter with auto-fix..." | tee -a /tmp/signlo_diagnostics/session.log
+          ruff check --fix --exit-zero --exclude ".github" . || echo "Ruff check encountered issues"
+          ruff format --exclude ".github" . || echo "Ruff format encountered issues"
+          COUNT=$(($(cat /tmp/signlo_diagnostics/tool_count.txt 2>/dev/null || echo 0) + 1))
+          echo "$COUNT" > /tmp/signlo_diagnostics/tool_count.txt
+        continue-on-error: true
+
+      - name: Scan .github directory for Python issues (read-only)
+        if: steps.detect_python.outputs.detected == 'yes' && steps.install_ruff.outputs.status == 'ok'
+        run: |
+          echo "=== Python Issues in .github Directory ===" >> /tmp/signlo_diagnostics/github_dir_issues.txt
+          ruff check .github/ --output-format=full >> /tmp/signlo_diagnostics/github_dir_issues.txt 2>&1 || true
+          echo "" >> /tmp/signlo_diagnostics/github_dir_issues.txt
+        continue-on-error: true
+
+      # ===================================================================
+      # JAVASCRIPT/TYPESCRIPT ECOSYSTEM - Prettier Formatting
+      # ===================================================================
+      - name: Detect Prettier-formattable files
+        id: detect_js_ts
+        run: |
+          if find . \( -name "*.js" -o -name "*.ts" -o -name "*.jsx" -o -name "*.tsx" \
+            -o -name "*.json" -o -name "*.md" -o -name "*.yml" -o -name "*.yaml" \
+            -o -name "*.html" -o -name "*.css" \) \
+            -not -path "./.git/*" -not -path "./.github/*" -not -path "./node_modules/*" | head -1 | grep -q .; then
+            echo "detected=yes" >> $GITHUB_OUTPUT
+            echo "Prettier-formattable files detected" | tee -a /tmp/signlo_diagnostics/session.log
+          else
+            echo "detected=no" >> $GITHUB_OUTPUT
+            echo "No Prettier-formattable files found - skipping Node toolchain" | tee -a /tmp/signlo_diagnostics/session.log
+          fi
+
+      - name: Setup Node.js runtime environment
+        if: steps.detect_js_ts.outputs.detected == 'yes'
+        id: setup_node_runtime
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: "22"
+
+      - name: Cache global npm directory for Prettier
+        if: steps.detect_js_ts.outputs.detected == 'yes'
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-npm-prettier-3.4.2
+          restore-keys: |
+            ${{ runner.os }}-npm-prettier-
+
+      - name: Install Prettier formatter
+        if: steps.detect_js_ts.outputs.detected == 'yes'
+        id: install_prettier
+        run: |
+          npm install -g prettier@3.4.2
+          echo "status=ok" >> $GITHUB_OUTPUT
+        continue-on-error: true
+
+      - name: Execute Prettier with .prettierignore respect
+        if: steps.detect_js_ts.outputs.detected == 'yes' && steps.install_prettier.outputs.status == 'ok' && github.event_name == 'push'
+        run: |
+          echo "Running Prettier (respecting .prettierignore)..." | tee -a /tmp/signlo_diagnostics/session.log
+          prettier --write . --ignore-path .prettierignore --log-level warn || echo "Prettier encountered issues"
+          COUNT=$(($(cat /tmp/signlo_diagnostics/tool_count.txt 2>/dev/null || echo 0) + 1))
+          echo "$COUNT" > /tmp/signlo_diagnostics/tool_count.txt
+        continue-on-error: true
+
+      - name: Scan .github directory for Prettier issues (read-only)
+        if: steps.detect_js_ts.outputs.detected == 'yes' && steps.install_prettier.outputs.status == 'ok'
+        run: |
+          echo "=== Prettier Issues in .github Directory ===" >> /tmp/signlo_diagnostics/github_dir_issues.txt
+          prettier --check .github/ --log-level warn >> /tmp/signlo_diagnostics/github_dir_issues.txt 2>&1 || true
+          echo "" >> /tmp/signlo_diagnostics/github_dir_issues.txt
+        continue-on-error: true
+
+      # ===================================================================
+      # RUST ECOSYSTEM - cargo fmt & clippy
+      # ===================================================================
+      - name: Detect Rust codebase
+        id: detect_rust
+        run: |
+          if [ -f "Cargo.toml" ] || find . -name "*.rs" -not -path "./.git/*" -not -path "./.github/*" | head -1 | grep -q .; then
+            echo "detected=yes" >> $GITHUB_OUTPUT
+            echo "Rust files detected in repository" | tee -a /tmp/signlo_diagnostics/session.log
+          else
+            echo "detected=no" >> $GITHUB_OUTPUT
+            echo "No Rust files found - skipping Rust toolchain" | tee -a /tmp/signlo_diagnostics/session.log
+          fi
+
+      - name: Setup Rust toolchain with caching
+        if: steps.detect_rust.outputs.detected == 'yes'
+        id: setup_rust
+        uses: actions-rust-lang/setup-rust-toolchain@166cdcfd11aee3cb47222f9ddb555ce30ddb9659 # v1.17.0
+        with:
+          components: rustfmt, clippy
+
+      - name: Execute rustfmt on codebase
+        if: steps.detect_rust.outputs.detected == 'yes'
+        run: |
+          echo "Running rustfmt..." | tee -a /tmp/signlo_diagnostics/session.log
+          cargo fmt --all || echo "rustfmt encountered issues"
+          COUNT=$(($(cat /tmp/signlo_diagnostics/tool_count.txt 2>/dev/null || echo 0) + 1))
+          echo "$COUNT" > /tmp/signlo_diagnostics/tool_count.txt
+        continue-on-error: true
+
+      - name: Execute clippy with auto-fixes
+        if: steps.detect_rust.outputs.detected == 'yes'
+        run: |
+          echo "Running clippy with --fix..." | tee -a /tmp/signlo_diagnostics/session.log
+          cargo clippy --fix --allow-dirty --allow-staged || echo "clippy encountered issues"
+          COUNT=$(($(cat /tmp/signlo_diagnostics/tool_count.txt 2>/dev/null || echo 0) + 1))
+          echo "$COUNT" > /tmp/signlo_diagnostics/tool_count.txt
+        continue-on-error: true
+
+      # ===================================================================
+      # GO ECOSYSTEM - gofmt & goimports
+      # ===================================================================
+      - name: Detect Go codebase
+        id: detect_go
+        run: |
+          if [ -f "go.mod" ] || find . -name "*.go" -not -path "./.git/*" -not -path "./.github/*" | head -1 | grep -q .; then
+            echo "detected=yes" >> $GITHUB_OUTPUT
+            echo "Go files detected in repository" | tee -a /tmp/signlo_diagnostics/session.log
+          else
+            echo "detected=no" >> $GITHUB_OUTPUT
+            echo "No Go files found - skipping Go toolchain" | tee -a /tmp/signlo_diagnostics/session.log
+          fi
+
+      - name: Setup Go runtime environment
+        if: steps.detect_go.outputs.detected == 'yes'
+        id: setup_go_runtime
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version: stable
+          cache-dependency-path: |
+            **/go.sum
+            **/go.mod
+
+      - name: Install goimports tool
+        if: steps.detect_go.outputs.detected == 'yes'
+        id: install_goimports
+        run: |
+          go install golang.org/x/tools/cmd/goimports@v0.31.0
+          echo "status=ok" >> $GITHUB_OUTPUT
+        continue-on-error: true
+
+      - name: Execute gofmt on codebase
+        if: steps.detect_go.outputs.detected == 'yes'
+        run: |
+          echo "Running gofmt..." | tee -a /tmp/signlo_diagnostics/session.log
+          find . -name "*.go" -not -path "./.git/*" -not -path "./.github/*" -exec gofmt -w {} \; || echo "gofmt encountered issues"
+          COUNT=$(($(cat /tmp/signlo_diagnostics/tool_count.txt 2>/dev/null || echo 0) + 1))
+          echo "$COUNT" > /tmp/signlo_diagnostics/tool_count.txt
+        continue-on-error: true
+
+      - name: Execute goimports on codebase
+        if: steps.detect_go.outputs.detected == 'yes' && steps.install_goimports.outputs.status == 'ok'
+        run: |
+          echo "Running goimports..." | tee -a /tmp/signlo_diagnostics/session.log
+          find . -name "*.go" -not -path "./.git/*" -not -path "./.github/*" -exec goimports -w {} \; || echo "goimports encountered issues"
+          COUNT=$(($(cat /tmp/signlo_diagnostics/tool_count.txt 2>/dev/null || echo 0) + 1))
+          echo "$COUNT" > /tmp/signlo_diagnostics/tool_count.txt
+        continue-on-error: true
+
+      # ===================================================================
+      # IMAGE OPTIMIZATION - PNG, JPEG, SVG
+      # ===================================================================
+      - name: Detect image files
+        id: detect_images
+        run: |
+          if find . \( -name "*.png" -o -name "*.jpg" -o -name "*.jpeg" -o -name "*.svg" \) \
+            -not -path "./.git/*" -not -path "./.github/*" -not -path "./node_modules/*" -not -path "./vendor/*" | head -1 | grep -q .; then
+            echo "detected=yes" >> $GITHUB_OUTPUT
+            echo "Image files detected in repository" | tee -a /tmp/signlo_diagnostics/session.log
+          else
+            echo "detected=no" >> $GITHUB_OUTPUT
+            echo "No image files found - skipping image optimization" | tee -a /tmp/signlo_diagnostics/session.log
+          fi
+
+      - name: Install image optimization tools
+        if: steps.detect_images.outputs.detected == 'yes'
+        id: install_image_tools
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq optipng jpegoptim
+          npm install -g svgo@3.3.2
+          echo "status=ok" >> $GITHUB_OUTPUT
+        continue-on-error: true
+
+      - name: Optimize PNG images
+        if: steps.detect_images.outputs.detected == 'yes' && steps.install_image_tools.outputs.status == 'ok'
+        run: |
+          echo "Optimizing PNG files..." | tee -a /tmp/signlo_diagnostics/session.log
+          find . -name "*.png" -not -path "./.git/*" -not -path "./.github/*" -not -path "./node_modules/*" -not -path "./vendor/*" \
+            -exec optipng -o2 -quiet {} \; || echo "optipng encountered issues"
+          COUNT=$(($(cat /tmp/signlo_diagnostics/tool_count.txt 2>/dev/null || echo 0) + 1))
+          echo "$COUNT" > /tmp/signlo_diagnostics/tool_count.txt
+        continue-on-error: true
+
+      - name: Optimize JPEG images
+        if: steps.detect_images.outputs.detected == 'yes' && steps.install_image_tools.outputs.status == 'ok'
+        run: |
+          echo "Optimizing JPEG files..." | tee -a /tmp/signlo_diagnostics/session.log
+          find . \( -name "*.jpg" -o -name "*.jpeg" \) -not -path "./.git/*" -not -path "./.github/*" -not -path "./node_modules/*" -not -path "./vendor/*" \
+            -exec jpegoptim --strip-all --quiet {} \; || echo "jpegoptim encountered issues"
+          COUNT=$(($(cat /tmp/signlo_diagnostics/tool_count.txt 2>/dev/null || echo 0) + 1))
+          echo "$COUNT" > /tmp/signlo_diagnostics/tool_count.txt
+        continue-on-error: true
+
+      - name: Optimize SVG images
+        if: steps.detect_images.outputs.detected == 'yes' && steps.install_image_tools.outputs.status == 'ok'
+        run: |
+          echo "Optimizing SVG files..." | tee -a /tmp/signlo_diagnostics/session.log
+          find . -name "*.svg" -not -path "./.git/*" -not -path "./.github/*" -not -path "./node_modules/*" -not -path "./vendor/*" \
+            -exec svgo --quiet {} \; || echo "svgo encountered issues"
+          COUNT=$(($(cat /tmp/signlo_diagnostics/tool_count.txt 2>/dev/null || echo 0) + 1))
+          echo "$COUNT" > /tmp/signlo_diagnostics/tool_count.txt
+        continue-on-error: true
+
+      # ===================================================================
+      # PRE-COMMIT HOOKS - If configured
+      # ===================================================================
+      - name: Detect pre-commit configuration
+        id: detect_precommit
+        run: |
+          if [ -f ".pre-commit-config.yaml" ]; then
+            echo "detected=yes" >> $GITHUB_OUTPUT
+            echo "pre-commit configuration detected" | tee -a /tmp/signlo_diagnostics/session.log
+          else
+            echo "detected=no" >> $GITHUB_OUTPUT
+            echo "No pre-commit config found - skipping" | tee -a /tmp/signlo_diagnostics/session.log
+          fi
+
+      - name: Install and execute pre-commit hooks
+        if: steps.detect_precommit.outputs.detected == 'yes' && (steps.detect_python.outputs.detected == 'yes' || steps.setup_py_runtime.outcome == 'success') && github.event_name == 'push'
+        run: |
+          pip install pre-commit
+          echo "Running pre-commit on all files..." | tee -a /tmp/signlo_diagnostics/session.log
+          pre-commit run --all-files || echo "pre-commit encountered issues"
+          COUNT=$(($(cat /tmp/signlo_diagnostics/tool_count.txt 2>/dev/null || echo 0) + 1))
+          echo "$COUNT" > /tmp/signlo_diagnostics/tool_count.txt
+        continue-on-error: true
+
+      # ===================================================================
+      # SAFETY CHECKPOINT - Revert any .github directory modifications
+      # ===================================================================
+      - name: Signlo safety checkpoint - protect .github directory
+        run: |
+          echo "Checking for unauthorized .github directory modifications..." | tee -a /tmp/signlo_diagnostics/session.log
+          if git diff --name-only | grep -q "^\.github/"; then
+            echo "⚠️ Detected modifications in .github directory - reverting for safety" | tee -a /tmp/signlo_diagnostics/session.log
+            git checkout -- .github/
+            echo "✅ .github directory protected and restored" | tee -a /tmp/signlo_diagnostics/session.log
+          else
+            echo "✅ No .github directory modifications detected" | tee -a /tmp/signlo_diagnostics/session.log
+          fi
+
+      # ===================================================================
+      # REPORTING SYSTEM - Generate PR comment with diagnostics
+      # ===================================================================
+      - name: Build Signlo diagnostic report
+        if: github.event_name == 'pull_request'
+        id: build_report
+        run: |
+          REPORT_FILE="/tmp/signlo_diagnostics/pr_report.md"
+
+          echo "# 🤖 Signlo Autofix Report" > "$REPORT_FILE"
+          echo "" >> "$REPORT_FILE"
+          echo "Automated formatting and linting analysis for this pull request." >> "$REPORT_FILE"
+          echo "" >> "$REPORT_FILE"
+
+          # Count tool executions
+          TOOL_COUNT=$(cat /tmp/signlo_diagnostics/tool_count.txt 2>/dev/null || echo "0")
+          echo "**Tools Executed:** $TOOL_COUNT" >> "$REPORT_FILE"
+          echo "" >> "$REPORT_FILE"
+
+          # Check for .github issues
+          if [ -s /tmp/signlo_diagnostics/github_dir_issues.txt ]; then
+            echo "## ⚠️ .github Directory Issues Found" >> "$REPORT_FILE"
+            echo "" >> "$REPORT_FILE"
+            echo "The following issues were detected in your \`.github/\` directory:" >> "$REPORT_FILE"
+            echo "" >> "$REPORT_FILE"
+            echo '```' >> "$REPORT_FILE"
+            cat /tmp/signlo_diagnostics/github_dir_issues.txt >> "$REPORT_FILE"
+            echo '```' >> "$REPORT_FILE"
+            echo "" >> "$REPORT_FILE"
+            echo "**Note:** These files cannot be auto-fixed by this workflow for security reasons." >> "$REPORT_FILE"
+            echo "Please apply fixes manually." >> "$REPORT_FILE"
+            echo "" >> "$REPORT_FILE"
+            echo "has_github_issues=yes" >> $GITHUB_OUTPUT
+          else
+            echo "has_github_issues=no" >> $GITHUB_OUTPUT
+          fi
+
+          echo "## ✅ Auto-Fixed Files" >> "$REPORT_FILE"
+          echo "" >> "$REPORT_FILE"
+          echo "All non-.github files have been automatically formatted and fixed." >> "$REPORT_FILE"
+          echo "Review the commit from \`autofix-ci[bot]\` to see the changes." >> "$REPORT_FILE"
+
+          echo "Report generated at: $REPORT_FILE" | tee -a /tmp/signlo_diagnostics/session.log
+        continue-on-error: true
+
+      - name: Post diagnostic report to PR
+        if: github.event_name == 'pull_request' && steps.build_report.outputs.has_github_issues == 'yes'
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        with:
+          script: |
+            const fs = require('fs');
+            const reportPath = '/tmp/signlo_diagnostics/pr_report.md';
+            const reportBody = fs.readFileSync(reportPath, 'utf8');
+
+            // Search for existing Signlo Autofix comment
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number
+            });
+
+            const botComment = comments.find(c =>
+              c.user.type === 'Bot' &&
+              c.body.includes('Signlo Autofix Report')
+            );
+
+            if (botComment) {
+              // Update existing comment
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body: reportBody
+              });
+              console.log('Updated existing Signlo Autofix comment');
+            } else {
+              // Create new comment
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: reportBody
+              });
+              console.log('Created new Signlo Autofix comment');
+            }
+        continue-on-error: true
+
+      - name: Log diagnostics for push events
+        if: github.event_name == 'push'
+        run: |
+          echo "=== Signlo Autofix Diagnostic Summary ===" | tee -a $GITHUB_STEP_SUMMARY
+          if [ -s /tmp/signlo_diagnostics/github_dir_issues.txt ]; then
+            echo "⚠️ Issues found in .github directory:" | tee -a $GITHUB_STEP_SUMMARY
+            cat /tmp/signlo_diagnostics/github_dir_issues.txt | tee -a $GITHUB_STEP_SUMMARY
+          else
+            echo "✅ No issues detected in .github directory" | tee -a $GITHUB_STEP_SUMMARY
+          fi
+        continue-on-error: true
+
+      # ===================================================================
+      # COMMIT CHANGES - Only if modifications exist
+      # ===================================================================
+      - name: Check for formatting changes
+        id: check_changes
+        run: |
+          if [ -n "$(git status --porcelain)" ]; then
+            echo "has_changes=yes" >> $GITHUB_OUTPUT
+            echo "Formatting changes detected - will commit" | tee -a /tmp/signlo_diagnostics/session.log
+          else
+            echo "has_changes=no" >> $GITHUB_OUTPUT
+            echo "No formatting changes to commit" | tee -a /tmp/signlo_diagnostics/session.log
+          fi
+
+      - name: Commit and push formatting changes
+        if: steps.check_changes.outputs.has_changes == 'yes' && inputs.dry_run != true
+        env:
+          TARGET_BRANCH: ${{ inputs.ref || github.head_ref || github.ref_name }}
+          APP_SLUG: ${{ steps.app-token.outputs.app-slug }}
+        run: |
+          git config user.name "${APP_SLUG}[bot]"
+          git config user.email "${APP_SLUG}[bot]@users.noreply.github.com"
+          git add -u
+          if git diff --cached --quiet; then
+            echo "Nothing to commit"
+            exit 0
+          fi
+          # No [skip ci]: pushed via the App token, this commit re-triggers the
+          # required CI/Test checks so auto-merge can complete (formatting is
+          # idempotent, so the re-run finds nothing to commit — no loop).
+          git commit -m "style: apply automated formatting fixes"
+          git push origin HEAD:"${TARGET_BRANCH}"
+        continue-on-error: true
+
+      - name: Report dry-run results
+        if: steps.check_changes.outputs.has_changes == 'yes' && inputs.dry_run == true
+        run: |
+          echo "## 🔍 Dry Run Mode - Changes Preview" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "The following files would be modified:" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          git diff --stat >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Note:** No changes were committed because dry_run mode is enabled." >> $GITHUB_STEP_SUMMARY
