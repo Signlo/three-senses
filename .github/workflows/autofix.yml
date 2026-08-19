@@ -82,10 +82,10 @@ jobs:
         id: detect_python
         run: |
           if find . -name "*.py" -not -path "./.git/*" -not -path "./.github/*" | head -1 | grep -q .; then
-            echo "detected=yes" >> $GITHUB_OUTPUT
+            echo "detected=yes" >> "$GITHUB_OUTPUT"
             echo "Python files detected in repository" | tee -a /tmp/signlo_diagnostics/session.log
           else
-            echo "detected=no" >> $GITHUB_OUTPUT
+            echo "detected=no" >> "$GITHUB_OUTPUT"
             echo "No Python files found - skipping Python toolchain" | tee -a /tmp/signlo_diagnostics/session.log
           fi
 
@@ -105,7 +105,7 @@ jobs:
         id: install_ruff
         run: |
           pip install ruff==0.15.12
-          echo "status=ok" >> $GITHUB_OUTPUT
+          echo "status=ok" >> "$GITHUB_OUTPUT"
         continue-on-error: true
 
       - name: Execute Ruff on codebase (excluding .github)
@@ -136,10 +136,10 @@ jobs:
             -o -name "*.json" -o -name "*.md" -o -name "*.yml" -o -name "*.yaml" \
             -o -name "*.html" -o -name "*.css" \) \
             -not -path "./.git/*" -not -path "./.github/*" -not -path "./node_modules/*" | head -1 | grep -q .; then
-            echo "detected=yes" >> $GITHUB_OUTPUT
+            echo "detected=yes" >> "$GITHUB_OUTPUT"
             echo "Prettier-formattable files detected" | tee -a /tmp/signlo_diagnostics/session.log
           else
-            echo "detected=no" >> $GITHUB_OUTPUT
+            echo "detected=no" >> "$GITHUB_OUTPUT"
             echo "No Prettier-formattable files found - skipping Node toolchain" | tee -a /tmp/signlo_diagnostics/session.log
           fi
 
@@ -164,7 +164,7 @@ jobs:
         id: install_prettier
         run: |
           npm install -g prettier@3.4.2
-          echo "status=ok" >> $GITHUB_OUTPUT
+          echo "status=ok" >> "$GITHUB_OUTPUT"
         continue-on-error: true
 
       - name: Execute Prettier with .prettierignore respect
@@ -191,10 +191,10 @@ jobs:
         id: detect_rust
         run: |
           if [ -f "Cargo.toml" ] || find . -name "*.rs" -not -path "./.git/*" -not -path "./.github/*" | head -1 | grep -q .; then
-            echo "detected=yes" >> $GITHUB_OUTPUT
+            echo "detected=yes" >> "$GITHUB_OUTPUT"
             echo "Rust files detected in repository" | tee -a /tmp/signlo_diagnostics/session.log
           else
-            echo "detected=no" >> $GITHUB_OUTPUT
+            echo "detected=no" >> "$GITHUB_OUTPUT"
             echo "No Rust files found - skipping Rust toolchain" | tee -a /tmp/signlo_diagnostics/session.log
           fi
 
@@ -230,10 +230,10 @@ jobs:
         id: detect_go
         run: |
           if [ -f "go.mod" ] || find . -name "*.go" -not -path "./.git/*" -not -path "./.github/*" | head -1 | grep -q .; then
-            echo "detected=yes" >> $GITHUB_OUTPUT
+            echo "detected=yes" >> "$GITHUB_OUTPUT"
             echo "Go files detected in repository" | tee -a /tmp/signlo_diagnostics/session.log
           else
-            echo "detected=no" >> $GITHUB_OUTPUT
+            echo "detected=no" >> "$GITHUB_OUTPUT"
             echo "No Go files found - skipping Go toolchain" | tee -a /tmp/signlo_diagnostics/session.log
           fi
 
@@ -252,7 +252,7 @@ jobs:
         id: install_goimports
         run: |
           go install golang.org/x/tools/cmd/goimports@v0.31.0
-          echo "status=ok" >> $GITHUB_OUTPUT
+          echo "status=ok" >> "$GITHUB_OUTPUT"
         continue-on-error: true
 
       - name: Execute gofmt on codebase
@@ -281,10 +281,10 @@ jobs:
         run: |
           if find . \( -name "*.png" -o -name "*.jpg" -o -name "*.jpeg" -o -name "*.svg" \) \
             -not -path "./.git/*" -not -path "./.github/*" -not -path "./node_modules/*" -not -path "./vendor/*" | head -1 | grep -q .; then
-            echo "detected=yes" >> $GITHUB_OUTPUT
+            echo "detected=yes" >> "$GITHUB_OUTPUT"
             echo "Image files detected in repository" | tee -a /tmp/signlo_diagnostics/session.log
           else
-            echo "detected=no" >> $GITHUB_OUTPUT
+            echo "detected=no" >> "$GITHUB_OUTPUT"
             echo "No image files found - skipping image optimization" | tee -a /tmp/signlo_diagnostics/session.log
           fi
 
@@ -295,7 +295,7 @@ jobs:
           sudo apt-get update -qq
           sudo apt-get install -y -qq optipng jpegoptim
           npm install -g svgo@3.3.2
-          echo "status=ok" >> $GITHUB_OUTPUT
+          echo "status=ok" >> "$GITHUB_OUTPUT"
         continue-on-error: true
 
       - name: Optimize PNG images
@@ -335,10 +335,10 @@ jobs:
         id: detect_precommit
         run: |
           if [ -f ".pre-commit-config.yaml" ]; then
-            echo "detected=yes" >> $GITHUB_OUTPUT
+            echo "detected=yes" >> "$GITHUB_OUTPUT"
             echo "pre-commit configuration detected" | tee -a /tmp/signlo_diagnostics/session.log
           else
-            echo "detected=no" >> $GITHUB_OUTPUT
+            echo "detected=no" >> "$GITHUB_OUTPUT"
             echo "No pre-commit config found - skipping" | tee -a /tmp/signlo_diagnostics/session.log
           fi
 
@@ -375,38 +375,44 @@ jobs:
         run: |
           REPORT_FILE="/tmp/signlo_diagnostics/pr_report.md"
 
-          echo "# 🤖 Signlo Autofix Report" > "$REPORT_FILE"
-          echo "" >> "$REPORT_FILE"
-          echo "Automated formatting and linting analysis for this pull request." >> "$REPORT_FILE"
-          echo "" >> "$REPORT_FILE"
-
           # Count tool executions
           TOOL_COUNT=$(cat /tmp/signlo_diagnostics/tool_count.txt 2>/dev/null || echo "0")
-          echo "**Tools Executed:** $TOOL_COUNT" >> "$REPORT_FILE"
-          echo "" >> "$REPORT_FILE"
+
+          {
+            echo "# 🤖 Signlo Autofix Report"
+            echo ""
+            echo "Automated formatting and linting analysis for this pull request."
+            echo ""
+            echo "**Tools Executed:** $TOOL_COUNT"
+            echo ""
+          } > "$REPORT_FILE"
 
           # Check for .github issues
           if [ -s /tmp/signlo_diagnostics/github_dir_issues.txt ]; then
-            echo "## ⚠️ .github Directory Issues Found" >> "$REPORT_FILE"
-            echo "" >> "$REPORT_FILE"
-            echo "The following issues were detected in your \`.github/\` directory:" >> "$REPORT_FILE"
-            echo "" >> "$REPORT_FILE"
-            echo '```' >> "$REPORT_FILE"
-            cat /tmp/signlo_diagnostics/github_dir_issues.txt >> "$REPORT_FILE"
-            echo '```' >> "$REPORT_FILE"
-            echo "" >> "$REPORT_FILE"
-            echo "**Note:** These files cannot be auto-fixed by this workflow for security reasons." >> "$REPORT_FILE"
-            echo "Please apply fixes manually." >> "$REPORT_FILE"
-            echo "" >> "$REPORT_FILE"
-            echo "has_github_issues=yes" >> $GITHUB_OUTPUT
+            {
+              echo "## ⚠️ .github Directory Issues Found"
+              echo ""
+              echo "The following issues were detected in your \`.github/\` directory:"
+              echo ""
+              echo '```'
+              cat /tmp/signlo_diagnostics/github_dir_issues.txt
+              echo '```'
+              echo ""
+              echo "**Note:** These files cannot be auto-fixed by this workflow for security reasons."
+              echo "Please apply fixes manually."
+              echo ""
+            } >> "$REPORT_FILE"
+            echo "has_github_issues=yes" >> "$GITHUB_OUTPUT"
           else
-            echo "has_github_issues=no" >> $GITHUB_OUTPUT
+            echo "has_github_issues=no" >> "$GITHUB_OUTPUT"
           fi
 
-          echo "## ✅ Auto-Fixed Files" >> "$REPORT_FILE"
-          echo "" >> "$REPORT_FILE"
-          echo "All non-.github files have been automatically formatted and fixed." >> "$REPORT_FILE"
-          echo "Review the commit from \`autofix-ci[bot]\` to see the changes." >> "$REPORT_FILE"
+          {
+            echo "## ✅ Auto-Fixed Files"
+            echo ""
+            echo "All non-.github files have been automatically formatted and fixed."
+            echo "Review the commit from \`autofix-ci[bot]\` to see the changes."
+          } >> "$REPORT_FILE"
 
           echo "Report generated at: $REPORT_FILE" | tee -a /tmp/signlo_diagnostics/session.log
         continue-on-error: true
@@ -456,12 +462,12 @@ jobs:
       - name: Log diagnostics for push events
         if: github.event_name == 'push'
         run: |
-          echo "=== Signlo Autofix Diagnostic Summary ===" | tee -a $GITHUB_STEP_SUMMARY
+          echo "=== Signlo Autofix Diagnostic Summary ===" | tee -a "$GITHUB_STEP_SUMMARY"
           if [ -s /tmp/signlo_diagnostics/github_dir_issues.txt ]; then
-            echo "⚠️ Issues found in .github directory:" | tee -a $GITHUB_STEP_SUMMARY
-            cat /tmp/signlo_diagnostics/github_dir_issues.txt | tee -a $GITHUB_STEP_SUMMARY
+            echo "⚠️ Issues found in .github directory:" | tee -a "$GITHUB_STEP_SUMMARY"
+            tee -a "$GITHUB_STEP_SUMMARY" < /tmp/signlo_diagnostics/github_dir_issues.txt
           else
-            echo "✅ No issues detected in .github directory" | tee -a $GITHUB_STEP_SUMMARY
+            echo "✅ No issues detected in .github directory" | tee -a "$GITHUB_STEP_SUMMARY"
           fi
         continue-on-error: true
 
@@ -472,10 +478,10 @@ jobs:
         id: check_changes
         run: |
           if [ -n "$(git status --porcelain)" ]; then
-            echo "has_changes=yes" >> $GITHUB_OUTPUT
+            echo "has_changes=yes" >> "$GITHUB_OUTPUT"
             echo "Formatting changes detected - will commit" | tee -a /tmp/signlo_diagnostics/session.log
           else
-            echo "has_changes=no" >> $GITHUB_OUTPUT
+            echo "has_changes=no" >> "$GITHUB_OUTPUT"
             echo "No formatting changes to commit" | tee -a /tmp/signlo_diagnostics/session.log
           fi
 
@@ -502,12 +508,14 @@ jobs:
       - name: Report dry-run results
         if: steps.check_changes.outputs.has_changes == 'yes' && inputs.dry_run == true
         run: |
-          echo "## 🔍 Dry Run Mode - Changes Preview" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "The following files would be modified:" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
-          git diff --stat >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Note:** No changes were committed because dry_run mode is enabled." >> $GITHUB_STEP_SUMMARY
+          {
+            echo "## 🔍 Dry Run Mode - Changes Preview"
+            echo ""
+            echo "The following files would be modified:"
+            echo ""
+            echo '```'
+            git diff --stat
+            echo '```'
+            echo ""
+            echo "**Note:** No changes were committed because dry_run mode is enabled."
+          } >> "$GITHUB_STEP_SUMMARY"
