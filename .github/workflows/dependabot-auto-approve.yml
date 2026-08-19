@@ -1,0 +1,55 @@
+name: Dependabot Auto-Approve
+
+# pull_request_target (not pull_request): GitHub gives Dependabot-triggered
+# `pull_request` workflows a READ-ONLY token, so approve/auto-merge 403'd. With
+# pull_request_target the job runs in the base-repo context with the permissions
+# below, even for Dependabot PRs. Safe here: it never checks out or runs PR code,
+# it only calls the GitHub API. The org ruleset requires 0 reviews, so no explicit
+# approval is needed — just enable auto-merge; CI gates the actual merge.
+on:
+  pull_request_target:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  auto-approve:
+    name: Auto-approve Dependabot PRs
+    # Self-hosted (2026-08-05): this job does seconds of work but GitHub bills every job
+    # rounded UP to a full minute, and self-hosted minutes are not billed at all. Measured
+    # over ~36h in this repo: Dependabot Auto-Approve 12 jobs = 12 billed min, Docs Link
+    # Check 12 jobs = 12 billed min — pure rounding tax. Safe to move because neither is a
+    # REQUIRED check (this one is advisory/non-blocking), so a busy or offline runner delays
+    # it rather than wedging any PR. Required checks deliberately stay GitHub-hosted:
+    # one runner would be a single point of failure for a gate that can block every merge.
+    runs-on: [self-hosted, Linux, ARM64, minuit-micro]
+    timeout-minutes: 5
+    if: github.actor == 'dependabot[bot]'
+
+    steps:
+      - name: Enable auto-merge
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            await github.rest.pulls.updateBranch({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.payload.pull_request.number,
+            }).catch(() => {}); // ignore if already up to date
+            await github.graphql(`
+              mutation EnableAutoMerge($pullRequestId: ID!) {
+                enablePullRequestAutoMerge(input: {
+                  pullRequestId: $pullRequestId,
+                  mergeMethod: SQUASH
+                }) { pullRequest { autoMergeRequest { mergeMethod } } }
+              }
+            `, { pullRequestId: context.payload.pull_request.node_id }).catch((e) => {
+              core.warning('enablePullRequestAutoMerge: ' + e.message);
+            });
