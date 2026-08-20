@@ -19,7 +19,11 @@ including the action, guaranteed in accessible language.
 
 Published by [International Deaf Emergency](https://ideafe.org), a Deaf-led
 US 501(c)(3) nonprofit. Canonical page: [ideafe.org/standard](https://ideafe.org/standard).
-Reference implementation: [Deaflare](https://deaflare.com).
+Reference implementation: [Deaflare](https://deaflare.com). As of 2026-08-20,
+Deaflare renders live federal alerts: it consumes the FEMA IPAWS-OPEN
+All-Hazards feed (production and the TDL staging lab) alongside the NWS
+public API, mapping real CAP v1.2 alerts through this vocabulary's hazard
+families. FEMA lab traffic is rendered under the standard's TEST treatment.
 
 ## Why the rhythms cannot be modified
 
