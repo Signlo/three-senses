@@ -46,7 +46,43 @@ concurrency:
 
 jobs:
   autofix:
-    runs-on: ubuntu-24.04-arm
+    # CONFIGURABLE RUNNER, SECURE DEFAULT (2026-08-19, Actions-minutes reduction).
+    #
+    # This was an unconditional `ubuntu-24.04-arm` while its four siblings
+    # (autofix-on-failure, issue-auto-triage, agentic-pr-rescue, conflict-labeler,
+    # dependabot-auto-approve) all run free on minuit-micro — and it fires on
+    # `pull_request` in EVERY repo, so it was the single largest billed line in the
+    # automation family.
+    #
+    # It cannot simply follow the siblings, because this file is synced to every repo
+    # in the org by scripts/sync_autofix.py — including Signlo/three-senses, which is
+    # PUBLIC. On a public repo a `pull_request` from a fork supplies both this file and
+    # the code the steps run, and the steps below execute `pre-commit run --all-files`
+    # whose hooks come from the PR's own .pre-commit-config.yaml. That is arbitrary
+    # code execution; on minuit (the fleet's only >4GB box, also hosting the Supabase
+    # dev/CI stack) it would be RCE on our own hardware.
+    #
+    # So the runner is a variable, and THE ABSENCE OF CONFIGURATION IS THE SAFE STATE:
+    # unset `vars.AUTOFIX_RUNNER` interpolates as the empty string, which is not
+    # 'self-hosted', so the `&&` yields false and the `||` falls through to the hosted
+    # image. A brand-new repo — public or private — costs money and cannot leak. Only
+    # an exact, explicit opt-in moves the job onto our metal.
+    #
+    # Note this is the INVERSE of the sibling idiom
+    # (`inputs.use_hosted == true && 'ubuntu-24.04-arm' || fromJSON(self-hosted)`),
+    # whose unconfigured default is self-hosted. That is fine in a workflow that is
+    # never distributed to a public repo, and wrong here. `vars.` rather than `inputs.`
+    # because this workflow's hot path is `pull_request`/`push`, which have no inputs
+    # at all.
+    #
+    # Deliberately NOT `github.repository == 'Signlo/three-senses'`: a hardcoded repo
+    # name stops protecting anything the day a second public repo appears, and fails
+    # toward exposure. The recommended way to set the variable is an ORG-level variable
+    # with visibility "Private repositories", which makes GitHub itself enforce the
+    # invariant — a public repo cannot read it, and a private repo that is later
+    # flipped public LOSES access and falls back to hosted automatically.
+    # scripts/check_public_runner_exposure.py enforces this shape in CI.
+    runs-on: ${{ vars.AUTOFIX_RUNNER == 'self-hosted' && fromJSON('["self-hosted","minuit-micro"]') || 'ubuntu-24.04-arm' }}
     timeout-minutes: 15
 
     steps:
@@ -72,7 +108,12 @@ jobs:
         run: |
           mkdir -p /tmp/signlo_diagnostics
           echo "0" > /tmp/signlo_diagnostics/tool_count.txt
-          echo "" > /tmp/signlo_diagnostics/github_dir_issues.txt
+          # `: >` truncates to ZERO bytes. This was `echo "" >`, which writes a 1-byte newline —
+          # and every consumer tests it with `[ -s … ]`, which is TRUE for 1 byte. So a perfectly
+          # clean repo reported ".github Directory Issues Found" on every PR and every push, and
+          # the "✅ No issues detected" branch was structurally UNREACHABLE. Mode C: the failure
+          # path firing on the good case (docs/operations/mode-cd-audit-2026-08-19.md).
+          : > /tmp/signlo_diagnostics/github_dir_issues.txt
           echo "Signlo Autofix Diagnostic System Initialized" > /tmp/signlo_diagnostics/session.log
 
       # ===================================================================
@@ -121,9 +162,23 @@ jobs:
       - name: Scan .github directory for Python issues (read-only)
         if: steps.detect_python.outputs.detected == 'yes' && steps.install_ruff.outputs.status == 'ok'
         run: |
-          echo "=== Python Issues in .github Directory ===" >> /tmp/signlo_diagnostics/github_dir_issues.txt
-          ruff check .github/ --output-format=full >> /tmp/signlo_diagnostics/github_dir_issues.txt 2>&1 || true
-          echo "" >> /tmp/signlo_diagnostics/github_dir_issues.txt
+          # Record a section ONLY when ruff actually reports something. The old form appended the
+          # header BEFORE running ruff and then appended ruff's own output unconditionally — and a
+          # clean `ruff check` prints "All checks passed!" — so the issues file was non-empty on a
+          # clean repo twice over. Gate on ruff's OWN verdict (exit 0 = clean, 1 = violations),
+          # and name the rc so a ruff CRASH (rc 2) is not filed as if it were a lint finding.
+          RUFF_OUT="$(mktemp)"
+          if ruff check .github/ --output-format=full > "$RUFF_OUT" 2>&1; then
+            echo "ruff: .github/ is clean" >> /tmp/signlo_diagnostics/session.log
+          else
+            RUFF_RC=$?
+            {
+              echo "=== Python Issues in .github Directory (ruff rc=$RUFF_RC) ==="
+              cat "$RUFF_OUT"
+              echo ""
+            } >> /tmp/signlo_diagnostics/github_dir_issues.txt
+          fi
+          rm -f "$RUFF_OUT"
         continue-on-error: true
 
       # ===================================================================
@@ -179,9 +234,20 @@ jobs:
       - name: Scan .github directory for Prettier issues (read-only)
         if: steps.detect_js_ts.outputs.detected == 'yes' && steps.install_prettier.outputs.status == 'ok'
         run: |
-          echo "=== Prettier Issues in .github Directory ===" >> /tmp/signlo_diagnostics/github_dir_issues.txt
-          prettier --check .github/ --log-level warn >> /tmp/signlo_diagnostics/github_dir_issues.txt 2>&1 || true
-          echo "" >> /tmp/signlo_diagnostics/github_dir_issues.txt
+          # Same fix as the ruff scan above: gate on prettier's own verdict (exit 0 = every matched
+          # file is already formatted) instead of appending a header before it even runs.
+          PRETTIER_OUT="$(mktemp)"
+          if prettier --check .github/ --log-level warn > "$PRETTIER_OUT" 2>&1; then
+            echo "prettier: .github/ is clean" >> /tmp/signlo_diagnostics/session.log
+          else
+            PRETTIER_RC=$?
+            {
+              echo "=== Prettier Issues in .github Directory (prettier rc=$PRETTIER_RC) ==="
+              cat "$PRETTIER_OUT"
+              echo ""
+            } >> /tmp/signlo_diagnostics/github_dir_issues.txt
+          fi
+          rm -f "$PRETTIER_OUT"
         continue-on-error: true
 
       # ===================================================================
