@@ -2,6 +2,11 @@
 
 [![npm](https://img.shields.io/npm/v/%40ideafe%2Fthree-senses)](https://www.npmjs.com/package/@ideafe/three-senses) [![CI](https://github.com/Signlo/three-senses/actions/workflows/ci.yml/badge.svg)](https://github.com/Signlo/three-senses/actions/workflows/ci.yml) [![DOI](https://zenodo.org/badge/1336687968.svg)](https://zenodo.org/badge/latestdoi/1336687968)
 
+> **Status: Draft 0.9.1.** This is a public draft, not a ratified standard. The normative
+> vocabulary (`vocabulary.json`) and the conformance vectors (`conformance/vectors.json`) may
+> change before 1.0 — implementations should pin an exact version. The DOI above cites this
+> draft, not a final specification.
+
 **See it. Feel it. Hear it. One shared rhythm for all.** Open rules that
 make every emergency warning
 detectable by sight, touch, or hearing alone, with the full warning,
