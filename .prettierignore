@@ -62,6 +62,22 @@ DIRECTORY.md
 # the same two md5s five times in under 12 h. Fixed in claude-config (56d996e1, with a
 # prettier-semantics test); mirrored here so the next autofix template sync keeps the fence.
 claude-md/
+# claude-config's memory/*.md are DATA, not prose: they carry Google Drive file ids, AWS secret
+# names, vibration-pattern arrays and other literals whose exact bytes are the whole value.
+# Prettier's emphasis normalisation cannot tell an identifier from markup, so it rewrites them
+# silently — 2026-08-17 (bot 5bd9f070) turned a Drive folder id's `__` into `**` (unresolvable:
+# a Drive id is [A-Za-z0-9_-] only) and `MAESTRO_QA_*` into `MAESTRO*QA*\*`, the very AWS secret
+# name an operator would have provisioned from that note.
+#
+# THIS FENCE HAS ALREADY BEEN LOST ONCE, WHICH IS WHY IT LIVES HERE. It was added to
+# claude-config's own .prettierignore on 2026-08-17 and worked — until 2026-08-20 06:38Z, when
+# `chore(ci): update .prettierignore from signlo-platform-ops` (claude-config d7384d60) deployed
+# THIS file over it and deleted all 17 lines. Three minutes later, at 06:41Z, `style: apply
+# automated formatting fixes` (bb911d16) rewrote 12 memory files and re-escaped bold markers to
+# literal \*\*. scripts/sync_autofix.py maps .github/.prettierignore -> each repo's root
+# .prettierignore, so a repo-local fence on a SYNCED file is not a fence at all: it survives
+# exactly until the next sync. Anything that must be ignored has to be ignored HERE.
+memory/
 
 # Coverage and test artifacts
 coverage/
