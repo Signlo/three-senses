@@ -72,20 +72,34 @@ Two `<parameter>` blocks per `<info>`, namespaced so they can never collide:
 ## 4. WEA texts
 
 The 90-character short and 360-character long WEA texts ride the IPAWS parameter
-convention, English and Spanish:
+convention:
 
 ```xml
 <parameter><valueName>CMAMtext</valueName><value>...90 characters...</value></parameter>
 <parameter><valueName>CMAMlongtext</valueName><value>...360 characters...</value></parameter>
-<parameter><valueName>CMAMtext-Spanish</valueName><value>...</value></parameter>
-<parameter><valueName>CMAMlongtext-Spanish</valueName><value>...</value></parameter>
 ```
 
-The Composer's precheck enforces the lengths and a conservative WEA-safe character set,
-and IPAWS-profile essentials besides: `<code>IPAWSv1.0</code>`, a required `<expires>`,
-timestamps with numeric timezone offsets, closed polygons under 100 nodes, six-digit SAME
-geocodes, and references on every Update and Cancel. Where FEMA's IPAWS-OPEN Web-Service
-Interface Design Guidance states a stricter rule, the Guidance wins; this annex tracks it.
+SPANISH is not a different valueName: per IPAWS/NWS practice, Spanish WEA is a SECOND
+`<info>` block, identical to the first except `<language>es-US</language>` and the
+Spanish strings under the same plain `CMAMtext`/`CMAMlongtext` valueNames. The IPAWS
+profile requires `<category>` and `<eventCode>` to be identical across the info blocks,
+and the Composer renders both blocks from one template so they always are. Messages bound
+for EAS or HazCollect also carry the profile's required `EAS-ORG` parameter (the
+originator's SAME organization code), which the Composer takes as `easOrg`.
+
+The Composer's precheck enforces, from the CAP 1.2 base spec: closed value lists on
+status/msgType/urgency/severity/certainty/category (runtime-validated — JSON input has no
+type system), identifier and sender character restrictions, dateTime with a numeric
+timezone offset (never "Z", and UTC written `-00:00`), and references as
+sender,identifier,sent triples on every Update, Cancel, Ack, and Error. From the IPAWS
+profile: `<code>IPAWSv1.0</code>`, a required `<expires>`, and a required three-letter
+SAME `<eventCode>`. From IPAWS-OPEN operational limits and the FEMA agreement's software
+requirements (not the OASIS profile itself): polygons under 100 nodes, six-digit SAME
+geocodes, and the WEA length/character rules. The profile makes SAME geocodes a SHOULD
+rather than a MUST; the Composer accepts any geometry but originators are advised to
+include SAME geocodes, since some disseminators ignore purely geospatial areas. Where
+FEMA's IPAWS-OPEN Web-Service Interface Design Guidance states a stricter rule, the
+Guidance wins; this annex tracks it.
 
 ## 5. What this annex is not
 

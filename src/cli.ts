@@ -92,7 +92,13 @@ switch (command) {
     const raw = arg === "-" || arg === undefined
       ? readFileSync(0, "utf8")
       : readFileSync(arg, "utf8");
-    const input = JSON.parse(raw) as ComposeInput;
+    let input: ComposeInput;
+    try {
+      input = JSON.parse(raw) as ComposeInput;
+    } catch (e) {
+      console.error(`invalid JSON input: ${e instanceof Error ? e.message : String(e)}`);
+      process.exit(1);
+    }
     const issues = precheck(input);
     if (issues.length > 0) {
       for (const i of issues) console.error(`PRECHECK ${i.field}: ${i.problem}`);

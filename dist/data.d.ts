@@ -371,6 +371,7 @@ export declare const WEA_ASL_DATA: {
     };
     families: {
         note: string;
+        capCategoryNote: string;
     };
     templates: ({
         id: string;
@@ -378,6 +379,7 @@ export declare const WEA_ASL_DATA: {
         sameCodes: string[];
         variant: string;
         family: string;
+        capCategory: string;
         englishText: string;
         asl: null;
         aslNote: string;
@@ -389,6 +391,7 @@ export declare const WEA_ASL_DATA: {
         name: string;
         sameCodes: string[];
         family: string;
+        capCategory: string;
         englishText: string;
         asl: {
             youtubeId: string;
@@ -405,6 +408,7 @@ export declare const WEA_ASL_DATA: {
         sameCodes: never[];
         sameNote: string;
         family: string;
+        capCategory: string;
         englishText: string;
         asl: {
             youtubeId: string;
@@ -419,6 +423,7 @@ export declare const WEA_ASL_DATA: {
         name: string;
         sameCodes: string[];
         family: null;
+        capCategory: string;
         familyNote: string;
         englishText: null;
         textNote: string;

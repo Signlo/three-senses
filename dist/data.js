@@ -602,7 +602,8 @@ export const WEA_ASL_DATA = {
         "deferredNote": "Message types the FCC expressly deferred with no template and no ASL (DA 25-12 para 6 n.32; generic evacuation and shelter-in-place template TEXTS were declined as too vague in para 11, yet their ASL videos exist)."
     },
     "families": {
-        "note": "Three Senses hazard-family categorization per THE-STANDARD.md section 4. null = an action or infrastructure message whose family follows the causing hazard chosen by the originator; renderers treat null as OTHER."
+        "note": "Three Senses hazard-family categorization per THE-STANDARD.md section 4. null = an action or infrastructure message whose family follows the causing hazard chosen by the originator; renderers treat null as OTHER.",
+        "capCategoryNote": "capCategory is the conventional CAP category for the event (Met, Geo, Health, ...), used as the compose default when the originator sets none."
     },
     "templates": [
         {
@@ -613,6 +614,7 @@ export const WEA_ASL_DATA = {
             ],
             "variant": "escalation of Tornado Warning (damage-threat catastrophic)",
             "family": "STORM",
+            "capCategory": "Met",
             "englishText": "[SENDING AGENCY]: A TORNADO EMERGENCY is in effect for [LOCATION] until [TIME]. Tornado spotted in this area. This is a life-threatening situation. Take shelter now in a basement or an interior room on the lowest floor of a sturdy building. If you are outdoors, in a mobile home, or in a vehicle, move to the closest sturdy shelter and protect yourself from flying objects. Check media. [URL]",
             "asl": null,
             "aslNote": "No ASL video published for the Emergency escalation; the Tornado Warning video is the nearest published asset."
@@ -624,6 +626,7 @@ export const WEA_ASL_DATA = {
                 "TOR"
             ],
             "family": "STORM",
+            "capCategory": "Met",
             "englishText": "[SENDING AGENCY]: A TORNADO WARNING is in effect for [LOCATION] until [TIME]. Take shelter now in a basement or an interior room on the lowest floor of a sturdy building. If you are outdoors, in a mobile home, or in a vehicle, move to the closest sturdy shelter and protect yourself from flying objects. Check media. [URL]",
             "asl": {
                 "youtubeId": "HHs1gMK5r5w",
@@ -638,6 +641,7 @@ export const WEA_ASL_DATA = {
             ],
             "variant": "escalation of Flash Flood Warning",
             "family": "WATER",
+            "capCategory": "Met",
             "englishText": "[SENDING AGENCY]: A FLASH FLOOD EMERGENCY is in effect for [LOCATION] until [TIME]. This is an extremely dangerous and life-threatening situation. Do not attempt to travel unless you are fleeing an area that may flood or are under an evacuation order. [URL]",
             "asl": null,
             "aslNote": "No ASL video published for the Emergency escalation; the Flash Flood Warning video is the nearest published asset."
@@ -649,6 +653,7 @@ export const WEA_ASL_DATA = {
                 "FFW"
             ],
             "family": "WATER",
+            "capCategory": "Met",
             "englishText": "[SENDING AGENCY]: A FLASH FLOOD WARNING is in effect for [LOCATION] until [TIME]. This is a dangerous and life-threatening situation. Do not attempt to travel unless you are fleeing an area that may flood or are under an evacuation order. [URL]",
             "asl": {
                 "youtubeId": "5AmPbScn01Y",
@@ -662,6 +667,7 @@ export const WEA_ASL_DATA = {
                 "SVR"
             ],
             "family": "STORM",
+            "capCategory": "Met",
             "englishText": "[SENDING AGENCY]: A SEVERE THUNDERSTORM WARNING is in effect for [LOCATION] until [TIME] for DESTRUCTIVE 80 mile per hour winds. Take shelter inside a sturdy building, away from windows. Flying objects may be deadly to those outside a sturdy shelter. [URL]",
             "asl": {
                 "youtubeId": "f8jc1sLUamY",
@@ -675,6 +681,7 @@ export const WEA_ASL_DATA = {
                 "SQW"
             ],
             "family": "STORM",
+            "capCategory": "Met",
             "englishText": "[SENDING AGENCY]: A SNOW SQUALL WARNING is in effect for [LOCATION] until [TIME]. Slow down or delay travel! Be ready for a sudden drop to near zero visibility and icy roads in heavy snow. [URL]",
             "asl": {
                 "youtubeId": "7Mv48bdH7l4",
@@ -688,6 +695,7 @@ export const WEA_ASL_DATA = {
                 "DSW"
             ],
             "family": "STORM",
+            "capCategory": "Met",
             "englishText": "[SENDING AGENCY]: A DUST STORM WARNING is in effect for [LOCATION] until [TIME]. Be ready for sudden drop to zero visibility. Pull Aside, Stay Alive! When visibility drops, pull far off the road and put your vehicle in park. Turn the lights off and keep your foot off the brake. Infants, the elderly, and those with trouble breathing urged to take precautions. [URL]",
             "asl": {
                 "youtubeId": "B1FIvqWsaLs",
@@ -701,6 +709,7 @@ export const WEA_ASL_DATA = {
                 "HUW"
             ],
             "family": "STORM",
+            "capCategory": "Met",
             "englishText": "[SENDING AGENCY]: A HURRICANE WARNING is in effect for [LOCATION] for dangerous and damaging winds until [TIME]. This warning is issued up to 36 hours before hazardous conditions begin. Take steps to protect life and property. Have food, water, cash, fuel, and medications for 3+ days. FOLLOW INSTRUCTIONS FROM LOCAL OFFICIALS. [URL]",
             "asl": {
                 "youtubeId": "-Qy-L4FxaVo",
@@ -714,6 +723,7 @@ export const WEA_ASL_DATA = {
                 "SSW"
             ],
             "family": "WATER",
+            "capCategory": "Met",
             "englishText": "[SENDING AGENCY]: A STORM SURGE WARNING is in effect for [LOCATION] for the danger of life-threatening flooding until [TIME]. This warning is issued up to 36 hours before hazardous conditions begin. Take steps to protect life and property. Follow evacuation orders if given for this area to avoid drowning or being cut off from emergency services. [URL]",
             "asl": {
                 "youtubeId": "jFRgptfwZBY",
@@ -727,6 +737,7 @@ export const WEA_ASL_DATA = {
                 "EWW"
             ],
             "family": "STORM",
+            "capCategory": "Met",
             "englishText": "[SENDING AGENCY]: An EXTREME WIND WARNING is in effect for [LOCATION] for the immediate danger of life-threatening winds until [TIME]. Take cover NOW in an interior room of a sturdy building, away from windows. Protect your head from flying objects. Do NOT go outside if the wind calms! Winds will quickly become dangerous again. [URL]",
             "asl": {
                 "youtubeId": "Lo2s5z81Sss",
@@ -743,6 +754,7 @@ export const WEA_ASL_DATA = {
                 "DMO"
             ],
             "family": "TEST",
+            "capCategory": "Safety",
             "englishText": "THIS IS A TEST of the National Wireless Emergency Alert System sent by [SENDING AGENCY]. The purpose is to maintain and improve alert and warning capabilities at the federal, state, local, Tribal and territorial levels and to evaluate the nation's public alert and warning capabilities. No action is required by the public. [URL]",
             "asl": {
                 "youtubeId": "nUBXiQsLVKM",
@@ -756,6 +768,7 @@ export const WEA_ASL_DATA = {
                 "TSW"
             ],
             "family": "WATER",
+            "capCategory": "Geo",
             "englishText": "[SENDING AGENCY]: A TSUNAMI WARNING is in effect for [LOCATION] until [TIME]. A series of powerful waves and strong currents may affect coasts near you. You are in danger. Get away from coastal waters. Move to high ground or inland now. Keep away from the coast until local officials say it is safe to return. [URL]",
             "asl": {
                 "youtubeId": "SgZlGJNIqG8",
@@ -769,6 +782,7 @@ export const WEA_ASL_DATA = {
                 "EQW"
             ],
             "family": "GROUND",
+            "capCategory": "Geo",
             "englishText": "EARTHQUAKE DETECTED! Drop, Cover, Hold On. Protect Yourself. [SENDING AGENCY] [URL]",
             "asl": {
                 "youtubeId": "WJ3CjR_f_y8",
@@ -781,6 +795,7 @@ export const WEA_ASL_DATA = {
             "sameCodes": [],
             "sameNote": "No standard SAME/EAS event code; match by event name.",
             "family": "OTHER",
+            "capCategory": "Health",
             "englishText": "[SENDING AGENCY]: A BOIL WATER ALERT has been issued for [LOCATION] and is in effect until [TIME]. Water in your community can make you sick. Use bottled water if available. Do not drink, cook with, brush your teeth with, or clean your home with tap water or filtered water until you boil it. Bring water to a full rolling boil for THREE MINUTES. Let water cool before use. Do not use ice made with water that has not been boiled. If you use formula to feed your child, use ready-to-use formula. Make sure pets do not drink water that has not been boiled. [URL]",
             "asl": {
                 "youtubeId": "hdkoGEZ1QiY",
@@ -794,6 +809,7 @@ export const WEA_ASL_DATA = {
                 "TOE"
             ],
             "family": "OTHER",
+            "capCategory": "Infra",
             "englishText": "[SENDING AGENCY]: A 9-1-1 OUTAGE ALERT is in effect for [LOCATION]. Please contact police, fire, medical, or other emergency services directly at their local phone numbers in case of emergency. If you dial 9-1-1, you may not get help. [URL]",
             "asl": {
                 "youtubeId": "4Tx5y8xXkbM",
@@ -807,6 +823,7 @@ export const WEA_ASL_DATA = {
                 "AVW"
             ],
             "family": "GROUND",
+            "capCategory": "Geo",
             "englishText": "[SENDING AGENCY]: An AVALANCHE WARNING is in effect in [LOCATION] until [TIME]. Unstable, fast-moving snow can happen quickly, causing injury or death and can block roads and damage property in affected areas. LEAVE areas near [LOCATION]. DO NOT return to area after evacuation until directed by local officials. Travel in the area is not recommended. Avalanches may run long distances. [URL]",
             "asl": {
                 "youtubeId": "3VLkxlkF9kw",
@@ -820,6 +837,7 @@ export const WEA_ASL_DATA = {
                 "FRW"
             ],
             "family": "FIRE",
+            "capCategory": "Fire",
             "englishText": "[SENDING AGENCY]: A FIRE WARNING in [LOCATION] is in effect until [TIME]. Evacuate your family and pets now, do not delay. Visibility in area will be reduced and roads can become blocked. If you do not leave now, you could be trapped, injured, or killed. LEAVE areas near [LOCATION]. Expect reduced visibility, heavy smoke, and difficulty breathing. Be careful when driving. Watch for public safety personnel operating in the area and follow their instructions. [URL]",
             "asl": {
                 "youtubeId": "XAOrS9vy2jw",
@@ -833,6 +851,7 @@ export const WEA_ASL_DATA = {
                 "HMW"
             ],
             "family": "THREAT",
+            "capCategory": "CBRNE",
             "englishText": "[SENDING AGENCY]: HAZARDOUS MATERIALS were released at [TIME] in [LOCATION]. Exposure may cause difficulty breathing, loss of coordination, burning sensation in eyes, nose, throat, or lungs, nausea, and possibly death. LEAVE areas near [LOCATION]. IF DRIVING to evacuate area, keep car windows and vents closed. DO NOT return to area after evacuation unless directed by local officials. [URL]",
             "asl": {
                 "youtubeId": "k7DEnCgCfJc",
@@ -846,6 +865,7 @@ export const WEA_ASL_DATA = {
                 "EVI"
             ],
             "family": null,
+            "capCategory": "Safety",
             "familyNote": "An action message: the family follows the causing hazard chosen by the originator.",
             "englishText": null,
             "textNote": "No adopted template text (declined as too vague, DA 25-12 para 11); the ASL video exists.",
@@ -861,6 +881,7 @@ export const WEA_ASL_DATA = {
                 "SPW"
             ],
             "family": null,
+            "capCategory": "Safety",
             "familyNote": "An action message: the family follows the causing hazard chosen by the originator.",
             "englishText": null,
             "textNote": "No adopted template text (declined as too vague, DA 25-12 para 11); the ASL video exists.",
