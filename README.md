@@ -2,7 +2,7 @@
 
 [![npm](https://img.shields.io/npm/v/%40ideafe%2Fthree-senses)](https://www.npmjs.com/package/@ideafe/three-senses) [![CI](https://github.com/Signlo/three-senses/actions/workflows/ci.yml/badge.svg)](https://github.com/Signlo/three-senses/actions/workflows/ci.yml) [![DOI](https://zenodo.org/badge/1336687968.svg)](https://zenodo.org/badge/latestdoi/1336687968)
 
-> **Status: Draft 0.9.1.** This is a public draft, not a ratified standard. The normative
+> **Status: Draft 0.10.0.** This is a public draft, not a ratified standard. The normative
 > vocabulary (`vocabulary.json`) and the conformance vectors (`conformance/vectors.json`) may
 > change before 1.0 — implementations should pin an exact version. The DOI above cites this
 > draft, not a final specification.
@@ -12,13 +12,25 @@ make every emergency warning
 detectable by sight, touch, or hearing alone, with the full warning,
 including the action, guaranteed in accessible language.
 
-- `THE-STANDARD.md`: the specification (draft 0.9.1)
+- `THE-STANDARD.md`: the specification (draft 0.10.0)
 - `vocabulary.json`: the normative, machine-readable rhythm vocabulary
 - `conformance/vectors.json`: machine-checkable conformance vectors (R1 to R8)
 - `conformance/validate.mjs`: checks a rendering log against the vectors
 - `SMS-PROFILE.md`: informative annex — a five-character code (`3S:W4`)
   that lets SMS-based alerting (no cell broadcast, humanitarian settings)
   drive the vocabulary with one regex, no AI; `parseSmsCode()` in the SDK
+- `CAP-PROFILE.md`: informative annex — accessibility at the SOURCE: how an
+  alert originator carries an official FCC ASL template video as a CAP
+  `<resource>` and Three Senses metadata as namespaced CAP `<parameter>`
+  blocks; implemented by `@ideafe/three-senses/compose` (the Three Senses
+  Alert Composer core, developed under a Memorandum of Agreement with
+  FEMA's IPAWS Program Management Office for the IPAWS-OPEN test
+  environment) and the `three-senses compose` / `templates` CLI commands
+- `wea-asl-templates.json`: the FCC WEA template / ASL video map — all 18
+  adopted template texts (DA 25-12 Appendix C) paired with the FCC's
+  official ASL videos, the mismatches between the two sets recorded
+  honestly (two adopted texts have no ASL video; two videos have no
+  adopted text)
 - `src/`, `dist/`: the SDK (`@ideafe/three-senses`), TypeScript, zero
   dependencies, conformance-proven against the vectors in CI
 

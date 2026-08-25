@@ -1,6 +1,6 @@
 # The Three Senses Alerting Standard
 
-Draft 0.9.1 (August 2026). Published by International Deaf Emergency (IDE),
+Draft 0.10.0 (August 2026). Published by International Deaf Emergency (IDE),
 a Deaf-led United States 501(c)(3) nonprofit. Contact: Emmanuel Jacq,
 President, emmanuel.jacq@ideafe.org. Canonical page: https://ideafe.org/standard
 (also reachable at https://alertsforall.org).
@@ -253,7 +253,7 @@ nothing in the licensing blocks a standards body from doing its work.
 
 ## 8. Status and lineage
 
-Draft 0.9.1 is implemented in Deaflare (the reference implementation).
+Draft 0.10.0 is implemented in Deaflare (the reference implementation).
 0.9.0 is the alignment release, after a second external FCC-style audit:
 it removed a leftover sentence contradicting the attention/language split,
 replaced the machine-readable principles block (which still carried the

@@ -10,15 +10,21 @@ import { dirname, join } from "node:path";
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const vocabulary = JSON.parse(readFileSync(join(root, "vocabulary.json"), "utf8"));
 const vectors = JSON.parse(readFileSync(join(root, "conformance", "vectors.json"), "utf8"));
+const weaAsl = JSON.parse(readFileSync(join(root, "wea-asl-templates.json"), "utf8"));
 
 const banner = `// GENERATED FILE — do not edit. Run \`npm run embed\` to regenerate from
-// vocabulary.json and conformance/vectors.json, the normative artifacts.
+// vocabulary.json, conformance/vectors.json, and wea-asl-templates.json, the\n// normative artifacts.
 `;
 
 writeFileSync(
   join(root, "src", "data.ts"),
   banner +
     `export const VOCABULARY_DATA = ${JSON.stringify(vocabulary, null, 2)} as const;\n\n` +
-    `export const VECTORS_DATA = ${JSON.stringify(vectors, null, 2)} as const;\n`,
+    `export const VECTORS_DATA = ${JSON.stringify(vectors, null, 2)} as const;\n\n` +
+    `export const WEA_ASL_DATA = ${JSON.stringify(weaAsl, null, 2)};\n`,
 );
-console.log("embedded vocabulary", vocabulary.version, "and vectors", vectors.standardVersion);
+console.log(
+  "embedded vocabulary", vocabulary.version,
+  "vectors", vectors.standardVersion,
+  "wea-asl map", weaAsl.version,
+);
