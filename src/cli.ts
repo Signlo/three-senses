@@ -6,7 +6,13 @@
  *   three-senses show FIRE            timeline, timer, and ASCII rhythm
  *   three-senses conformance          prove this SDK against the vectors
  *   three-senses log FIRE             a render log for conformance/validate.mjs
+ *   three-senses templates            the FCC WEA template / ASL video map
+ *   three-senses compose in.json      CAP 1.2 + IPAWS-profile XML from a
+ *                                     JSON input ("-" reads stdin); errors
+ *                                     list every precheck issue and exit 1
  */
+import { readFileSync } from "node:fs";
+import { composeCap, precheck, weaTemplates, type ComposeInput } from "./compose.js";
 import {
   type FamilyName,
   STANDARD_VERSION,
@@ -73,9 +79,33 @@ switch (command) {
     console.log(pass ? "CONFORMANT" : "NOT CONFORMANT");
     process.exit(pass ? 0 : 1);
   }
+  case "templates": {
+    console.log(`FCC WEA template / ASL video map (compiled 2026-08-25)`);
+    for (const t of weaTemplates()) {
+      const codes = t.sameCodes.length ? t.sameCodes.join("/") : "(no SAME code)";
+      const asl = t.asl ? t.asl.url : "NO ASL VIDEO PUBLISHED";
+      console.log(`${t.name.padEnd(28)} ${codes.padEnd(16)} ${String(t.family ?? "(originator's)").padEnd(14)} ${asl}`);
+    }
+    break;
+  }
+  case "compose": {
+    const raw = arg === "-" || arg === undefined
+      ? readFileSync(0, "utf8")
+      : readFileSync(arg, "utf8");
+    const input = JSON.parse(raw) as ComposeInput;
+    const issues = precheck(input);
+    if (issues.length > 0) {
+      for (const i of issues) console.error(`PRECHECK ${i.field}: ${i.problem}`);
+      process.exit(1);
+    }
+    process.stdout.write(composeCap(input));
+    break;
+  }
   // eslint-disable-next-line no-fallthrough
   default: {
-    console.log("usage: three-senses <list | show <FAMILY> | log <FAMILY> | conformance>");
+    console.log(
+      "usage: three-senses <list | show <FAMILY> | log <FAMILY> | conformance | templates | compose <in.json|->>",
+    );
     process.exit(command ? 2 : 0);
   }
 }

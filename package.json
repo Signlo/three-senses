@@ -1,6 +1,6 @@
 {
   "name": "@ideafe/three-senses",
-  "version": "0.9.1",
+  "version": "0.10.0",
   "description": "SDK for the Three Senses Alerting Standard: hazard-family alert rhythms rendered identically on touch, light, and tone. See it. Feel it. Hear it.",
   "license": "Apache-2.0",
   "type": "module",
@@ -16,7 +16,12 @@
       "default": "./dist/web.js"
     },
     "./vocabulary.json": "./vocabulary.json",
-    "./conformance/vectors.json": "./conformance/vectors.json"
+    "./conformance/vectors.json": "./conformance/vectors.json",
+    "./compose": {
+      "types": "./dist/compose.d.ts",
+      "default": "./dist/compose.js"
+    },
+    "./wea-asl-templates.json": "./wea-asl-templates.json"
   },
   "bin": {
     "three-senses": "dist/cli.js"
@@ -27,7 +32,9 @@
     "conformance",
     "THE-STANDARD.md",
     "LICENSE",
-    "LICENSE-SPEC.md"
+    "LICENSE-SPEC.md",
+    "wea-asl-templates.json",
+    "CAP-PROFILE.md"
   ],
   "scripts": {
     "embed": "node scripts/embed-data.mjs",
