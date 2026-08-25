@@ -9,12 +9,16 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { families, renderLog } from "../dist/index.js";
 
-const validator = new URL("../conformance/validate.mjs", import.meta.url).pathname;
+const validator = new URL("../conformance/validate.mjs", import.meta.url)
+  .pathname;
 const dir = mkdtempSync(join(tmpdir(), "three-senses-"));
 
 function run(file) {
   try {
-    return { code: 0, out: execFileSync("node", [validator, file], { encoding: "utf8" }) };
+    return {
+      code: 0,
+      out: execFileSync("node", [validator, file], { encoding: "utf8" }),
+    };
   } catch (error) {
     return { code: error.status, out: `${error.stdout}${error.stderr}` };
   }

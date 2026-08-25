@@ -40,7 +40,10 @@ test("STORM edges fire on the published offsets across the loop boundary", (t) =
 test("stop() ends the loop and turns the light off", (t) => {
   t.mock.timers.enable({ apis: ["setTimeout", "Date"], now: 0 });
   const edges = [];
-  const alert = startAlert("FIRE", { vibrate: false, onFlash: (on) => edges.push(on) });
+  const alert = startAlert("FIRE", {
+    vibrate: false,
+    onFlash: (on) => edges.push(on),
+  });
   t.mock.timers.tick(700); // a few beeps in
   alert.stop();
   const after = edges.length;
@@ -52,7 +55,11 @@ test("stop() ends the loop and turns the light off", (t) => {
 test("loop: false plays exactly one cycle", (t) => {
   t.mock.timers.enable({ apis: ["setTimeout", "Date"], now: 0 });
   const edges = [];
-  const alert = startAlert("TEST", { loop: false, vibrate: false, onFlash: (on) => edges.push(on) });
+  const alert = startAlert("TEST", {
+    loop: false,
+    vibrate: false,
+    onFlash: (on) => edges.push(on),
+  });
   assert.equal(alert.level, 0.3); // R6 cap applied by default Extreme
   t.mock.timers.tick(cycleMs("TEST") * 3);
   assert.equal(edges.length, timeline("TEST").steps.length);
@@ -66,7 +73,10 @@ test("ALL_CLEAR plays the release exactly once and never loops (R3)", (t) => {
   const alert = startAlert("ALL_CLEAR", {
     vibrate: false,
     loop: true, // even asked to loop, a play-once family refuses
-    onFlash: (on, level) => { edges.push(on); levels.push(level); },
+    onFlash: (on, level) => {
+      edges.push(on);
+      levels.push(level);
+    },
   });
   t.mock.timers.tick(60_000);
   // One cycle only: two on-edges (the long press and the settling press).

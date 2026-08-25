@@ -12,7 +12,9 @@ import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 
 const here = dirname(fileURLToPath(import.meta.url));
-const { vectors } = JSON.parse(readFileSync(join(here, "vectors.json"), "utf8"));
+const { vectors } = JSON.parse(
+  readFileSync(join(here, "vectors.json"), "utf8"),
+);
 
 const logPath = process.argv[2];
 if (!logPath) {
@@ -39,7 +41,9 @@ for (const log of logs) {
     failures++;
   } else if (log.cycleMs !== undefined && log.cycleMs !== expected.totalMs) {
     console.error(`FAIL ${log.family} (R8 loop-seamlessness)`);
-    console.error(`  expected cycle: ${expected.totalMs} ms (trailing quiet included)`);
+    console.error(
+      `  expected cycle: ${expected.totalMs} ms (trailing quiet included)`,
+    );
     console.error(`  rendered cycle: ${log.cycleMs} ms`);
     failures++;
   } else {

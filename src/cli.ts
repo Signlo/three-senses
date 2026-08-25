@@ -12,7 +12,12 @@
  *                                     list every precheck issue and exit 1
  */
 import { readFileSync } from "node:fs";
-import { composeCap, precheck, weaTemplates, type ComposeInput } from "./compose.js";
+import {
+  composeCap,
+  precheck,
+  weaTemplates,
+  type ComposeInput,
+} from "./compose.js";
 import {
   type FamilyName,
   STANDARD_VERSION,
@@ -31,7 +36,8 @@ function ascii(name: FamilyName, msPerChar = 100): string {
   // On-intervals from the on/off pairs; a cell is lit when any interval
   // overlaps it, so a pulse shorter than one cell still shows.
   const intervals: Array<[number, number]> = [];
-  for (let i = 0; i < t.steps.length; i += 2) intervals.push([t.steps[i].at, t.steps[i + 1].at]);
+  for (let i = 0; i < t.steps.length; i += 2)
+    intervals.push([t.steps[i].at, t.steps[i + 1].at]);
   let out = "";
   for (let ms = 0; ms < t.totalMs; ms += msPerChar) {
     const lit = intervals.some(([on, off]) => on < ms + msPerChar && off > ms);
@@ -47,7 +53,9 @@ switch (command) {
     console.log(`Three Senses Alerting Standard ${STANDARD_VERSION}`);
     for (const name of families()) {
       const f = family(name);
-      console.log(`${name.padEnd(9)} ${String(cycleMs(name)).padStart(5)} ms  ${f.meaning}`);
+      console.log(
+        `${name.padEnd(9)} ${String(cycleMs(name)).padStart(5)} ms  ${f.meaning}`,
+      );
     }
     break;
   }
@@ -61,9 +69,12 @@ switch (command) {
     console.log(
       `cycle ${t.totalMs} ms (trailing quiet included, R8) · ` +
         `vibrate [${vibratePattern(name).join(", ")}]` +
-        (f.fixedLevel !== undefined ? ` · level capped at ${f.fixedLevel} (R6)` : ""),
+        (f.fixedLevel !== undefined
+          ? ` · level capped at ${f.fixedLevel} (R6)`
+          : ""),
     );
-    for (const s of t.steps) console.log(`  ${String(s.at).padStart(5)} ms ${s.event}`);
+    for (const s of t.steps)
+      console.log(`  ${String(s.at).padStart(5)} ms ${s.event}`);
     break;
   }
   case "log": {
@@ -74,7 +85,9 @@ switch (command) {
   case "conformance": {
     const { pass, results } = conformance();
     for (const r of results) {
-      console.log(`${r.pass ? "PASS" : "FAIL"} ${r.family} ${r.requirement}${r.detail ? ` — ${r.detail}` : ""}`);
+      console.log(
+        `${r.pass ? "PASS" : "FAIL"} ${r.family} ${r.requirement}${r.detail ? ` — ${r.detail}` : ""}`,
+      );
     }
     console.log(pass ? "CONFORMANT" : "NOT CONFORMANT");
     process.exit(pass ? 0 : 1);
@@ -82,26 +95,34 @@ switch (command) {
   case "templates": {
     console.log(`FCC WEA template / ASL video map (compiled 2026-08-25)`);
     for (const t of weaTemplates()) {
-      const codes = t.sameCodes.length ? t.sameCodes.join("/") : "(no SAME code)";
+      const codes = t.sameCodes.length
+        ? t.sameCodes.join("/")
+        : "(no SAME code)";
       const asl = t.asl ? t.asl.url : "NO ASL VIDEO PUBLISHED";
-      console.log(`${t.name.padEnd(28)} ${codes.padEnd(16)} ${String(t.family ?? "(originator's)").padEnd(14)} ${asl}`);
+      console.log(
+        `${t.name.padEnd(28)} ${codes.padEnd(16)} ${String(t.family ?? "(originator's)").padEnd(14)} ${asl}`,
+      );
     }
     break;
   }
   case "compose": {
-    const raw = arg === "-" || arg === undefined
-      ? readFileSync(0, "utf8")
-      : readFileSync(arg, "utf8");
+    const raw =
+      arg === "-" || arg === undefined
+        ? readFileSync(0, "utf8")
+        : readFileSync(arg, "utf8");
     let input: ComposeInput;
     try {
       input = JSON.parse(raw) as ComposeInput;
     } catch (e) {
-      console.error(`invalid JSON input: ${e instanceof Error ? e.message : String(e)}`);
+      console.error(
+        `invalid JSON input: ${e instanceof Error ? e.message : String(e)}`,
+      );
       process.exit(1);
     }
     const issues = precheck(input);
     if (issues.length > 0) {
-      for (const i of issues) console.error(`PRECHECK ${i.field}: ${i.problem}`);
+      for (const i of issues)
+        console.error(`PRECHECK ${i.field}: ${i.problem}`);
       process.exit(1);
     }
     process.stdout.write(composeCap(input));

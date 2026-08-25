@@ -187,15 +187,15 @@ public alerting, and this standard maps onto it rather than beside it:
 The hazard families identify a CATEGORY only; they never determine the
 protective action. The reference crosswalk:
 
-| Event class | Family |
-| --- | --- |
-| Earthquake, landslide, avalanche, volcano | GROUND |
-| Flood, tsunami, storm surge, dam failure | WATER |
-| Tornado, hurricane, cyclone, severe storm, winter storm, high wind | STORM |
-| Wildfire, structure fire, fire weather | FIRE |
+| Event class                                                                                                      | Family |
+| ---------------------------------------------------------------------------------------------------------------- | ------ |
+| Earthquake, landslide, avalanche, volcano                                                                        | GROUND |
+| Flood, tsunami, storm surge, dam failure                                                                         | WATER  |
+| Tornado, hurricane, cyclone, severe storm, winter storm, high wind                                               | STORM  |
+| Wildfire, structure fire, fire weather                                                                           | FIRE   |
 | Human threat, law enforcement, civil danger, missing person (AMBER), chemical, radiological, hazardous materials | THREAT |
-| Health, air quality, infectious disease, utility and infrastructure, and every event without a family | OTHER |
-| Drills, exercises, and system tests, whatever hazard words they carry | TEST |
+| Health, air quality, infectious disease, utility and infrastructure, and every event without a family            | OTHER  |
+| Drills, exercises, and system tests, whatever hazard words they carry                                            | TEST   |
 
 Events spanning families take the originator's primary categorization.
 Whether health emergencies warrant a family of their own is a question for

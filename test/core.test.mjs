@@ -24,7 +24,9 @@ import {
   LIGHT_BOUNDS,
 } from "../dist/index.js";
 
-const rootVocabulary = JSON.parse(readFileSync(new URL("../vocabulary.json", import.meta.url)));
+const rootVocabulary = JSON.parse(
+  readFileSync(new URL("../vocabulary.json", import.meta.url)),
+);
 const rootVectors = JSON.parse(
   readFileSync(new URL("../conformance/vectors.json", import.meta.url)),
 );
@@ -104,7 +106,10 @@ test("R5 photosensitivity: every family sits inside the published light bounds",
     const t = timeline(name);
     assert.ok(lightIsSafe(t), name);
     assert.ok(flashesPerSecond(t) <= LIGHT_BOUNDS.maxFlashesPerSecond, name);
-    assert.ok(transitionsPerSecond(t) <= LIGHT_BOUNDS.maxTransitionsPerSecond, name);
+    assert.ok(
+      transitionsPerSecond(t) <= LIGHT_BOUNDS.maxTransitionsPerSecond,
+      name,
+    );
   }
   // FIRE is the fastest thing in the vocabulary and still inside the bound.
   assert.equal(flashesPerSecond(timeline("FIRE")), 3);

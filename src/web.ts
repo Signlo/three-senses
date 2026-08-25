@@ -101,7 +101,10 @@ function scheduleTimeline(
  *   });
  *   button.onclick = () => alert.stop(); // I UNDERSTAND
  */
-export function startAlert(name: FamilyName, options: StartOptions = {}): AlertHandle {
+export function startAlert(
+  name: FamilyName,
+  options: StartOptions = {},
+): AlertHandle {
   // Light and sound render at the REACH level (full from DANGER COMING up);
   // the Vibration API is binary, so the touch grading lives on real haptic
   // hardware via the vocabulary's touchLevels.
@@ -116,7 +119,8 @@ export function startAlert(name: FamilyName, options: StartOptions = {}): AlertH
     typeof navigator.vibrate === "function";
 
   // TONE: one oscillator, gain gated on the envelope at the flat level.
-  let audio: { ctx: AudioContext; gain: GainNode; owned: boolean } | null = null;
+  let audio: { ctx: AudioContext; gain: GainNode; owned: boolean } | null =
+    null;
   if (options.tone && typeof AudioContext !== "undefined") {
     const ctx = options.audioContext ?? new AudioContext();
     const osc = ctx.createOscillator();

@@ -153,7 +153,10 @@ export function severityMarks(severity: SeverityName): number {
  * The TOUCH channel's flat level for this alert: the graded severity level,
  * capped by the family's fixedLevel (R6: TEST never exceeds 0.3).
  */
-export function channelLevel(name: FamilyName, severity: SeverityName | number): number {
+export function channelLevel(
+  name: FamilyName,
+  severity: SeverityName | number,
+): number {
   const f = family(name);
   const level = severityLevel(severity);
   return f.fixedLevel !== undefined ? Math.min(f.fixedLevel, level) : level;
@@ -163,7 +166,10 @@ export function channelLevel(name: FamilyName, severity: SeverityName | number):
  * The LIGHT and SOUND flat level for this alert: the reach ladder (full from
  * DANGER COMING upward), still capped by the family's fixedLevel (R6).
  */
-export function lightSoundLevel(name: FamilyName, severity: SeverityName | number): number {
+export function lightSoundLevel(
+  name: FamilyName,
+  severity: SeverityName | number,
+): number {
   const f = family(name);
   const level = reachLevel(severity);
   return f.fixedLevel !== undefined ? Math.min(f.fixedLevel, level) : level;
@@ -258,9 +264,16 @@ export function conformance(): { pass: boolean; results: ConformanceResult[] } {
       family: name,
       requirement: "R8 loop-seamlessness",
       pass: t.totalMs === v.totalMs,
-      detail: t.totalMs === v.totalMs ? undefined : `cycle ${t.totalMs} expected ${v.totalMs}`,
+      detail:
+        t.totalMs === v.totalMs
+          ? undefined
+          : `cycle ${t.totalMs} expected ${v.totalMs}`,
     });
-    results.push({ family: name, requirement: "R5 photosensitivity", pass: lightIsSafe(t) });
+    results.push({
+      family: name,
+      requirement: "R5 photosensitivity",
+      pass: lightIsSafe(t),
+    });
   }
   results.push({
     family: "ALL_CLEAR",
@@ -275,7 +288,9 @@ export function conformance(): { pass: boolean; results: ConformanceResult[] } {
   results.push({
     family: "TEST",
     requirement: "R6 test-gentleness",
-    pass: channelLevel("TEST", "Extreme") <= 0.3 && lightSoundLevel("TEST", "Extreme") <= 0.3,
+    pass:
+      channelLevel("TEST", "Extreme") <= 0.3 &&
+      lightSoundLevel("TEST", "Extreme") <= 0.3,
   });
   return { pass: results.every((r) => r.pass), results };
 }

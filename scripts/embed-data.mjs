@@ -8,9 +8,15 @@ import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
-const vocabulary = JSON.parse(readFileSync(join(root, "vocabulary.json"), "utf8"));
-const vectors = JSON.parse(readFileSync(join(root, "conformance", "vectors.json"), "utf8"));
-const weaAsl = JSON.parse(readFileSync(join(root, "wea-asl-templates.json"), "utf8"));
+const vocabulary = JSON.parse(
+  readFileSync(join(root, "vocabulary.json"), "utf8"),
+);
+const vectors = JSON.parse(
+  readFileSync(join(root, "conformance", "vectors.json"), "utf8"),
+);
+const weaAsl = JSON.parse(
+  readFileSync(join(root, "wea-asl-templates.json"), "utf8"),
+);
 
 const banner = `// GENERATED FILE — do not edit. Run \`npm run embed\` to regenerate from
 // vocabulary.json, conformance/vectors.json, and wea-asl-templates.json, the\n// normative artifacts.
@@ -24,7 +30,10 @@ writeFileSync(
     `export const WEA_ASL_DATA = ${JSON.stringify(weaAsl, null, 2)};\n`,
 );
 console.log(
-  "embedded vocabulary", vocabulary.version,
-  "vectors", vectors.standardVersion,
-  "wea-asl map", weaAsl.version,
+  "embedded vocabulary",
+  vocabulary.version,
+  "vectors",
+  vectors.standardVersion,
+  "wea-asl map",
+  weaAsl.version,
 );

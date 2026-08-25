@@ -41,7 +41,10 @@ const BASE = {
 // ---------- the data artifact ----------
 
 test("the embedded map matches the published wea-asl-templates.json byte-for-byte", () => {
-  assert.deepEqual(JSON.parse(JSON.stringify(weaTemplates())), rootMap.templates);
+  assert.deepEqual(
+    JSON.parse(JSON.stringify(weaTemplates())),
+    rootMap.templates,
+  );
 });
 
 test("the map holds all 18 adopted templates plus the two ASL-only action videos", () => {
@@ -50,24 +53,48 @@ test("the map holds all 18 adopted templates plus the two ASL-only action videos
   const withVideo = rootMap.templates.filter((t) => t.asl);
   assert.equal(withText.length, 18, "the adopted Appendix C set");
   assert.equal(withVideo.length, 18, "the published ASL video set");
-  const textNoVideo = rootMap.templates.filter((t) => t.englishText && !t.asl).map((t) => t.id);
-  const videoNoText = rootMap.templates.filter((t) => !t.englishText && t.asl).map((t) => t.id);
-  assert.deepEqual(textNoVideo.sort(), ["flash-flood-emergency", "tornado-emergency"]);
-  assert.deepEqual(videoNoText.sort(), ["evacuation-immediate", "shelter-in-place-warning"]);
+  const textNoVideo = rootMap.templates
+    .filter((t) => t.englishText && !t.asl)
+    .map((t) => t.id);
+  const videoNoText = rootMap.templates
+    .filter((t) => !t.englishText && t.asl)
+    .map((t) => t.id);
+  assert.deepEqual(textNoVideo.sort(), [
+    "flash-flood-emergency",
+    "tornado-emergency",
+  ]);
+  assert.deepEqual(videoNoText.sort(), [
+    "evacuation-immediate",
+    "shelter-in-place-warning",
+  ]);
 });
 
 test("every template carries a valid capCategory", () => {
   const allowed = new Set([
-    "Geo", "Met", "Safety", "Security", "Rescue", "Fire",
-    "Health", "Env", "Transport", "Infra", "CBRNE", "Other",
+    "Geo",
+    "Met",
+    "Safety",
+    "Security",
+    "Rescue",
+    "Fire",
+    "Health",
+    "Env",
+    "Transport",
+    "Infra",
+    "CBRNE",
+    "Other",
   ]);
-  for (const t of rootMap.templates) assert.ok(allowed.has(t.capCategory), t.id);
+  for (const t of rootMap.templates)
+    assert.ok(allowed.has(t.capCategory), t.id);
 });
 
 test("every published video URL is a well-formed YouTube watch URL", () => {
   for (const t of rootMap.templates) {
     if (!t.asl) continue;
-    assert.match(t.asl.url, /^https:\/\/www\.youtube\.com\/watch\?v=[A-Za-z0-9_-]{6,}$/);
+    assert.match(
+      t.asl.url,
+      /^https:\/\/www\.youtube\.com\/watch\?v=[A-Za-z0-9_-]{6,}$/,
+    );
     assert.ok(t.asl.url.endsWith(t.asl.youtubeId));
   }
 });
@@ -111,17 +138,42 @@ test("familyForEvent: word boundaries — no substring misclassification (audit 
 
 test("compose: a valid input yields IPAWS-profile CAP with template resource and parameters", () => {
   const xml = composeCap(BASE);
-  assert.ok(xml.includes('<alert xmlns="urn:oasis:names:tc:emergency:cap:1.2">'));
+  assert.ok(
+    xml.includes('<alert xmlns="urn:oasis:names:tc:emergency:cap:1.2">'),
+  );
   assert.ok(xml.includes("<code>IPAWSv1.0</code>"));
   assert.ok(xml.includes("<scope>Public</scope>"));
-  assert.ok(xml.includes("<eventCode><valueName>SAME</valueName><value>TOR</value></eventCode>"));
-  assert.ok(xml.includes("ideafe:threeSenses:family</valueName><value>STORM</value>"));
-  assert.ok(xml.includes(`ideafe:threeSenses:version</valueName><value>${rootMap.version}</value>`));
-  assert.ok(xml.includes("https://www.youtube.com/watch?v=HHs1gMK5r5w"), "the official TOR video");
-  assert.ok(xml.includes("not a translation of this specific message"), "honesty label");
+  assert.ok(
+    xml.includes(
+      "<eventCode><valueName>SAME</valueName><value>TOR</value></eventCode>",
+    ),
+  );
+  assert.ok(
+    xml.includes("ideafe:threeSenses:family</valueName><value>STORM</value>"),
+  );
+  assert.ok(
+    xml.includes(
+      `ideafe:threeSenses:version</valueName><value>${rootMap.version}</value>`,
+    ),
+  );
+  assert.ok(
+    xml.includes("https://www.youtube.com/watch?v=HHs1gMK5r5w"),
+    "the official TOR video",
+  );
+  assert.ok(
+    xml.includes("not a translation of this specific message"),
+    "honesty label",
+  );
   assert.ok(xml.includes("<valueName>CMAMtext</valueName>"));
-  assert.ok(xml.includes("<geocode><valueName>SAME</valueName><value>040109</value></geocode>"));
-  assert.ok(xml.includes("<category>Met</category>"), "template capCategory default");
+  assert.ok(
+    xml.includes(
+      "<geocode><valueName>SAME</valueName><value>040109</value></geocode>",
+    ),
+  );
+  assert.ok(
+    xml.includes("<category>Met</category>"),
+    "template capCategory default",
+  );
 });
 
 test("compose is deterministic: same input, same bytes", () => {
@@ -133,13 +185,21 @@ test("compose: Spanish WEA rides a SECOND es-US info block with plain CMAMtext (
   const infos = xml.split("<info>").length - 1;
   assert.equal(infos, 2, "two info blocks when Spanish is present");
   assert.ok(xml.includes("<language>es-US</language>"));
-  assert.ok(!xml.includes("CMAMtext-Spanish"), "the invented valueName must never appear");
+  assert.ok(
+    !xml.includes("CMAMtext-Spanish"),
+    "the invented valueName must never appear",
+  );
   const esBlock = xml.slice(xml.indexOf("<language>es-US</language>"));
-  assert.ok(esBlock.includes("Aviso de tornado"), "Spanish text under plain CMAMtext");
+  assert.ok(
+    esBlock.includes("Aviso de tornado"),
+    "Spanish text under plain CMAMtext",
+  );
   // the profile requires category and eventCode identical across info blocks
   assert.equal(xml.split("<category>Met</category>").length - 1, 2);
   assert.equal(
-    xml.split("<eventCode><valueName>SAME</valueName><value>TOR</value></eventCode>").length - 1,
+    xml.split(
+      "<eventCode><valueName>SAME</valueName><value>TOR</value></eventCode>",
+    ).length - 1,
     2,
   );
   // both blocks carry the ASL resource and the area
@@ -153,9 +213,15 @@ test("compose: no Spanish text, exactly one info block", () => {
 });
 
 test("compose: unknown event attaches NO asl resource (negative control)", () => {
-  const xml = composeCap({ ...BASE, event: "Volcano Warning", sameCode: "VOW" });
+  const xml = composeCap({
+    ...BASE,
+    event: "Volcano Warning",
+    sameCode: "VOW",
+  });
   assert.ok(!xml.includes("<resource>"), "no wrong-hazard video, ever");
-  assert.ok(xml.includes("ideafe:threeSenses:family</valueName><value>GROUND</value>"));
+  assert.ok(
+    xml.includes("ideafe:threeSenses:family</valueName><value>GROUND</value>"),
+  );
 });
 
 test("compose: attachAslTemplate false suppresses the resource", () => {
@@ -170,12 +236,21 @@ test("compose: EAS-ORG and passthrough parameters are emitted escaped", () => {
     parameters: [{ valueName: "WEAHandling", value: "Imminent & Threat" }],
   });
   assert.ok(xml.includes("<valueName>EAS-ORG</valueName><value>CIV</value>"));
-  assert.ok(xml.includes("<valueName>WEAHandling</valueName><value>Imminent &amp; Threat</value>"));
+  assert.ok(
+    xml.includes(
+      "<valueName>WEAHandling</valueName><value>Imminent &amp; Threat</value>",
+    ),
+  );
 });
 
 test("compose: XML-escapes user text", () => {
-  const xml = composeCap({ ...BASE, headline: 'Winds >80mph & "destructive" <hail>' });
-  assert.ok(xml.includes("Winds &gt;80mph &amp; &quot;destructive&quot; &lt;hail&gt;"));
+  const xml = composeCap({
+    ...BASE,
+    headline: 'Winds >80mph & "destructive" <hail>',
+  });
+  assert.ok(
+    xml.includes("Winds &gt;80mph &amp; &quot;destructive&quot; &lt;hail&gt;"),
+  );
   assert.ok(!/<headline>[^<]*<hail>/.test(xml));
 });
 
@@ -187,7 +262,14 @@ test("precheck: a clean input has zero issues", () => {
 
 test("precheck: enum garbage is rejected — no injection through status et al. (audit F3)", () => {
   const evil = "Actual</status><scope>Restricted</scope><status>Test";
-  for (const field of ["status", "msgType", "urgency", "severity", "certainty", "category"]) {
+  for (const field of [
+    "status",
+    "msgType",
+    "urgency",
+    "severity",
+    "certainty",
+    "category",
+  ]) {
     const issues = precheck({ ...BASE, [field]: evil });
     assert.ok(
       issues.some((i) => i.field === field && /must be one of/.test(i.problem)),
@@ -208,7 +290,11 @@ test("compose: even a hypothetical enum bypass is escaped (defense in depth)", (
 test("precheck: sameCode is REQUIRED and three letters (IPAWS profile, audit F2)", () => {
   const missing = { ...BASE };
   delete missing.sameCode;
-  assert.ok(precheck(missing).some((i) => i.field === "sameCode" && /required/.test(i.problem)));
+  assert.ok(
+    precheck(missing).some(
+      (i) => i.field === "sameCode" && /required/.test(i.problem),
+    ),
+  );
   assert.ok(
     precheck({ ...BASE, sameCode: "TORNADO" }).some(
       (i) => i.field === "sameCode" && /three-letter/.test(i.problem),
@@ -225,7 +311,9 @@ test("precheck: sender charset is enforced like identifier (audit F6)", () => {
 
 test("precheck: missing expires is caught (IPAWS profile)", () => {
   const issues = precheck({ ...BASE, expires: "" });
-  assert.ok(issues.some((i) => i.field === "expires" && i.problem === "required"));
+  assert.ok(
+    issues.some((i) => i.field === "expires" && i.problem === "required"),
+  );
 });
 
 test("precheck: bare-Z and +00:00 timestamps are rejected (CAP 1.2 dateTime, audit F7)", () => {
@@ -240,7 +328,9 @@ test("precheck: bare-Z and +00:00 timestamps are rejected (CAP 1.2 dateTime, aud
     ),
   );
   assert.deepEqual(
-    precheck({ ...BASE, sent: "2026-08-25T16:00:00-00:00" }).filter((i) => i.field === "sent"),
+    precheck({ ...BASE, sent: "2026-08-25T16:00:00-00:00" }).filter(
+      (i) => i.field === "sent",
+    ),
     [],
     "-00:00 is the mandated UTC form",
   );
@@ -249,14 +339,22 @@ test("precheck: bare-Z and +00:00 timestamps are rejected (CAP 1.2 dateTime, aud
 test("precheck: a 100-node polygon is rejected (MOA software requirement)", () => {
   const ring = Array.from({ length: 99 }, (_, i) => `35.${i},-97.${i}`);
   ring.push(ring[0]);
-  const issues = precheck({ ...BASE, area: { ...BASE.area, polygons: [ring.join(" ")] } });
-  assert.ok(issues.some((i) => i.field === "area.polygons" && /100/.test(i.problem)));
+  const issues = precheck({
+    ...BASE,
+    area: { ...BASE.area, polygons: [ring.join(" ")] },
+  });
+  assert.ok(
+    issues.some((i) => i.field === "area.polygons" && /100/.test(i.problem)),
+  );
 });
 
 test("precheck: an unclosed polygon is rejected", () => {
   const issues = precheck({
     ...BASE,
-    area: { ...BASE.area, polygons: ["35.4,-97.6 35.6,-97.6 35.6,-97.3 35.4,-97.3"] },
+    area: {
+      ...BASE.area,
+      polygons: ["35.4,-97.6 35.6,-97.6 35.6,-97.3 35.4,-97.3"],
+    },
   });
   assert.ok(issues.some((i) => /must close/.test(i.problem)));
 });
@@ -267,9 +365,15 @@ test("precheck: out-of-range coordinates and zero radius are rejected (audit A3)
     area: { ...BASE.area, polygons: ["999,999 1,1 2,2 999,999"] },
   });
   assert.ok(issues.some((i) => /latitude 999/.test(i.problem)));
-  const issues2 = precheck({ ...BASE, area: { ...BASE.area, circles: ["35.4,-97.6 0"] } });
+  const issues2 = precheck({
+    ...BASE,
+    area: { ...BASE.area, circles: ["35.4,-97.6 0"] },
+  });
   assert.ok(issues2.some((i) => /radius must be positive/.test(i.problem)));
-  const issues3 = precheck({ ...BASE, area: { ...BASE.area, circles: ["95.4,-197.6 5"] } });
+  const issues3 = precheck({
+    ...BASE,
+    area: { ...BASE.area, circles: ["95.4,-197.6 5"] },
+  });
   assert.ok(issues3.some((i) => /latitude 95.4/.test(i.problem)));
   assert.ok(issues3.some((i) => /longitude -197.6/.test(i.problem)));
 });
@@ -277,11 +381,15 @@ test("precheck: out-of-range coordinates and zero radius are rejected (audit A3)
 test("precheck: WEA over 90 characters is rejected, and 91 is the first failure (boundary)", () => {
   const ninety = "x".repeat(90);
   assert.deepEqual(
-    precheck({ ...BASE, wea: { shortEn: ninety } }).filter((i) => i.field === "wea.shortEn"),
+    precheck({ ...BASE, wea: { shortEn: ninety } }).filter(
+      (i) => i.field === "wea.shortEn",
+    ),
     [],
   );
   const issues = precheck({ ...BASE, wea: { shortEn: ninety + "x" } });
-  assert.ok(issues.some((i) => i.field === "wea.shortEn" && /limit 90/.test(i.problem)));
+  assert.ok(
+    issues.some((i) => i.field === "wea.shortEn" && /limit 90/.test(i.problem)),
+  );
 });
 
 test("precheck: WEA-unsafe characters are rejected (emoji, embedded newline)", () => {
@@ -298,12 +406,21 @@ test("precheck: WEA-unsafe characters are rejected (emoji, embedded newline)", (
 });
 
 test("precheck: Spanish accents pass the WEA-safe set", () => {
-  const issues = precheck({ ...BASE, wea: { shortEn: "ok", shortEs: "Refúgiese ahora ¡peligro!" } });
-  assert.deepEqual(issues.filter((i) => i.field === "wea.shortEs"), []);
+  const issues = precheck({
+    ...BASE,
+    wea: { shortEn: "ok", shortEs: "Refúgiese ahora ¡peligro!" },
+  });
+  assert.deepEqual(
+    issues.filter((i) => i.field === "wea.shortEs"),
+    [],
+  );
 });
 
 test("precheck: longEs without shortEs is rejected", () => {
-  const issues = precheck({ ...BASE, wea: { shortEn: "ok", longEs: "texto largo" } });
+  const issues = precheck({
+    ...BASE,
+    wea: { shortEn: "ok", longEs: "texto largo" },
+  });
   assert.ok(issues.some((i) => i.field === "wea.shortEs"));
 });
 
@@ -313,24 +430,39 @@ test("precheck: area needs at least one geometry", () => {
 });
 
 test("precheck: a non-six-digit SAME geocode is rejected", () => {
-  const issues = precheck({ ...BASE, area: { ...BASE.area, sameGeocodes: ["4109"] } });
+  const issues = precheck({
+    ...BASE,
+    area: { ...BASE.area, sameGeocodes: ["4109"] },
+  });
   assert.ok(issues.some((i) => i.field === "area.sameGeocodes"));
 });
 
 test("precheck: Update/Cancel/Ack/Error without references are rejected (audit F8)", () => {
   for (const msgType of ["Update", "Cancel", "Ack", "Error"]) {
     const issues = precheck({ ...BASE, msgType });
-    assert.ok(issues.some((i) => i.field === "references"), msgType);
+    assert.ok(
+      issues.some((i) => i.field === "references"),
+      msgType,
+    );
   }
 });
 
 test("precheck: a malformed references triple is rejected", () => {
-  const issues = precheck({ ...BASE, msgType: "Update", references: ["not a triple"] });
-  assert.ok(issues.some((i) => i.field === "references" && /triple/.test(i.problem)));
+  const issues = precheck({
+    ...BASE,
+    msgType: "Update",
+    references: ["not a triple"],
+  });
+  assert.ok(
+    issues.some((i) => i.field === "references" && /triple/.test(i.problem)),
+  );
 });
 
 test("precheck: malformed passthrough parameters are rejected", () => {
-  const issues = precheck({ ...BASE, parameters: [{ valueName: "", value: "x" }] });
+  const issues = precheck({
+    ...BASE,
+    parameters: [{ valueName: "", value: "x" }],
+  });
   assert.ok(issues.some((i) => i.field === "parameters"));
 });
 
@@ -351,7 +483,10 @@ test("composeFollowUp: cancel references the prior triple without re-entering da
       "<references>composer-test@ideafe.org,IDE-TEST-0001,2026-08-25T12:00:00-04:00</references>",
     ),
   );
-  assert.ok(xml.includes("<event>Tornado Warning</event>"), "prior data carried over");
+  assert.ok(
+    xml.includes("<event>Tornado Warning</event>"),
+    "prior data carried over",
+  );
 });
 
 test("composeFollowUp: a chain carries EVERY prior reference forward (audit F4)", () => {
@@ -360,7 +495,9 @@ test("composeFollowUp: a chain carries EVERY prior reference forward (audit F4)"
     identifier: "IDE-TEST-0002",
     sent: "2026-08-25T12:30:00-04:00",
     msgType: "Update",
-    references: ["composer-test@ideafe.org,IDE-TEST-0001,2026-08-25T12:00:00-04:00"],
+    references: [
+      "composer-test@ideafe.org,IDE-TEST-0001,2026-08-25T12:00:00-04:00",
+    ],
   };
   const xml = composeFollowUp(update1Input, "Update", {
     identifier: "IDE-TEST-0003",
@@ -376,11 +513,12 @@ test("composeFollowUp: a chain carries EVERY prior reference forward (audit F4)"
 });
 
 test("composeFollowUp: duplicate references are collapsed", () => {
-  const triple = "composer-test@ideafe.org,IDE-TEST-0001,2026-08-25T12:00:00-04:00";
-  const xml = composeFollowUp(
-    { ...BASE, references: undefined },
-    "Cancel",
-    { identifier: "IDE-TEST-0004", sent: "2026-08-25T13:00:00-04:00", references: [triple] },
-  );
+  const triple =
+    "composer-test@ideafe.org,IDE-TEST-0001,2026-08-25T12:00:00-04:00";
+  const xml = composeFollowUp({ ...BASE, references: undefined }, "Cancel", {
+    identifier: "IDE-TEST-0004",
+    sent: "2026-08-25T13:00:00-04:00",
+    references: [triple],
+  });
   assert.equal(xml.split(triple).length - 1, 1);
 });

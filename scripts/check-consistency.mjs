@@ -33,7 +33,10 @@ for (const f of files) {
   const text = readFileSync(f, "utf8");
   for (const re of BANNED) {
     const m = text.match(re);
-    if (m) { console.error(`BANNED ${f}: "${m[0]}"`); failures++; }
+    if (m) {
+      console.error(`BANNED ${f}: "${m[0]}"`);
+      failures++;
+    }
   }
 }
 
@@ -41,24 +44,63 @@ for (const f of files) {
 const vocab = JSON.parse(readFileSync("vocabulary.json", "utf8"));
 const v = vocab.version;
 const pkg = JSON.parse(readFileSync("package.json", "utf8")).version;
-if (pkg !== v) { console.error(`VERSION package.json ${pkg} != vocabulary ${v}`); failures++; }
+if (pkg !== v) {
+  console.error(`VERSION package.json ${pkg} != vocabulary ${v}`);
+  failures++;
+}
 const std = readFileSync("THE-STANDARD.md", "utf8");
-if (!std.includes(`Draft ${v}`)) { console.error(`VERSION THE-STANDARD.md missing Draft ${v}`); failures++; }
+if (!std.includes(`Draft ${v}`)) {
+  console.error(`VERSION THE-STANDARD.md missing Draft ${v}`);
+  failures++;
+}
 const readme = readFileSync("README.md", "utf8");
-if (!readme.includes(`draft ${v}`) && !readme.includes(`Draft ${v}`)) { console.error(`VERSION README missing ${v}`); failures++; }
+if (!readme.includes(`draft ${v}`) && !readme.includes(`Draft ${v}`)) {
+  console.error(`VERSION README missing ${v}`);
+  failures++;
+}
 const vectors = JSON.parse(readFileSync("conformance/vectors.json", "utf8"));
-if (vectors.standardVersion !== v) { console.error(`VERSION vectors ${vectors.standardVersion} != ${v}`); failures++; }
+if (vectors.standardVersion !== v) {
+  console.error(`VERSION vectors ${vectors.standardVersion} != ${v}`);
+  failures++;
+}
 const cff = readFileSync("CITATION.cff", "utf8");
-if (!cff.includes("cff-version: 1.2.0")) { console.error("CITATION.cff cff-version corrupted"); failures++; }
-if (!cff.includes(`version: ${v}`)) { console.error(`CITATION.cff software version != ${v}`); failures++; }
+if (!cff.includes("cff-version: 1.2.0")) {
+  console.error("CITATION.cff cff-version corrupted");
+  failures++;
+}
+if (!cff.includes(`version: ${v}`)) {
+  console.error(`CITATION.cff software version != ${v}`);
+  failures++;
+}
 const data = readFileSync("src/data.ts", "utf8");
-if (!data.includes(`"version": "${v}"`)) { console.error(`VERSION src/data.ts stale (run npm run embed)`); failures++; }
+if (!data.includes(`"version": "${v}"`)) {
+  console.error(`VERSION src/data.ts stale (run npm run embed)`);
+  failures++;
+}
 
 // Unknown must be Severe-equivalent (presumed dangerous): touch .75, reach 1, marks 3.
 const s = vocab.severity;
-if (s.touchLevels.Unknown !== s.touchLevels.Severe) { console.error(`UNKNOWN touch ${s.touchLevels.Unknown} != Severe ${s.touchLevels.Severe}`); failures++; }
-if (s.reachLevels.Unknown !== s.reachLevels.Severe) { console.error(`UNKNOWN reach ${s.reachLevels.Unknown} != Severe ${s.reachLevels.Severe}`); failures++; }
-if (s.marks.Unknown !== s.marks.Severe) { console.error(`UNKNOWN marks ${s.marks.Unknown} != Severe ${s.marks.Severe}`); failures++; }
+if (s.touchLevels.Unknown !== s.touchLevels.Severe) {
+  console.error(
+    `UNKNOWN touch ${s.touchLevels.Unknown} != Severe ${s.touchLevels.Severe}`,
+  );
+  failures++;
+}
+if (s.reachLevels.Unknown !== s.reachLevels.Severe) {
+  console.error(
+    `UNKNOWN reach ${s.reachLevels.Unknown} != Severe ${s.reachLevels.Severe}`,
+  );
+  failures++;
+}
+if (s.marks.Unknown !== s.marks.Severe) {
+  console.error(`UNKNOWN marks ${s.marks.Unknown} != Severe ${s.marks.Severe}`);
+  failures++;
+}
 
-if (failures) { console.error(`\n${failures} consistency failure(s).`); process.exit(1); }
-console.log(`consistency OK: ${files.length} files clean, version ${v} everywhere, Unknown = Severe-equivalent`);
+if (failures) {
+  console.error(`\n${failures} consistency failure(s).`);
+  process.exit(1);
+}
+console.log(
+  `consistency OK: ${files.length} files clean, version ${v} everywhere, Unknown = Severe-equivalent`,
+);

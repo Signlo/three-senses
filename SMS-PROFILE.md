@@ -23,26 +23,26 @@ are permitted: `[3S:W4]` equals `3S:W4`.
 
 FAMILY, one letter:
 
-| Letter | Family | Meaning |
-| --- | --- | --- |
-| G | GROUND | earthquake, landslide |
-| W | WATER | flood, tsunami, storm surge |
-| S | STORM | cyclone, typhoon, tornado, severe storm |
-| F | FIRE | fire, wildfire |
-| H | THREAT | danger from people |
-| O | OTHER | any unnamed hazard |
-| T | TEST | drill, never a real emergency |
-| A | ALL_CLEAR | the danger has ended |
+| Letter | Family    | Meaning                                 |
+| ------ | --------- | --------------------------------------- |
+| G      | GROUND    | earthquake, landslide                   |
+| W      | WATER     | flood, tsunami, storm surge             |
+| S      | STORM     | cyclone, typhoon, tornado, severe storm |
+| F      | FIRE      | fire, wildfire                          |
+| H      | THREAT    | danger from people                      |
+| O      | OTHER     | any unnamed hazard                      |
+| T      | TEST      | drill, never a real emergency           |
+| A      | ALL_CLEAR | the danger has ended                    |
 
 SEVERITY, one digit:
 
-| Digit | Step | Touch level |
-| --- | --- | --- |
-| 0 | SAFE NOW (all clear) | silence |
-| 1 | BE CAREFUL | 25% |
-| 2 | DANGER COMING | 50% |
-| 3 | ACT NOW (Severe) | 75% |
-| 4 | ACT NOW (Extreme) | 100% |
+| Digit | Step                 | Touch level |
+| ----- | -------------------- | ----------- |
+| 0     | SAFE NOW (all clear) | silence     |
+| 1     | BE CAREFUL           | 25%         |
+| 2     | DANGER COMING        | 50%         |
+| 3     | ACT NOW (Severe)     | 75%         |
+| 4     | ACT NOW (Extreme)    | 100%        |
 
 Examples:
 

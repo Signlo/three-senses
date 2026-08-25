@@ -5,7 +5,9 @@ import { parseSmsCode, channelLevel, timeline } from "../dist/index.js";
 
 test("parses real annex examples", () => {
   assert.deepEqual(
-    parseSmsCode("Tsunami warning for the coast. Move to high ground now. 3S:W4"),
+    parseSmsCode(
+      "Tsunami warning for the coast. Move to high ground now. 3S:W4",
+    ),
     { family: "WATER", severity: "Extreme" },
   );
   assert.deepEqual(
@@ -19,8 +21,14 @@ test("parses real annex examples", () => {
 });
 
 test("case-insensitive, first match wins, position-independent", () => {
-  assert.deepEqual(parseSmsCode("3s:f3 evacuate now"), { family: "FIRE", severity: "Severe" });
-  assert.deepEqual(parseSmsCode("3S:G2 then later 3S:F4"), { family: "GROUND", severity: "Moderate" });
+  assert.deepEqual(parseSmsCode("3s:f3 evacuate now"), {
+    family: "FIRE",
+    severity: "Severe",
+  });
+  assert.deepEqual(parseSmsCode("3S:G2 then later 3S:F4"), {
+    family: "GROUND",
+    severity: "Moderate",
+  });
 });
 
 test("rule 4: malformed or absent codes are null, never a guess", () => {

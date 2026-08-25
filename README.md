@@ -64,14 +64,19 @@ Timelines, severity, and conformance (Node or browser):
 
 ```js
 import {
-  timeline, cycleMs, cycleStart, channelLevel, vibratePattern, conformance,
+  timeline,
+  cycleMs,
+  cycleStart,
+  channelLevel,
+  vibratePattern,
+  conformance,
 } from "@ideafe/three-senses";
 
-timeline("FIRE");            // { steps: [{at: 0, event: "on"}, ...], totalMs: 4000 }
-cycleMs("WATER");            // 6000 — the normative repeat interval (R8)
+timeline("FIRE"); // { steps: [{at: 0, event: "on"}, ...], totalMs: 4000 }
+cycleMs("WATER"); // 6000 — the normative repeat interval (R8)
 channelLevel("TEST", "Extreme"); // 0.3 — a drill is capped, always (R6)
-vibratePattern("STORM");     // [500, 1000, 500, 1000, 500]
-conformance().pass;          // true — this SDK, proven against the vectors
+vibratePattern("STORM"); // [500, 1000, 500, 1000, 500]
+conformance().pass; // true — this SDK, proven against the vectors
 ```
 
 Play an alert in a browser, all channels on one clock:
@@ -82,8 +87,8 @@ import { startAlert } from "@ideafe/three-senses/web";
 const alert = startAlert("FIRE", {
   severity: "Extreme",
   onFlash: (on) => beacon.classList.toggle("lit", on), // any light you own
-  tone: true,      // 520 Hz, gated on the same envelope
-  vibrate: true,   // Vibration API where available
+  tone: true, // 520 Hz, gated on the same envelope
+  vibrate: true, // Vibration API where available
 });
 acknowledgeButton.onclick = () => alert.stop(); // I UNDERSTAND
 ```
