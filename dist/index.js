@@ -185,9 +185,15 @@ export function conformance() {
             family: name,
             requirement: "R8 loop-seamlessness",
             pass: t.totalMs === v.totalMs,
-            detail: t.totalMs === v.totalMs ? undefined : `cycle ${t.totalMs} expected ${v.totalMs}`,
+            detail: t.totalMs === v.totalMs
+                ? undefined
+                : `cycle ${t.totalMs} expected ${v.totalMs}`,
         });
-        results.push({ family: name, requirement: "R5 photosensitivity", pass: lightIsSafe(t) });
+        results.push({
+            family: name,
+            requirement: "R5 photosensitivity",
+            pass: lightIsSafe(t),
+        });
     }
     results.push({
         family: "ALL_CLEAR",
@@ -201,7 +207,8 @@ export function conformance() {
     results.push({
         family: "TEST",
         requirement: "R6 test-gentleness",
-        pass: channelLevel("TEST", "Extreme") <= 0.3 && lightSoundLevel("TEST", "Extreme") <= 0.3,
+        pass: channelLevel("TEST", "Extreme") <= 0.3 &&
+            lightSoundLevel("TEST", "Extreme") <= 0.3,
     });
     return { pass: results.every((r) => r.pass), results };
 }

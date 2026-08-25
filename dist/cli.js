@@ -12,7 +12,7 @@
  *                                     list every precheck issue and exit 1
  */
 import { readFileSync } from "node:fs";
-import { composeCap, precheck, weaTemplates } from "./compose.js";
+import { composeCap, precheck, weaTemplates, } from "./compose.js";
 import { STANDARD_VERSION, families, family, timeline, cycleMs, vibratePattern, renderLog, conformance, } from "./index.js";
 function ascii(name, msPerChar = 100) {
     const t = timeline(name);
@@ -49,7 +49,9 @@ switch (command) {
         console.log(ascii(name));
         console.log(`cycle ${t.totalMs} ms (trailing quiet included, R8) · ` +
             `vibrate [${vibratePattern(name).join(", ")}]` +
-            (f.fixedLevel !== undefined ? ` · level capped at ${f.fixedLevel} (R6)` : ""));
+            (f.fixedLevel !== undefined
+                ? ` · level capped at ${f.fixedLevel} (R6)`
+                : ""));
         for (const s of t.steps)
             console.log(`  ${String(s.at).padStart(5)} ms ${s.event}`);
         break;
@@ -70,7 +72,9 @@ switch (command) {
     case "templates": {
         console.log(`FCC WEA template / ASL video map (compiled 2026-08-25)`);
         for (const t of weaTemplates()) {
-            const codes = t.sameCodes.length ? t.sameCodes.join("/") : "(no SAME code)";
+            const codes = t.sameCodes.length
+                ? t.sameCodes.join("/")
+                : "(no SAME code)";
             const asl = t.asl ? t.asl.url : "NO ASL VIDEO PUBLISHED";
             console.log(`${t.name.padEnd(28)} ${codes.padEnd(16)} ${String(t.family ?? "(originator's)").padEnd(14)} ${asl}`);
         }
