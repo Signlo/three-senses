@@ -103,3 +103,7 @@ tmp/
 .vscode/
 *.swp
 *.swo
+
+# GENERATED — embed-data.mjs owns this file byte-for-byte; prettier unquoting
+# its keys broke the consistency gate on main (2026-08-25).
+src/data.ts

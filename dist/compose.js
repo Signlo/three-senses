@@ -34,15 +34,50 @@ import { WEA_ASL_DATA } from "./data.js";
 // Runtime twins of the closed lists above (CAP 1.2 xsd enumerations).
 const STATUSES = ["Actual", "Exercise", "System", "Test", "Draft"];
 const MSG_TYPES = ["Alert", "Update", "Cancel", "Ack", "Error"];
-const URGENCIES = ["Immediate", "Expected", "Future", "Past", "Unknown"];
-const SEVERITIES = ["Extreme", "Severe", "Moderate", "Minor", "Unknown"];
-const CERTAINTIES = ["Observed", "Likely", "Possible", "Unlikely", "Unknown"];
+const URGENCIES = [
+    "Immediate",
+    "Expected",
+    "Future",
+    "Past",
+    "Unknown",
+];
+const SEVERITIES = [
+    "Extreme",
+    "Severe",
+    "Moderate",
+    "Minor",
+    "Unknown",
+];
+const CERTAINTIES = [
+    "Observed",
+    "Likely",
+    "Possible",
+    "Unlikely",
+    "Unknown",
+];
 const CATEGORIES = [
-    "Geo", "Met", "Safety", "Security", "Rescue", "Fire",
-    "Health", "Env", "Transport", "Infra", "CBRNE", "Other",
+    "Geo",
+    "Met",
+    "Safety",
+    "Security",
+    "Rescue",
+    "Fire",
+    "Health",
+    "Env",
+    "Transport",
+    "Infra",
+    "CBRNE",
+    "Other",
 ];
 const FAMILIES = [
-    "GROUND", "WATER", "STORM", "FIRE", "THREAT", "TEST", "OTHER", "ALL_CLEAR",
+    "GROUND",
+    "WATER",
+    "STORM",
+    "FIRE",
+    "THREAT",
+    "TEST",
+    "OTHER",
+    "ALL_CLEAR",
 ];
 const TEMPLATES = WEA_ASL_DATA.templates;
 /** Every FCC WEA template in the map, in published order. */
@@ -139,7 +174,9 @@ export function precheck(input) {
     const issues = [];
     const need = (field) => {
         const v = input[field];
-        if (v === undefined || v === null || (typeof v === "string" && v.trim() === ""))
+        if (v === undefined ||
+            v === null ||
+            (typeof v === "string" && v.trim() === ""))
             issues.push({ field: String(field), problem: "required" });
     };
     need("identifier");
@@ -159,15 +196,29 @@ export function precheck(input) {
     for (const f of ["identifier", "sender"]) {
         const v = input[f];
         if (v && CAP_ID_UNSAFE_RE.test(v))
-            issues.push({ field: f, problem: "no spaces, commas, ampersands, or angle brackets" });
+            issues.push({
+                field: f,
+                problem: "no spaces, commas, ampersands, or angle brackets",
+            });
     }
     // IPAWS profile: eventCode with valueName SAME is REQUIRED, three letters.
-    if (input.sameCode === undefined || input.sameCode === null || input.sameCode === "")
-        issues.push({ field: "sameCode", problem: "required (IPAWS profile: SAME eventCode)" });
+    if (input.sameCode === undefined ||
+        input.sameCode === null ||
+        input.sameCode === "")
+        issues.push({
+            field: "sameCode",
+            problem: "required (IPAWS profile: SAME eventCode)",
+        });
     else if (!/^[A-Z]{3}$/.test(input.sameCode))
-        issues.push({ field: "sameCode", problem: "a three-letter SAME code (e.g. TOR)" });
+        issues.push({
+            field: "sameCode",
+            problem: "a three-letter SAME code (e.g. TOR)",
+        });
     if (input.easOrg !== undefined && !/^[A-Z]{2,4}$/.test(input.easOrg))
-        issues.push({ field: "easOrg", problem: "a SAME organization code (e.g. CIV, WXR, EAS, PEP)" });
+        issues.push({
+            field: "easOrg",
+            problem: "a SAME organization code (e.g. CIV, WXR, EAS, PEP)",
+        });
     for (const f of ["sent", "expires"]) {
         const v = input[f];
         if (!v)
@@ -179,16 +230,25 @@ export function precheck(input) {
             });
         }
         else if (v.endsWith("+00:00")) {
-            issues.push({ field: f, problem: "CAP 1.2 dateTime: UTC MUST be written -00:00, not +00:00" });
+            issues.push({
+                field: f,
+                problem: "CAP 1.2 dateTime: UTC MUST be written -00:00, not +00:00",
+            });
         }
     }
     const mt = input.msgType ?? "Alert";
     if ((mt === "Update" || mt === "Cancel" || mt === "Ack" || mt === "Error") &&
         !(input.references && input.references.length > 0))
-        issues.push({ field: "references", problem: `${mt} must reference the prior message(s)` });
+        issues.push({
+            field: "references",
+            problem: `${mt} must reference the prior message(s)`,
+        });
     for (const r of input.references ?? []) {
         if (!/^[^\s,]+,[^\s,]+,[^\s,]+$/.test(r))
-            issues.push({ field: "references", problem: `"${r}" is not a sender,identifier,sent triple` });
+            issues.push({
+                field: "references",
+                problem: `"${r}" is not a sender,identifier,sent triple`,
+            });
     }
     if (!input.area || !input.area.areaDesc?.trim())
         issues.push({ field: "area.areaDesc", problem: "required" });
@@ -196,18 +256,33 @@ export function precheck(input) {
         (input.area?.circles?.length ?? 0) > 0 ||
         (input.area?.sameGeocodes?.length ?? 0) > 0;
     if (!hasGeometry)
-        issues.push({ field: "area", problem: "at least one polygon, circle, or SAME geocode" });
+        issues.push({
+            field: "area",
+            problem: "at least one polygon, circle, or SAME geocode",
+        });
     for (const p of input.area?.polygons ?? []) {
         const nodes = p.trim().split(/\s+/);
         if (nodes.length >= 100)
-            issues.push({ field: "area.polygons", problem: `polygon has ${nodes.length} nodes (limit: fewer than 100)` });
+            issues.push({
+                field: "area.polygons",
+                problem: `polygon has ${nodes.length} nodes (limit: fewer than 100)`,
+            });
         if (nodes.length >= 4 && nodes[0] !== nodes[nodes.length - 1])
-            issues.push({ field: "area.polygons", problem: "polygon ring must close (first point repeated last)" });
+            issues.push({
+                field: "area.polygons",
+                problem: "polygon ring must close (first point repeated last)",
+            });
         if (nodes.length > 0 && nodes.length < 4)
-            issues.push({ field: "area.polygons", problem: "a polygon needs at least 4 points (closed ring)" });
+            issues.push({
+                field: "area.polygons",
+                problem: "a polygon needs at least 4 points (closed ring)",
+            });
         for (const n of nodes) {
             if (!/^-?\d+(\.\d+)?,-?\d+(\.\d+)?$/.test(n)) {
-                issues.push({ field: "area.polygons", problem: 'points must be "lat,lon" pairs' });
+                issues.push({
+                    field: "area.polygons",
+                    problem: 'points must be "lat,lon" pairs',
+                });
             }
             else {
                 checkLatLon(issues, "area.polygons", n);
@@ -217,17 +292,26 @@ export function precheck(input) {
     for (const c of input.area?.circles ?? []) {
         const m = /^(-?\d+(?:\.\d+)?,-?\d+(?:\.\d+)?)\s+(\d+(?:\.\d+)?)$/.exec(c.trim());
         if (!m) {
-            issues.push({ field: "area.circles", problem: '"lat,lon radiusKm" required' });
+            issues.push({
+                field: "area.circles",
+                problem: '"lat,lon radiusKm" required',
+            });
         }
         else {
             checkLatLon(issues, "area.circles", m[1]);
             if (Number(m[2]) <= 0)
-                issues.push({ field: "area.circles", problem: "radius must be positive" });
+                issues.push({
+                    field: "area.circles",
+                    problem: "radius must be positive",
+                });
         }
     }
     for (const g of input.area?.sameGeocodes ?? []) {
         if (!/^\d{6}$/.test(g))
-            issues.push({ field: "area.sameGeocodes", problem: `"${g}" is not a six-digit SAME code` });
+            issues.push({
+                field: "area.sameGeocodes",
+                problem: `"${g}" is not a six-digit SAME code`,
+            });
     }
     if (input.wea) {
         const w = input.wea;
@@ -238,21 +322,36 @@ export function precheck(input) {
             ["wea.longEs", w.longEs, 360],
         ];
         if (!w.shortEn?.trim())
-            issues.push({ field: "wea.shortEn", problem: "required when wea is present" });
+            issues.push({
+                field: "wea.shortEn",
+                problem: "required when wea is present",
+            });
         if (w.longEs && !w.shortEs)
-            issues.push({ field: "wea.shortEs", problem: "required when wea.longEs is present" });
+            issues.push({
+                field: "wea.shortEs",
+                problem: "required when wea.longEs is present",
+            });
         for (const [field, text, max] of checks) {
             if (text === undefined)
                 continue;
             if (text.length > max)
-                issues.push({ field, problem: `${text.length} characters (limit ${max})` });
+                issues.push({
+                    field,
+                    problem: `${text.length} characters (limit ${max})`,
+                });
             if (!WEA_SAFE_RE.test(text))
-                issues.push({ field, problem: "contains characters outside the WEA-safe set" });
+                issues.push({
+                    field,
+                    problem: "contains characters outside the WEA-safe set",
+                });
         }
     }
     for (const p of input.parameters ?? []) {
         if (!p?.valueName?.trim() || p.value === undefined || p.value === null)
-            issues.push({ field: "parameters", problem: "each parameter needs valueName and value" });
+            issues.push({
+                field: "parameters",
+                problem: "each parameter needs valueName and value",
+            });
     }
     return issues;
 }
