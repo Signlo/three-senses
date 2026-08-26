@@ -28,7 +28,7 @@ jobs:
     # REQUIRED check (this one is advisory/non-blocking), so a busy or offline runner delays
     # it rather than wedging any PR. Required checks deliberately stay GitHub-hosted:
     # one runner would be a single point of failure for a gate that can block every merge.
-    runs-on: [self-hosted, Linux, ARM64, minuit-micro]
+    runs-on: ubuntu-24.04-arm # minuit-micro retired 2026-08-26 (Wave-5 teardown; was self-hosted on minuit)
     timeout-minutes: 5
     if: github.actor == 'dependabot[bot]'
 
