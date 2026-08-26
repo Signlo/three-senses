@@ -78,6 +78,12 @@ claude-md/
 # .prettierignore, so a repo-local fence on a SYNCED file is not a fence at all: it survives
 # exactly until the next sync. Anything that must be ignored has to be ignored HERE.
 memory/
+# three-senses' src/data.ts is GENERATED (scripts/embed-data.mjs embeds vocabulary.json +
+# conformance/vectors.json + wea-asl-templates.json) and gated by a grep in
+# check-consistency.mjs. Prettier unquotes the embedded JSON's keys, which broke that gate
+# on three-senses main within minutes of the first merge (2026-08-25, autofix commit after
+# PR #3). Same generator-vs-formatter class as database.types.ts and DIRECTORY.md above.
+src/data.ts
 
 # Coverage and test artifacts
 coverage/
@@ -103,7 +109,3 @@ tmp/
 .vscode/
 *.swp
 *.swo
-
-# GENERATED — embed-data.mjs owns this file byte-for-byte; prettier unquoting
-# its keys broke the consistency gate on main (2026-08-25).
-src/data.ts
