@@ -267,7 +267,7 @@ export const VOCABULARY_DATA = {
 } as const;
 
 export const VECTORS_DATA = {
-  "standardVersion": "0.10.0",
+  "standardVersion": "0.10.2",
   "description": "Machine-checkable conformance vectors. A conformant renderer executes exactly these on/off events, at these offsets from a single shared clock (t0), on every channel it renders. Tolerance: an event may fire late by scheduling jitter but its SCHEDULED time must equal the vector; a renderer must never reorder, merge, or drop events, and a late start must join mid-pattern in phase at t0 + offset, not shifted.",
   "requirements": [
     "R1 rhythm-identity: for each family, rendered on/off offsets equal the vector exactly.",

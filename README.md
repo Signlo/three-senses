@@ -2,7 +2,7 @@
 
 [![npm](https://img.shields.io/npm/v/%40ideafe%2Fthree-senses)](https://www.npmjs.com/package/@ideafe/three-senses) [![CI](https://github.com/Signlo/three-senses/actions/workflows/ci.yml/badge.svg)](https://github.com/Signlo/three-senses/actions/workflows/ci.yml) [![DOI](https://zenodo.org/badge/1336687968.svg)](https://zenodo.org/badge/latestdoi/1336687968)
 
-> **Status: Draft 0.10.0.** This is a public draft, not a ratified standard. The normative
+> **Status: Draft 0.10.2.** This is a public draft, not a ratified standard. The normative
 > vocabulary (`vocabulary.json`) and the conformance vectors (`conformance/vectors.json`) may
 > change before 1.0 — implementations should pin an exact version. The DOI above cites this
 > draft, not a final specification.
@@ -12,7 +12,7 @@ make every emergency warning
 detectable by sight, touch, or hearing alone, with the full warning,
 including the action, guaranteed in accessible language.
 
-- `THE-STANDARD.md`: the specification (draft 0.10.0)
+- `THE-STANDARD.md`: the specification (draft 0.10.2)
 - `vocabulary.json`: the normative, machine-readable rhythm vocabulary
 - `conformance/vectors.json`: machine-checkable conformance vectors (R1 to R8)
 - `conformance/validate.mjs`: checks a rendering log against the vectors
