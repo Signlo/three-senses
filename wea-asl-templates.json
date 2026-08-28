@@ -30,9 +30,7 @@
     {
       "id": "tornado-emergency",
       "name": "Tornado Emergency",
-      "sameCodes": [
-        "TOR"
-      ],
+      "sameCodes": ["TOR"],
       "variant": "escalation of Tornado Warning (damage-threat catastrophic)",
       "family": "STORM",
       "capCategory": "Met",
@@ -45,9 +43,7 @@
     {
       "id": "tornado-warning",
       "name": "Tornado Warning",
-      "sameCodes": [
-        "TOR"
-      ],
+      "sameCodes": ["TOR"],
       "family": "STORM",
       "capCategory": "Met",
       "englishText": "[SENDING AGENCY]: A TORNADO WARNING is in effect for [LOCATION] until [TIME]. Take shelter now in a basement or an interior room on the lowest floor of a sturdy building. If you are outdoors, in a mobile home, or in a vehicle, move to the closest sturdy shelter and protect yourself from flying objects. Check media. [URL]",
@@ -59,9 +55,7 @@
     {
       "id": "flash-flood-emergency",
       "name": "Flash Flood Emergency",
-      "sameCodes": [
-        "FFW"
-      ],
+      "sameCodes": ["FFW"],
       "variant": "escalation of Flash Flood Warning",
       "family": "WATER",
       "capCategory": "Met",
@@ -74,9 +68,7 @@
     {
       "id": "flash-flood-warning",
       "name": "Flash Flood Warning",
-      "sameCodes": [
-        "FFW"
-      ],
+      "sameCodes": ["FFW"],
       "family": "WATER",
       "capCategory": "Met",
       "englishText": "[SENDING AGENCY]: A FLASH FLOOD WARNING is in effect for [LOCATION] until [TIME]. This is a dangerous and life-threatening situation. Do not attempt to travel unless you are fleeing an area that may flood or are under an evacuation order. [URL]",
@@ -88,9 +80,7 @@
     {
       "id": "severe-thunderstorm-warning",
       "name": "Severe Thunderstorm Warning",
-      "sameCodes": [
-        "SVR"
-      ],
+      "sameCodes": ["SVR"],
       "family": "STORM",
       "capCategory": "Met",
       "englishText": "[SENDING AGENCY]: A SEVERE THUNDERSTORM WARNING is in effect for [LOCATION] until [TIME] for DESTRUCTIVE 80 mile per hour winds. Take shelter inside a sturdy building, away from windows. Flying objects may be deadly to those outside a sturdy shelter. [URL]",
@@ -102,9 +92,7 @@
     {
       "id": "snow-squall-warning",
       "name": "Snow Squall Warning",
-      "sameCodes": [
-        "SQW"
-      ],
+      "sameCodes": ["SQW"],
       "family": "STORM",
       "capCategory": "Met",
       "englishText": "[SENDING AGENCY]: A SNOW SQUALL WARNING is in effect for [LOCATION] until [TIME]. Slow down or delay travel! Be ready for a sudden drop to near zero visibility and icy roads in heavy snow. [URL]",
@@ -116,9 +104,7 @@
     {
       "id": "dust-storm-warning",
       "name": "Dust Storm Warning",
-      "sameCodes": [
-        "DSW"
-      ],
+      "sameCodes": ["DSW"],
       "family": "STORM",
       "capCategory": "Met",
       "englishText": "[SENDING AGENCY]: A DUST STORM WARNING is in effect for [LOCATION] until [TIME]. Be ready for sudden drop to zero visibility. Pull Aside, Stay Alive! When visibility drops, pull far off the road and put your vehicle in park. Turn the lights off and keep your foot off the brake. Infants, the elderly, and those with trouble breathing urged to take precautions. [URL]",
@@ -130,9 +116,7 @@
     {
       "id": "hurricane-warning",
       "name": "Hurricane Warning",
-      "sameCodes": [
-        "HUW"
-      ],
+      "sameCodes": ["HUW"],
       "family": "STORM",
       "capCategory": "Met",
       "englishText": "[SENDING AGENCY]: A HURRICANE WARNING is in effect for [LOCATION] for dangerous and damaging winds until [TIME]. This warning is issued up to 36 hours before hazardous conditions begin. Take steps to protect life and property. Have food, water, cash, fuel, and medications for 3+ days. FOLLOW INSTRUCTIONS FROM LOCAL OFFICIALS. [URL]",
@@ -144,9 +128,7 @@
     {
       "id": "storm-surge-warning",
       "name": "Storm Surge Warning",
-      "sameCodes": [
-        "SSW"
-      ],
+      "sameCodes": ["SSW"],
       "family": "WATER",
       "capCategory": "Met",
       "englishText": "[SENDING AGENCY]: A STORM SURGE WARNING is in effect for [LOCATION] for the danger of life-threatening flooding until [TIME]. This warning is issued up to 36 hours before hazardous conditions begin. Take steps to protect life and property. Follow evacuation orders if given for this area to avoid drowning or being cut off from emergency services. [URL]",
@@ -158,9 +140,7 @@
     {
       "id": "extreme-wind-warning",
       "name": "Extreme Wind Warning",
-      "sameCodes": [
-        "EWW"
-      ],
+      "sameCodes": ["EWW"],
       "family": "STORM",
       "capCategory": "Met",
       "englishText": "[SENDING AGENCY]: An EXTREME WIND WARNING is in effect for [LOCATION] for the immediate danger of life-threatening winds until [TIME]. Take cover NOW in an interior room of a sturdy building, away from windows. Protect your head from flying objects. Do NOT go outside if the wind calms! Winds will quickly become dangerous again. [URL]",
@@ -172,12 +152,7 @@
     {
       "id": "test-alert",
       "name": "Test Alert",
-      "sameCodes": [
-        "NPT",
-        "RWT",
-        "RMT",
-        "DMO"
-      ],
+      "sameCodes": ["NPT", "RWT", "RMT", "DMO"],
       "family": "TEST",
       "capCategory": "Safety",
       "englishText": "THIS IS A TEST of the National Wireless Emergency Alert System sent by [SENDING AGENCY]. The purpose is to maintain and improve alert and warning capabilities at the federal, state, local, Tribal and territorial levels and to evaluate the nation's public alert and warning capabilities. No action is required by the public. [URL]",
@@ -189,9 +164,7 @@
     {
       "id": "tsunami-warning",
       "name": "Tsunami Warning",
-      "sameCodes": [
-        "TSW"
-      ],
+      "sameCodes": ["TSW"],
       "family": "WATER",
       "capCategory": "Geo",
       "englishText": "[SENDING AGENCY]: A TSUNAMI WARNING is in effect for [LOCATION] until [TIME]. A series of powerful waves and strong currents may affect coasts near you. You are in danger. Get away from coastal waters. Move to high ground or inland now. Keep away from the coast until local officials say it is safe to return. [URL]",
@@ -203,9 +176,7 @@
     {
       "id": "earthquake-warning",
       "name": "Earthquake Warning",
-      "sameCodes": [
-        "EQW"
-      ],
+      "sameCodes": ["EQW"],
       "family": "GROUND",
       "capCategory": "Geo",
       "englishText": "EARTHQUAKE DETECTED! Drop, Cover, Hold On. Protect Yourself. [SENDING AGENCY] [URL]",
@@ -230,9 +201,7 @@
     {
       "id": "911-outage-alert",
       "name": "911 Outage Alert",
-      "sameCodes": [
-        "TOE"
-      ],
+      "sameCodes": ["TOE"],
       "family": "OTHER",
       "capCategory": "Infra",
       "englishText": "[SENDING AGENCY]: A 9-1-1 OUTAGE ALERT is in effect for [LOCATION]. Please contact police, fire, medical, or other emergency services directly at their local phone numbers in case of emergency. If you dial 9-1-1, you may not get help. [URL]",
@@ -244,9 +213,7 @@
     {
       "id": "avalanche-warning",
       "name": "Avalanche Warning",
-      "sameCodes": [
-        "AVW"
-      ],
+      "sameCodes": ["AVW"],
       "family": "GROUND",
       "capCategory": "Geo",
       "englishText": "[SENDING AGENCY]: An AVALANCHE WARNING is in effect in [LOCATION] until [TIME]. Unstable, fast-moving snow can happen quickly, causing injury or death and can block roads and damage property in affected areas. LEAVE areas near [LOCATION]. DO NOT return to area after evacuation until directed by local officials. Travel in the area is not recommended. Avalanches may run long distances. [URL]",
@@ -258,9 +225,7 @@
     {
       "id": "fire-warning",
       "name": "Fire Warning",
-      "sameCodes": [
-        "FRW"
-      ],
+      "sameCodes": ["FRW"],
       "family": "FIRE",
       "capCategory": "Fire",
       "englishText": "[SENDING AGENCY]: A FIRE WARNING in [LOCATION] is in effect until [TIME]. Evacuate your family and pets now, do not delay. Visibility in area will be reduced and roads can become blocked. If you do not leave now, you could be trapped, injured, or killed. LEAVE areas near [LOCATION]. Expect reduced visibility, heavy smoke, and difficulty breathing. Be careful when driving. Watch for public safety personnel operating in the area and follow their instructions. [URL]",
@@ -272,9 +237,7 @@
     {
       "id": "hazardous-materials-warning",
       "name": "Hazardous Materials Warning",
-      "sameCodes": [
-        "HMW"
-      ],
+      "sameCodes": ["HMW"],
       "family": "THREAT",
       "capCategory": "CBRNE",
       "englishText": "[SENDING AGENCY]: HAZARDOUS MATERIALS were released at [TIME] in [LOCATION]. Exposure may cause difficulty breathing, loss of coordination, burning sensation in eyes, nose, throat, or lungs, nausea, and possibly death. LEAVE areas near [LOCATION]. IF DRIVING to evacuate area, keep car windows and vents closed. DO NOT return to area after evacuation unless directed by local officials. [URL]",
@@ -286,9 +249,7 @@
     {
       "id": "evacuation-immediate",
       "name": "Evacuation Immediate",
-      "sameCodes": [
-        "EVI"
-      ],
+      "sameCodes": ["EVI"],
       "family": null,
       "capCategory": "Safety",
       "familyNote": "An action message: the family follows the causing hazard chosen by the originator.",
@@ -300,9 +261,7 @@
     {
       "id": "shelter-in-place-warning",
       "name": "Shelter in Place Warning",
-      "sameCodes": [
-        "SPW"
-      ],
+      "sameCodes": ["SPW"],
       "family": null,
       "capCategory": "Safety",
       "familyNote": "An action message: the family follows the causing hazard chosen by the originator.",
