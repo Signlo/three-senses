@@ -3,7 +3,7 @@
 // normative artifacts.
 export const VOCABULARY_DATA = {
   "standard": "Three Senses Alerting Standard",
-  "version": "0.10.0",
+  "version": "0.10.2",
   "publisher": "International Deaf Emergency (ideafe.org)",
   "published": "2026-08-17",
   "license": "Apache-2.0",
