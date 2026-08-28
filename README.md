@@ -27,10 +27,12 @@ including the action, guaranteed in accessible language.
   FEMA's IPAWS Program Management Office for the IPAWS-OPEN test
   environment) and the `three-senses compose` / `templates` CLI commands
 - `wea-asl-templates.json`: the FCC WEA template / ASL video map — all 18
-  adopted template texts (DA 25-12 Appendix C) paired with the FCC's
-  official ASL videos, the mismatches between the two sets recorded
-  honestly (two adopted texts have no ASL video; two videos have no
-  adopted text)
+  adopted template texts (DA 25-12 Appendix C) paired with their official
+  FCC ASL videos (coverage is complete: every adopted text has a video).
+  Two demo-era action messages (Evacuation Immediate, Shelter in Place)
+  are carried as annotated stubs — no adopted text, no official video.
+  ⚠ Maps ≤ v0.10.1 carried prose (and ≤ v0.10.0 carried video IDs) derived
+  from the FCC's Feb-2024 DEMO-ONLY set; use v0.10.2+.
 - `src/`, `dist/`: the SDK (`@ideafe/three-senses`), TypeScript, zero
   dependencies, conformance-proven against the vectors in CI
 
