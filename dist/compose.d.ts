@@ -76,6 +76,13 @@ export interface AslTemplate {
         youtubeId: string;
         url: string;
     } | null;
+    /** Present on escalation variants (e.g. Tornado Emergency escalates Tornado
+     *  Warning). A bare SAME-code lookup prefers the base template — the
+     *  originator opts INTO an escalation by name. */
+    variant?: string;
+    /** Present on demo-era stubs that carry neither an adopted text nor an
+     *  official video; explains why. */
+    note?: string;
 }
 /** Every FCC WEA template in the map, in published order. */
 export declare function weaTemplates(): readonly AslTemplate[];

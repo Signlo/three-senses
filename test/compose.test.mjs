@@ -47,26 +47,34 @@ test("the embedded map matches the published wea-asl-templates.json byte-for-byt
   );
 });
 
-test("the map holds all 18 adopted templates plus the two ASL-only action videos", () => {
+test("the 18 adopted templates align text-to-video; two demo-era stubs carry neither", () => {
+  // v0.10.1 truth table, after the demo->official video correction: the OFFICIAL
+  // ASL set covers exactly the 18 adopted Appendix C texts (including both
+  // Emergency escalations, which the demo set lacked). Evacuation Immediate and
+  // Shelter in Place existed ONLY as demo videos: no adopted text, no official
+  // video — kept as annotated stubs because the message types are real.
   assert.equal(rootMap.templates.length, 20);
   const withText = rootMap.templates.filter((t) => t.englishText);
   const withVideo = rootMap.templates.filter((t) => t.asl);
   assert.equal(withText.length, 18, "the adopted Appendix C set");
-  assert.equal(withVideo.length, 18, "the published ASL video set");
-  const textNoVideo = rootMap.templates
-    .filter((t) => t.englishText && !t.asl)
-    .map((t) => t.id);
-  const videoNoText = rootMap.templates
-    .filter((t) => !t.englishText && t.asl)
-    .map((t) => t.id);
-  assert.deepEqual(textNoVideo.sort(), [
-    "flash-flood-emergency",
-    "tornado-emergency",
-  ]);
-  assert.deepEqual(videoNoText.sort(), [
+  assert.equal(withVideo.length, 18, "the official ASL video set");
+  assert.deepEqual(
+    rootMap.templates.filter((t) => t.englishText && !t.asl).map((t) => t.id),
+    [],
+    "every adopted text has an official video",
+  );
+  assert.deepEqual(
+    rootMap.templates.filter((t) => !t.englishText && t.asl).map((t) => t.id),
+    [],
+    "no video without an adopted text (the demo-era pair is stubbed out)",
+  );
+  const stubs = rootMap.templates.filter((t) => !t.englishText && !t.asl);
+  assert.deepEqual(stubs.map((t) => t.id).sort(), [
     "evacuation-immediate",
     "shelter-in-place-warning",
   ]);
+  for (const st of stubs)
+    assert.ok(st.note && st.note.includes("DEMO"), `${st.id} explains itself`);
 });
 
 test("every template carries a valid capCategory", () => {
@@ -101,7 +109,7 @@ test("every published video URL is a well-formed YouTube watch URL", () => {
 
 // ---------- template + family lookup ----------
 
-test("weaTemplateFor: TOR prefers the variant with a published video", () => {
+test("weaTemplateFor: a bare TOR never silently escalates — base Warning wins", () => {
   const t = weaTemplateFor("TOR");
   assert.equal(t.id, "tornado-warning");
   assert.ok(t.asl.url.includes("youtube.com"));
@@ -157,7 +165,7 @@ test("compose: a valid input yields IPAWS-profile CAP with template resource and
     ),
   );
   assert.ok(
-    xml.includes("https://www.youtube.com/watch?v=HHs1gMK5r5w"),
+    xml.includes("https://www.youtube.com/watch?v=a59VLxN82uI"),
     "the official TOR video",
   );
   assert.ok(

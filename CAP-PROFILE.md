@@ -37,7 +37,7 @@ One `<resource>` block per `<info>`:
     (official FCC WEA template video; not a translation of this specific
     message)</resourceDesc>
   <mimeType>text/html</mimeType>
-  <uri>https://www.youtube.com/watch?v=HHs1gMK5r5w</uri>
+  <uri>https://www.youtube.com/watch?v=a59VLxN82uI</uri>
 </resource>
 ```
 

@@ -188,6 +188,13 @@ export interface AslTemplate {
   capCategory?: CapCategory;
   englishText: string | null;
   asl: { youtubeId: string; url: string } | null;
+  /** Present on escalation variants (e.g. Tornado Emergency escalates Tornado
+   *  Warning). A bare SAME-code lookup prefers the base template — the
+   *  originator opts INTO an escalation by name. */
+  variant?: string;
+  /** Present on demo-era stubs that carry neither an adopted text nor an
+   *  official video; explains why. */
+  note?: string;
 }
 
 const TEMPLATES = WEA_ASL_DATA.templates as readonly AslTemplate[];
@@ -211,10 +218,23 @@ export function weaTemplateFor(sameCodeOrEvent: string): AslTemplate | null {
   const byCode = TEMPLATES.filter((t) =>
     t.sameCodes.some((c) => c.toUpperCase() === q),
   );
-  if (byCode.length > 0) return byCode.find((t) => t.asl) ?? byCode[0];
+  // Among matches, prefer the BASE template (no `variant`) over an escalation,
+  // then prefer one with a published video. A bare SAME code carries no
+  // damage-threat information, so it must never silently escalate: TOR maps to
+  // Tornado Warning, not Tornado Emergency — the originator opts INTO the
+  // escalation by name. (Until v0.10.1 the escalations had no official video,
+  // so "first with a video" happened to pick the base; with the official set
+  // both variants have videos and the rule must be stated, not accidental.)
+  const pick = (list: AslTemplate[]): AslTemplate | null => {
+    if (list.length === 0) return null;
+    const base = list.filter((t) => !t.variant);
+    const pool = base.length > 0 ? base : list;
+    return pool.find((t) => t.asl) ?? pool[0];
+  };
+  const codeHit = pick(byCode);
+  if (codeHit) return codeHit;
   const byName = TEMPLATES.filter((t) => t.name.toUpperCase() === q);
-  if (byName.length > 0) return byName.find((t) => t.asl) ?? byName[0];
-  return null;
+  return pick(byName);
 }
 
 /**

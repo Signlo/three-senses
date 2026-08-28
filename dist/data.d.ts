@@ -381,11 +381,15 @@ export declare const WEA_ASL_DATA: {
         family: string;
         capCategory: string;
         englishText: string;
-        asl: null;
+        asl: {
+            youtubeId: string;
+            url: string;
+        };
         aslNote: string;
         sameNote?: undefined;
         familyNote?: undefined;
         textNote?: undefined;
+        note?: undefined;
     } | {
         id: string;
         name: string;
@@ -402,6 +406,7 @@ export declare const WEA_ASL_DATA: {
         sameNote?: undefined;
         familyNote?: undefined;
         textNote?: undefined;
+        note?: undefined;
     } | {
         id: string;
         name: string;
@@ -418,6 +423,7 @@ export declare const WEA_ASL_DATA: {
         aslNote?: undefined;
         familyNote?: undefined;
         textNote?: undefined;
+        note?: undefined;
     } | {
         id: string;
         name: string;
@@ -427,10 +433,8 @@ export declare const WEA_ASL_DATA: {
         familyNote: string;
         englishText: null;
         textNote: string;
-        asl: {
-            youtubeId: string;
-            url: string;
-        };
+        asl: null;
+        note: string;
         variant?: undefined;
         aslNote?: undefined;
         sameNote?: undefined;
