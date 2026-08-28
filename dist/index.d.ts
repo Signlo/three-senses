@@ -56,7 +56,7 @@ export interface Timeline {
 }
 export declare const VOCABULARY: {
     readonly standard: "Three Senses Alerting Standard";
-    readonly version: "0.10.0";
+    readonly version: "0.10.2";
     readonly publisher: "International Deaf Emergency (ideafe.org)";
     readonly published: "2026-08-17";
     readonly license: "Apache-2.0";
@@ -178,7 +178,7 @@ export declare const VOCABULARY: {
     };
 };
 export declare const VECTORS: {
-    readonly standardVersion: "0.10.0";
+    readonly standardVersion: "0.10.2";
     readonly description: "Machine-checkable conformance vectors. A conformant renderer executes exactly these on/off events, at these offsets from a single shared clock (t0), on every channel it renders. Tolerance: an event may fire late by scheduling jitter but its SCHEDULED time must equal the vector; a renderer must never reorder, merge, or drop events, and a late start must join mid-pattern in phase at t0 + offset, not shifted.";
     readonly requirements: readonly ["R1 rhythm-identity: for each family, rendered on/off offsets equal the vector exactly.", "R2 severity-invariance: the vector is identical at every severity; only intensity changes.", "R3 all-clear-release: ALL_CLEAR renders its release cue self-terminating and never escalating (at most three presentations at 0, 45 and 120 seconds, never louder, canceled by any interaction; never repeat-until-acknowledged), at its fixed gentle level with falling intensity, alongside affirmative words naming what ended; tone-only sirens never sound it; silence alone is never presented as an all-clear.", "R4 one-clock: all channels schedule from one shared t0; a late channel joins in phase.", "R5 photosensitivity: no light renderer exceeds 3 flashes/second or 6 transitions/second, and a steady-light path exists.", "R6 test-gentleness: the TEST family never exceeds intensity level 0.3 on any channel at any severity.", "R7 no-dialects: implementations must not add, remove, or alter family patterns and still claim conformance.", "R8 loop-seamlessness: totalMs includes the family's trailing quiet and is normative; a repeating renderer schedules the next cycle's first event at exactly t0 + totalMs, never earlier, so pulses never fuse across the loop boundary."];
     readonly vectors: {

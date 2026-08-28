@@ -3,7 +3,7 @@
 // normative artifacts.
 export const VOCABULARY_DATA = {
   "standard": "Three Senses Alerting Standard",
-  "version": "0.10.0",
+  "version": "0.10.2",
   "publisher": "International Deaf Emergency (ideafe.org)",
   "published": "2026-08-17",
   "license": "Apache-2.0",
@@ -267,7 +267,7 @@ export const VOCABULARY_DATA = {
 } as const;
 
 export const VECTORS_DATA = {
-  "standardVersion": "0.10.0",
+  "standardVersion": "0.10.2",
   "description": "Machine-checkable conformance vectors. A conformant renderer executes exactly these on/off events, at these offsets from a single shared clock (t0), on every channel it renders. Tolerance: an event may fire late by scheduling jitter but its SCHEDULED time must equal the vector; a renderer must never reorder, merge, or drop events, and a late start must join mid-pattern in phase at t0 + offset, not shifted.",
   "requirements": [
     "R1 rhythm-identity: for each family, rendered on/off offsets equal the vector exactly.",
@@ -581,7 +581,7 @@ export const VECTORS_DATA = {
 
 export const WEA_ASL_DATA = {
   "name": "FCC WEA template and ASL video map",
-  "version": "0.10.1",
+  "version": "0.10.2",
   "publisher": "International Deaf Emergency (ideafe.org)",
   "license": "Apache-2.0",
   "compiled": "2026-08-25",
@@ -592,7 +592,7 @@ export const WEA_ASL_DATA = {
   },
   "honesty": {
     "producedBy": "The videos and texts are the FCC's, not IDE's. A template video explains what an alert TYPE means in ASL; it is never a translation of a specific message (agency, location, and time reach ASL users as text, 47 CFR 10.500(e)(3)).",
-    "mismatch": "The adopted text set and the published ASL video set are NOT identical. Two adopted templates have no ASL video (Tornado Emergency, Flash Flood Emergency: the escalation variants), and two published videos have no adopted template text (Evacuation Immediate, Shelter in Place Warning). Recorded as found on 2026-08-25.",
+    "mismatch": "CORRECTED v0.10.2: no video/text mismatch exists in the OFFICIAL set — all 18 adopted Appendix C templates (including the Tornado Emergency and Flash Flood Emergency escalations) have dedicated official FCC ASL videos. The earlier claim that the two Emergencies lacked videos described the Feb-2024 DEMO-ONLY set and was false for the official assets. Evacuation Immediate and Shelter in Place existed only as demo videos (no adopted text, no official video) and are carried here as annotated stubs.",
     "deferredNoAsl": [
       "All-clear",
       "AMBER alert",
@@ -621,8 +621,7 @@ export const WEA_ASL_DATA = {
       "asl": {
         "youtubeId": "nJWws8aNQ4M",
         "url": "https://www.youtube.com/watch?v=nJWws8aNQ4M"
-      },
-      "aslNote": "No ASL video published for the Emergency escalation; the Tornado Warning video is the nearest published asset."
+      }
     },
     {
       "id": "tornado-warning",
@@ -651,8 +650,7 @@ export const WEA_ASL_DATA = {
       "asl": {
         "youtubeId": "bo8C8FgXjNQ",
         "url": "https://www.youtube.com/watch?v=bo8C8FgXjNQ"
-      },
-      "aslNote": "No ASL video published for the Emergency escalation; the Flash Flood Warning video is the nearest published asset."
+      }
     },
     {
       "id": "flash-flood-warning",
