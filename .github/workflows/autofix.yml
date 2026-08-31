@@ -85,6 +85,50 @@ jobs:
     runs-on: ${{ vars.AUTOFIX_RUNNER == 'self-hosted' && fromJSON('["self-hosted","minuit-micro"]') || 'ubuntu-24.04-arm' }}
     timeout-minutes: 15
 
+    # A DEPENDABOT PR SKIPS THIS JOB, IT DOES NOT FAIL IT (2026-08-31, signlo-app#2154/#2155).
+    #
+    # A Dependabot-triggered run (`pull_request`, `pull_request_target`, or a `push` whose
+    # pusher is Dependabot) is handed GitHub's SEPARATE "Dependabot secrets" scope, not the
+    # repo/org ACTIONS secrets. `secrets.SIGNLO_BOT_APP_ID` / `SIGNLO_BOT_PRIVATE_KEY`
+    # therefore interpolate to the EMPTY STRING, and the very first step below — "Mint GitHub
+    # App token" — hard-fails on every single Dependabot PR:
+    #
+    #   The 'client-id' (or deprecated 'app-id') input must be set to a non-empty string.
+    #   If using a secret or variable, ensure it is available in this workflow context.
+    #
+    # It is a SCOPE problem, not a missing secret: `gh api repos/Signlo/signlo-app/dependabot/secrets`
+    # returns exactly two entries (MAESTRO_QA_EMAIL, MAESTRO_QA_PASSWORD) while the App
+    # credentials exist only in the Actions scope. Re-running never helps — a re-run inherits
+    # the same restricted scope — so this was an unfixable red check on every dependency PR in
+    # every repo this template reaches.
+    #
+    # A clean SKIP is the correct behaviour, not a softened failure, because there is nothing
+    # for this job to do even if it could start. GitHub also downgrades a Dependabot run's
+    # GITHUB_TOKEN to READ-ONLY, so the formatting commit could not be pushed by any token
+    # available here — that is the same restriction that forced dependabot-auto-approve.yml
+    # onto `pull_request_target`. And Dependabot only ever edits manifests/lockfiles, which
+    # none of the formatters below rewrite. A job that CANNOT succeed must not report failure:
+    # a red check nobody can act on trains reviewers to ignore red.
+    #
+    # Job-LEVEL `if:` on purpose, not a per-step guard on the mint: a job skipped at job level
+    # reports conclusion `skipped`, which GitHub counts as satisfied for a required status
+    # check, whereas a job that starts and fails inside blocks a merge. (Autofix is not a
+    # required check anywhere today — it also could not be, since its `pull_request` trigger is
+    # `paths:`-filtered and a path-filtered required check sits "expected" forever on unrelated
+    # PRs — but the job-level form is the shape that stays safe if a repo ever requires it.)
+    #
+    # `github.actor` is set by GitHub and a PR author cannot forge it — the same idiom,
+    # inverted, that dependabot-auto-approve.yml uses and that
+    # scripts/check_public_runner_exposure.py accepts in UNFORGEABLE_IDENTITY. It remains
+    # `dependabot[bot]` across re-runs, which is exactly right here.
+    #
+    # Deliberately NOT `!endsWith(github.actor, '[bot]')`: the org's own bot opens real PRs
+    # (roadmap driver, template sync) which run with the normal Actions scope and SHOULD be
+    # autofixed. Widening this to every bot would silently switch autofix off for much of the
+    # traffic that actually needs it. Both edges are pinned in
+    # tests/test_workflow_autofix.py::TestDependabotSkip.
+    if: github.actor != 'dependabot[bot]'
+
     steps:
       # Mint a GitHub App token so the formatting commit (below) is pushed as
       # the App, not GITHUB_TOKEN — GITHUB_TOKEN pushes do NOT trigger workflows,
