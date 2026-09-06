@@ -1,0 +1,50 @@
+# Publishes @ideafe/three-senses to npm when a version tag (v*) is pushed.
+#
+# Auth is npm Trusted Publishing (OIDC): npmjs.com is configured to trust
+# THIS workflow file in Signlo/three-senses, so no NPM_TOKEN secret exists
+# anywhere. Configured on the package's Settings page on npmjs.com
+# (Trusted Publisher -> GitHub Actions -> Signlo / three-senses / release.yml).
+# If that config is ever removed, publish fails with an auth error; fix it
+# on npmjs.com, never by minting a token into repo secrets.
+#
+# Release flow: bump "version" in package.json + rebuild dist, merge to main,
+# then push the matching tag (git tag vX.Y.Z && git push origin vX.Y.Z).
+name: Release
+on:
+  push:
+    tags:
+      - "v*"
+permissions:
+  contents: read
+  id-token: write # OIDC token for npm Trusted Publishing + provenance
+concurrency:
+  group: release
+  cancel-in-progress: false
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+          registry-url: https://registry.npmjs.org
+      - name: Trusted Publishing needs npm >= 11.5.1
+        run: npm install -g npm@11
+      - run: npm ci
+      - name: Full test gate (consistency + build + node --test)
+        run: npm test
+      - name: Committed dist matches the source (no stale build)
+        run: git diff --exit-code -- dist src/data.ts
+      - name: The CLI proves conformance
+        run: node dist/cli.js conformance
+      - name: Tag matches package.json version
+        run: |
+          pkg="v$(node -p "require('./package.json').version")"
+          if [ "$pkg" != "$GITHUB_REF_NAME" ]; then
+            echo "tag $GITHUB_REF_NAME does not match package.json $pkg" >&2
+            exit 1
+          fi
+      - name: Publish to npm (provenance attached automatically)
+        run: npm publish --access public
