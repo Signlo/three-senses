@@ -26,10 +26,13 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      # NO registry-url here: setup-node's registry-url writes an _authToken
+      # placeholder into .npmrc, and npm then tries (and fails) token auth
+      # instead of falling through to OIDC Trusted Publishing. Proven by the
+      # v0.10.3 smoke release: E404 on PUT until this line was removed.
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: 24
-          registry-url: https://registry.npmjs.org
       - name: Trusted Publishing needs npm >= 11.5.1
         run: npm install -g npm@11
       - run: npm ci
