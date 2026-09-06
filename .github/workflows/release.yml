@@ -59,5 +59,22 @@ jobs:
             echo "OIDC request URL: MISSING - id-token permission not effective" >&2
             exit 1
           fi
+      - name: Print OIDC identity claims (claims only, never the token)
+        run: |
+          python3 - <<'PY'
+          import base64, json, os, urllib.request
+          url = os.environ["ACTIONS_ID_TOKEN_REQUEST_URL"] + "&audience=npm:registry.npmjs.org"
+          req = urllib.request.Request(url, headers={"Authorization": "bearer " + os.environ["ACTIONS_ID_TOKEN_REQUEST_TOKEN"]})
+          tok = json.load(urllib.request.urlopen(req))["value"]
+          pay = tok.split(".")[1]
+          pay += "=" * (-len(pay) % 4)
+          claims = json.loads(base64.urlsafe_b64decode(pay))
+          for k in ("sub", "repository", "repository_owner", "repository_id",
+                    "workflow_ref", "job_workflow_ref", "ref", "environment",
+                    "event_name", "repository_visibility", "runner_environment", "iss", "aud"):
+              print(f"{k} = {claims.get(k)}")
+          pkg = json.load(open("package.json"))
+          print("package.json repository =", json.dumps(pkg.get("repository")))
+          PY
       - name: Publish to npm (provenance attached automatically)
         run: npm publish --access public --loglevel http
