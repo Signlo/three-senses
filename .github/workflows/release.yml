@@ -49,5 +49,15 @@ jobs:
             echo "tag $GITHUB_REF_NAME does not match package.json $pkg" >&2
             exit 1
           fi
+      - name: OIDC preflight (the token URL must be injected, or publish cannot authenticate)
+        run: |
+          node --version
+          npm --version
+          if [ -n "$ACTIONS_ID_TOKEN_REQUEST_URL" ]; then
+            echo "OIDC request URL: present"
+          else
+            echo "OIDC request URL: MISSING - id-token permission not effective" >&2
+            exit 1
+          fi
       - name: Publish to npm (provenance attached automatically)
-        run: npm publish --access public
+        run: npm publish --access public --loglevel http
