@@ -46,6 +46,13 @@ out/
 # migrations. Found 2026-08-07 audit; autofix had already produced the reformat and
 # was stopped only by the branch ruleset.
 **/database.types.ts
+# claude-config's IAM policy-as-code snapshot. These files are a byte-exact canonical
+# export of live IAM (bin/iam-export.sh); iam-drift-check.sh compares them nightly with
+# `diff -ruN` and pages on ANY byte difference. An autofix formatting pass (2026-09-03,
+# claude-config fd402420) reflowed 27 of them and lit a permanent false drift alarm
+# (claude-config #1703). Same generator-vs-formatter class as the entries around it.
+# Only claude-config has an iam/ directory, so this entry is inert everywhere else.
+iam/
 # Machine-generated repo inventory with a byte-for-byte CI gate (claude-config
 # bin/build-directory.py --check, oss-borrow W1.4). Its own banner says
 # DO-NOT-HAND-EDIT, and a formatter rewrite IS a hand edit: prettier re-aligns the
