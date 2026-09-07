@@ -28,7 +28,7 @@ jobs:
     # REQUIRED check (this one is advisory/non-blocking), so a busy or offline runner delays
     # it rather than wedging any PR. Required checks deliberately stay GitHub-hosted:
     # one runner would be a single point of failure for a gate that can block every merge.
-    runs-on: ubuntu-24.04-arm # minuit-micro retired 2026-08-26 (Wave-5 teardown; was self-hosted on minuit)
+    runs-on: [self-hosted, hetzner-x64] # re-homed to signlo-hetzner1 2026-09-01 (ROI audit: hosted since the 08-26 minuit teardown at ~1 billed min/run of rounding tax; this family drove the $150-limit freeze). No dispatch inputs on this trigger, so no use_hosted hatch; if the runner is down these queue and runner-health-monitor (kept HOSTED on purpose) pages. NOT safe to copy into any org-synced/public workflow.
     timeout-minutes: 5
     if: github.actor == 'dependabot[bot]'
 
