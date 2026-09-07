@@ -50,12 +50,12 @@ jobs:
     #
     # This was an unconditional `ubuntu-24.04-arm` while its four siblings
     # (autofix-on-failure, issue-auto-triage, agentic-pr-rescue, conflict-labeler,
-    # dependabot-auto-approve) all run free on minuit-micro — and it fires on
+    # dependabot-auto-approve) all run free on minuit-micro, and it fires on
     # `pull_request` in EVERY repo, so it was the single largest billed line in the
     # automation family.
     #
     # It cannot simply follow the siblings, because this file is synced to every repo
-    # in the org by scripts/sync_autofix.py — including Signlo/three-senses, which is
+    # in the org by scripts/sync_autofix.py, including Signlo/three-senses, which is
     # PUBLIC. On a public repo a `pull_request` from a fork supplies both this file and
     # the code the steps run, and the steps below execute `pre-commit run --all-files`
     # whose hooks come from the PR's own .pre-commit-config.yaml. That is arbitrary
@@ -65,7 +65,7 @@ jobs:
     # So the runner is a variable, and THE ABSENCE OF CONFIGURATION IS THE SAFE STATE:
     # unset `vars.AUTOFIX_RUNNER` interpolates as the empty string, which is not
     # 'self-hosted', so the `&&` yields false and the `||` falls through to the hosted
-    # image. A brand-new repo — public or private — costs money and cannot leak. Only
+    # image. A brand-new repo, public or private, costs money and cannot leak. Only
     # an exact, explicit opt-in moves the job onto our metal.
     #
     # Note this is the INVERSE of the sibling idiom
@@ -79,7 +79,7 @@ jobs:
     # name stops protecting anything the day a second public repo appears, and fails
     # toward exposure. The recommended way to set the variable is an ORG-level variable
     # with visibility "Private repositories", which makes GitHub itself enforce the
-    # invariant — a public repo cannot read it, and a private repo that is later
+    # invariant: a public repo cannot read it, and a private repo that is later
     # flipped public LOSES access and falls back to hosted automatically.
     # scripts/check_public_runner_exposure.py enforces this shape in CI.
     runs-on: ${{ vars.AUTOFIX_RUNNER == 'self-hosted' && fromJSON('["self-hosted","minuit-micro"]') || 'ubuntu-24.04-arm' }}
@@ -90,22 +90,22 @@ jobs:
     # A Dependabot-triggered run (`pull_request`, `pull_request_target`, or a `push` whose
     # pusher is Dependabot) is handed GitHub's SEPARATE "Dependabot secrets" scope, not the
     # repo/org ACTIONS secrets. `secrets.SIGNLO_BOT_APP_ID` / `SIGNLO_BOT_PRIVATE_KEY`
-    # therefore interpolate to the EMPTY STRING, and the very first step below — "Mint GitHub
-    # App token" — hard-fails on every single Dependabot PR:
+    # therefore interpolate to the EMPTY STRING, and the very first step below, "Mint GitHub
+    # App token", hard-fails on every single Dependabot PR:
     #
     #   The 'client-id' (or deprecated 'app-id') input must be set to a non-empty string.
     #   If using a secret or variable, ensure it is available in this workflow context.
     #
     # It is a SCOPE problem, not a missing secret: `gh api repos/Signlo/signlo-app/dependabot/secrets`
     # returns exactly two entries (MAESTRO_QA_EMAIL, MAESTRO_QA_PASSWORD) while the App
-    # credentials exist only in the Actions scope. Re-running never helps — a re-run inherits
-    # the same restricted scope — so this was an unfixable red check on every dependency PR in
+    # credentials exist only in the Actions scope. Re-running never helps: a re-run inherits
+    # the same restricted scope, so this was an unfixable red check on every dependency PR in
     # every repo this template reaches.
     #
     # A clean SKIP is the correct behaviour, not a softened failure, because there is nothing
     # for this job to do even if it could start. GitHub also downgrades a Dependabot run's
     # GITHUB_TOKEN to READ-ONLY, so the formatting commit could not be pushed by any token
-    # available here — that is the same restriction that forced dependabot-auto-approve.yml
+    # available here, and that is the same restriction that forced dependabot-auto-approve.yml
     # onto `pull_request_target`. And Dependabot only ever edits manifests/lockfiles, which
     # none of the formatters below rewrite. A job that CANNOT succeed must not report failure:
     # a red check nobody can act on trains reviewers to ignore red.
@@ -113,11 +113,11 @@ jobs:
     # Job-LEVEL `if:` on purpose, not a per-step guard on the mint: a job skipped at job level
     # reports conclusion `skipped`, which GitHub counts as satisfied for a required status
     # check, whereas a job that starts and fails inside blocks a merge. (Autofix is not a
-    # required check anywhere today — it also could not be, since its `pull_request` trigger is
+    # required check anywhere today, and it also could not be, since its `pull_request` trigger is
     # `paths:`-filtered and a path-filtered required check sits "expected" forever on unrelated
-    # PRs — but the job-level form is the shape that stays safe if a repo ever requires it.)
+    # PRs, but the job-level form is the shape that stays safe if a repo ever requires it.)
     #
-    # `github.actor` is set by GitHub and a PR author cannot forge it — the same idiom,
+    # `github.actor` is set by GitHub and a PR author cannot forge it: the same idiom,
     # inverted, that dependabot-auto-approve.yml uses and that
     # scripts/check_public_runner_exposure.py accepts in UNFORGEABLE_IDENTITY. It remains
     # `dependabot[bot]` across re-runs, which is exactly right here.
@@ -127,11 +127,25 @@ jobs:
     # autofixed. Widening this to every bot would silently switch autofix off for much of the
     # traffic that actually needs it. Both edges are pinned in
     # tests/test_workflow_autofix.py::TestDependabotSkip.
-    if: github.actor != 'dependabot[bot]'
+    #
+    # THE SECOND CLAUSE IS A PER-REPO KILL SWITCH (repo variable AUTOFIX_FORMAT=off), added
+    # 2026-09-07 after this workflow's first successful run on signlo-studio reformatted 146
+    # files and pushed a commit main COULD NOT BUILD: that repo's bundler (tools/build.mjs)
+    # deliberately parses a restricted module syntax, and prettier reflowed `import {` across
+    # lines. A formatter and a parser-owned tree cannot both own the same bytes, which is the
+    # same class as every generator-owned entry in .github/.prettierignore, except that it
+    # covers ALL the formatters this job runs, not just prettier, and a whole repo rather than
+    # a path (this file and the ignore file are both SYNCED VERBATIM org-wide, so a repo-local
+    # edit to either survives exactly until the next sync; a repo VARIABLE is per-repo state
+    # the sync never touches). Unset interpolates as the empty string, so the default is ON
+    # everywhere: only an explicit `off` skips, and a skipped job reports `skipped`, which
+    # GitHub counts as satisfied if this is ever required. Both edges are pinned in
+    # tests/test_workflow_autofix.py::TestFormatKillSwitch.
+    if: github.actor != 'dependabot[bot]' && vars.AUTOFIX_FORMAT != 'off'
 
     steps:
       # Mint a GitHub App token so the formatting commit (below) is pushed as
-      # the App, not GITHUB_TOKEN — GITHUB_TOKEN pushes do NOT trigger workflows,
+      # the App, not GITHUB_TOKEN: GITHUB_TOKEN pushes do NOT trigger workflows,
       # so the required CI/Test checks never ran on the format commit and
       # auto-merge stayed blocked. The App token re-triggers them.
       - name: Mint GitHub App token
@@ -152,7 +166,7 @@ jobs:
         run: |
           mkdir -p /tmp/signlo_diagnostics
           echo "0" > /tmp/signlo_diagnostics/tool_count.txt
-          # `: >` truncates to ZERO bytes. This was `echo "" >`, which writes a 1-byte newline —
+          # `: >` truncates to ZERO bytes. This was `echo "" >`, which writes a 1-byte newline,
           # and every consumer tests it with `[ -s … ]`, which is TRUE for 1 byte. So a perfectly
           # clean repo reported ".github Directory Issues Found" on every PR and every push, and
           # the "✅ No issues detected" branch was structurally UNREACHABLE. Mode C: the failure
@@ -207,8 +221,8 @@ jobs:
         if: steps.detect_python.outputs.detected == 'yes' && steps.install_ruff.outputs.status == 'ok'
         run: |
           # Record a section ONLY when ruff actually reports something. The old form appended the
-          # header BEFORE running ruff and then appended ruff's own output unconditionally — and a
-          # clean `ruff check` prints "All checks passed!" — so the issues file was non-empty on a
+          # header BEFORE running ruff and then appended ruff's own output unconditionally, and a
+          # clean `ruff check` prints "All checks passed!", so the issues file was non-empty on a
           # clean repo twice over. Gate on ruff's OWN verdict (exit 0 = clean, 1 = violations),
           # and name the rc so a ruff CRASH (rc 2) is not filed as if it were a lint finding.
           RUFF_OUT="$(mktemp)"
@@ -428,7 +442,7 @@ jobs:
         continue-on-error: true
 
       # SVG optimization REMOVED (2026-08-19). svgo REWRITES authored vector
-      # sources — brand marks, logo kits, hand-drawn figures — which is asset
+      # sources (brand marks, logo kits, hand-drawn figures) which is asset
       # mutation, not formatting. On its first App-token run it minified
       # signlo-app's design/logo-kit/*.svg inside a sync PR and broke the
       # icons-lock gate (the [skip ci] era had only been hiding this).
@@ -607,7 +621,7 @@ jobs:
           fi
           # No [skip ci]: pushed via the App token, this commit re-triggers the
           # required CI/Test checks so auto-merge can complete (formatting is
-          # idempotent, so the re-run finds nothing to commit — no loop).
+          # idempotent, so the re-run finds nothing to commit, so no loop).
           git commit -m "style: apply automated formatting fixes"
           git push origin HEAD:"${TARGET_BRANCH}"
         continue-on-error: true
