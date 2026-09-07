@@ -88,7 +88,7 @@ for EAS or HazCollect also carry the profile's required `EAS-ORG` parameter (the
 originator's SAME organization code), which the Composer takes as `easOrg`.
 
 The Composer's precheck enforces, from the CAP 1.2 base spec: closed value lists on
-status/msgType/urgency/severity/certainty/category (runtime-validated — JSON input has no
+status/msgType/urgency/severity/certainty/category (runtime-validated, because JSON input has no
 type system), identifier and sender character restrictions, dateTime with a numeric
 timezone offset (never "Z", and UTC written `-00:00`), and references as
 sender,identifier,sent triples on every Update, Cancel, Ack, and Error. From the IPAWS

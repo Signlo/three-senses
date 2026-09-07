@@ -3,6 +3,44 @@
 Questions from the WFD 75th Anniversary webinar (17 August 2026) and from
 implementers. Short answers; the specification is the authority.
 
+## Why is one alarm sound not enough?
+
+Because one sound can only carry one instruction, and the instructions
+contradict each other.
+
+> The fire alarm carries exactly one message: get out. In a tsunami, going
+> outside is lethal and the roof is safety; in a tornado, the basement is.
+> Three dangers, three opposite escapes, one bell.
+
+The building often knows which hazard is coming; the alarm has no vocabulary
+to say it. So the signal is spent on "something is wrong" and the part that
+decides whether you live, which way safety is, is left to the person to guess.
+A hazard vocabulary closes that gap. A child feels WATER on a wristband and
+knows: climb, not run. The exact event and the action still arrive in words
+(requirement R2); the rhythm is what gets the body moving in the right
+direction before the words are read.
+
+## Where do the rhythms come from?
+
+> These rhythms come from sign languages. Deaf people have carried the shape
+> of danger in our hands for centuries. Now that knowledge can save everyone.
+
+Each pattern is drawn from the hazard's own temporal signature, and those
+signatures are already how sign languages depict these dangers. FIRE is ten
+rapid pulses, like the fingers of the sign for fire flickering upward. WATER
+is long soft rolls a breath apart, like the rolling hand of the signs for
+waves. GROUND is one unbroken hold, like the sustained-shaking signs for
+earthquake. THREAT, TEST and OTHER are deliberately abstract, because a human
+threat and a drill have no natural signature to imitate. So a person meeting
+the vocabulary for the first time is recognizing a hazard, not decoding a
+code. Mimesis is a design hypothesis under human testing, and
+`vocabulary.json` says so family by family.
+
+> Deaf people have been the crash-test bodies of every warning failure. We
+> would rather be its engineers.
+>
+> An alert designed for the body that hears nothing reaches every body.
+
 ## Does a quiet phone mean I am safe?
 
 No, and the standard now says so in as many words. Silence can also mean a
@@ -25,19 +63,19 @@ Government alerts do not travel by internet or SMS. They use CELL
 BROADCAST: a one-to-many radio signal from the cell tower that reaches
 every phone in the area at once, with no data plan and no congestion. That
 is why it survives disasters. The catch: no third-party app may read that
-channel, on Android or iOS — the operating system presents the alert
+channel, on Android or iOS: the operating system presents the alert
 itself. An app can teach the rhythm language and play it perfectly, but
 only the OS hears the radio. That is why this standard is addressed to
 regulators and platform makers: the alert pipe already exists, and even
 carries a hazard-type field; what is missing is the rule that its
 presentation must carry meaning. (On Android there is one legal,
-user-granted bridge — a notification listener watching the system alert
-app — and the reference implementation prototypes it; it is best-effort by
+user-granted bridge (a notification listener watching the system alert
+app), and the reference implementation prototypes it; it is best-effort by
 construction and impossible on iOS, which is exactly the gap.)
 
 ## Could SMS with a code drive the rhythms, without AI?
 
-Yes — see `SMS-PROFILE.md`. A five-character code (`3S:W4` = WATER family,
+Yes, see `SMS-PROFILE.md`. A five-character code (`3S:W4` = WATER family,
 extreme) parses with one regular expression. It exists for the places that
 alert by SMS today: countries without cell broadcast and humanitarian
 operations. Platform honesty: automatic SMS reading is Android-only and
@@ -46,7 +84,7 @@ deployments, not app-store apps. iOS apps cannot read SMS at all.
 
 ## Can I change the rhythms in my implementation?
 
-No — that is the one thing conformance forbids (requirement R7). A warning
+No. That is the one thing conformance forbids (requirement R7). A warning
 language only works if FIRE feels the same everywhere, like the siren.
 Implement freely under Apache-2.0; if you alter a pattern, you have made
 something else and must not call it Three Senses. Propose changes here
