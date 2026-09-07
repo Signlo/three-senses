@@ -5,7 +5,7 @@ name: Dependabot Auto-Approve
 # pull_request_target the job runs in the base-repo context with the permissions
 # below, even for Dependabot PRs. Safe here: it never checks out or runs PR code,
 # it only calls the GitHub API. The org ruleset requires 0 reviews, so no explicit
-# approval is needed — just enable auto-merge; CI gates the actual merge.
+# approval is needed: just enable auto-merge, and CI gates the actual merge.
 on:
   pull_request_target:
     types: [opened, synchronize, reopened]
@@ -24,7 +24,7 @@ jobs:
     # Self-hosted (2026-08-05): this job does seconds of work but GitHub bills every job
     # rounded UP to a full minute, and self-hosted minutes are not billed at all. Measured
     # over ~36h in this repo: Dependabot Auto-Approve 12 jobs = 12 billed min, Docs Link
-    # Check 12 jobs = 12 billed min — pure rounding tax. Safe to move because neither is a
+    # Check 12 jobs = 12 billed min, which is pure rounding tax. Safe to move because neither is a
     # REQUIRED check (this one is advisory/non-blocking), so a busy or offline runner delays
     # it rather than wedging any PR. Required checks deliberately stay GitHub-hosted:
     # one runner would be a single point of failure for a gate that can block every merge.
