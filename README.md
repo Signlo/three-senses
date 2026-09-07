@@ -4,7 +4,7 @@
 
 > **Status: Draft 0.10.3.** This is a public draft, not a ratified standard. The normative
 > vocabulary (`vocabulary.json`) and the conformance vectors (`conformance/vectors.json`) may
-> change before 1.0 — implementations should pin an exact version. The DOI above cites this
+> change before 1.0, so implementations should pin an exact version. The DOI above cites this
 > draft, not a final specification.
 
 **See it. Feel it. Hear it. One shared rhythm for all.** Open rules that
@@ -12,25 +12,58 @@ make every emergency warning
 detectable by sight, touch, or hearing alone, with the full warning,
 including the action, guaranteed in accessible language.
 
+## The one-bell problem
+
+> The fire alarm carries exactly one message: get out. In a tsunami, going
+> outside is lethal and the roof is safety; in a tornado, the basement is.
+> Three dangers, three opposite escapes, one bell.
+
+The building often knows which hazard is coming; the alarm has no vocabulary
+to say it. This standard is that missing vocabulary: a small set of hazard
+families, each carried by a rhythm the body can learn, so the signal itself
+says which danger arrived, before a single word is read.
+
+> A child feels WATER on a wristband and knows: climb, not run.
+
+## Where the rhythms come from
+
+> These rhythms come from sign languages. Deaf people have carried the shape
+> of danger in our hands for centuries. Now that knowledge can save everyone.
+
+FIRE is ten rapid pulses, like the fingers of the sign for fire flickering
+upward. WATER is long soft rolls a breath apart, like the rolling hand of the
+signs for waves. GROUND is one unbroken hold, like the sustained-shaking signs
+for earthquake. THREAT, TEST and OTHER are deliberately abstract, because a
+human threat and a drill have no natural signature to imitate. Mimesis is a
+design hypothesis under human testing, and `vocabulary.json` records it as
+one, family by family.
+
+> Deaf people have been the crash-test bodies of every warning failure. We
+> would rather be its engineers.
+
+> An alert designed for the body that hears nothing reaches every body.
+
+## What is in this repository
+
 - `THE-STANDARD.md`: the specification (draft 0.10.3)
 - `vocabulary.json`: the normative, machine-readable rhythm vocabulary
 - `conformance/vectors.json`: machine-checkable conformance vectors (R1 to R8)
 - `conformance/validate.mjs`: checks a rendering log against the vectors
-- `SMS-PROFILE.md`: informative annex — a five-character code (`3S:W4`)
+- `SMS-PROFILE.md`: informative annex, a five-character code (`3S:W4`)
   that lets SMS-based alerting (no cell broadcast, humanitarian settings)
   drive the vocabulary with one regex, no AI; `parseSmsCode()` in the SDK
-- `CAP-PROFILE.md`: informative annex — accessibility at the SOURCE: how an
+- `CAP-PROFILE.md`: informative annex on accessibility at the SOURCE: how an
   alert originator carries an official FCC ASL template video as a CAP
   `<resource>` and Three Senses metadata as namespaced CAP `<parameter>`
   blocks; implemented by `@ideafe/three-senses/compose` (the Three Senses
   Alert Composer core, developed under a Memorandum of Agreement with
   FEMA's IPAWS Program Management Office for the IPAWS-OPEN test
   environment) and the `three-senses compose` / `templates` CLI commands
-- `wea-asl-templates.json`: the FCC WEA template / ASL video map — all 18
+- `wea-asl-templates.json`: the FCC WEA template / ASL video map, all 18
   adopted template texts (DA 25-12 Appendix C) paired with their official
   FCC ASL videos (coverage is complete: every adopted text has a video).
   Two demo-era action messages (Evacuation Immediate, Shelter in Place)
-  are carried as annotated stubs — no adopted text, no official video.
+  are carried as annotated stubs: no adopted text, no official video.
   ⚠ Maps ≤ v0.10.1 carried prose (and ≤ v0.10.0 carried video IDs) derived
   from the FCC's Feb-2024 DEMO-ONLY set; use v0.10.2+.
 - `src/`, `dist/`: the SDK (`@ideafe/three-senses`), TypeScript, zero
@@ -45,6 +78,9 @@ public API, mapping real CAP v1.2 alerts through this vocabulary's hazard
 families. FEMA lab traffic is rendered under the standard's TEST treatment.
 
 ## Why the rhythms cannot be modified
+
+> Morse code gave the world one shared rhythm language, and to this day
+> everyone knows SOS. Nobody owns it. That is why it works.
 
 Anyone may implement this standard, free, forever (Apache-2.0 data and
 code). But a warning language only works if it is the same everywhere, like
@@ -75,10 +111,10 @@ import {
 } from "@ideafe/three-senses";
 
 timeline("FIRE"); // { steps: [{at: 0, event: "on"}, ...], totalMs: 4000 }
-cycleMs("WATER"); // 6000 — the normative repeat interval (R8)
-channelLevel("TEST", "Extreme"); // 0.3 — a drill is capped, always (R6)
+cycleMs("WATER"); // 6000, the normative repeat interval (R8)
+channelLevel("TEST", "Extreme"); // 0.3, a drill is capped, always (R6)
 vibratePattern("STORM"); // [500, 1000, 500, 1000, 500]
-conformance().pass; // true — this SDK, proven against the vectors
+conformance().pass; // true, this SDK proven against the vectors
 ```
 
 Play an alert in a browser, all channels on one clock:
@@ -96,7 +132,7 @@ acknowledgeButton.onclick = () => alert.stop(); // I UNDERSTAND
 ```
 
 The renderer callback design is deliberate: the SDK owns the clock and the
-rhythm; you own the surface — a DOM element, a torch, a smart bulb, a
+rhythm; you own the surface, whether a DOM element, a torch, a smart bulb, or a
 building beacon. Severity only ever changes the level. ALL_CLEAR plays its gentle,
 self-terminating release cue and never loops.
 
