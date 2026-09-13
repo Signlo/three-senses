@@ -11,8 +11,69 @@ permissions:
 jobs:
   test:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # fetch-depth: 0 so the secret scan below can resolve base..head. A shallow clone
+          # cannot, and that action fails closed rather than passing silently.
+          fetch-depth: 0
+      # Secret scan of the PR's own commits with the org-pinned gitleaks, hosted HERE on purpose:
+      # this job's context ("test") is a REQUIRED check on main and runs on every PR without a
+      # path filter, so the scan cannot be skipped past by auto-merge and needs no new job. This
+      # repo is PUBLIC, so GitHub's native secret scanning and push protection are on as well;
+      # this step is the org's own layer, the same one every private Signlo repo carries.
+      #
+      # INLINE rather than the shared composite action, and the reason is measured: the org's
+      # `secret-scan-range` action lives in the PRIVATE signlo-platform-ops repo, and a public
+      # caller cannot resolve it ("Unable to resolve action signlo/signlo-platform-ops, not
+      # found", run 34750175576 on 2026-09-13). The steps below are that action's logic, with
+      # the same pinned release and checksum verification signlo-app's inline scan uses.
+      # Range-scoped, so it needs no suppression list. Fails closed: an unresolvable range is
+      # an error, never a silent pass. Doctrine and the org-wide check that keeps this step
+      # here: signlo-platform-ops docs/operations/repo-posture.md (oss-borrow W3.1).
+      - name: Install gitleaks (pinned release, checksum-verified)
+        env:
+          GITLEAKS_VERSION: 8.30.1
+          GITLEAKS_SHA256_ARM64: e4a487ee7ccd7d3a7f7ec08657610aa3606637dab924210b3aee62570fb4b080 # gitleaks_8.30.1_linux_arm64.tar.gz
+          GITLEAKS_SHA256_X64: 551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb # gitleaks_8.30.1_linux_x64.tar.gz
+        run: |
+          set -euo pipefail
+          case "$(uname -m)" in
+            aarch64 | arm64) ARCH=arm64; SHA="$GITLEAKS_SHA256_ARM64" ;;
+            *) ARCH=x64; SHA="$GITLEAKS_SHA256_X64" ;;
+          esac
+          url="https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_${ARCH}.tar.gz"
+          curl -sSfL --retry 3 --retry-all-errors --retry-delay 2 --max-time 60 -o /tmp/gitleaks.tar.gz "$url"
+          echo "${SHA}  /tmp/gitleaks.tar.gz" | sha256sum -c -
+          tar -xzf /tmp/gitleaks.tar.gz -C /tmp gitleaks
+          /tmp/gitleaks version
+      - name: Secret scan (commit range)
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+          # Not a PR (push to main): there is no range to scan here, and GitHub's native
+          # secret scanning covers the public history. Report and exit clean.
+          if [ "$EVENT_NAME" != "pull_request" ]; then
+            echo "event=$EVENT_NAME: no PR range to scan"
+            exit 0
+          fi
+          if [ -z "$BASE_SHA" ] || [ -z "$HEAD_SHA" ]; then
+            echo "::error::secret scan: could not resolve base/head from the event payload"
+            exit 1
+          fi
+          for sha in "$BASE_SHA" "$HEAD_SHA"; do
+            if ! git cat-file -e "${sha}^{commit}" 2>/dev/null; then
+              echo "::error::secret scan: ${sha} is not in this checkout (checkout needs fetch-depth: 0)"
+              exit 1
+            fi
+          done
+          echo "Scanning ${BASE_SHA}..${HEAD_SHA} (only the commits this PR adds)"
+          /tmp/gitleaks detect --source . --log-opts="${BASE_SHA}..${HEAD_SHA}" \
+            --redact -v --no-banner --exit-code 1
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: 22
