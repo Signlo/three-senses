@@ -11,8 +11,24 @@ permissions:
 jobs:
   test:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # fetch-depth: 0 so the secret scan below can resolve base..head. A shallow clone
+          # cannot, and that action fails closed rather than passing silently.
+          fetch-depth: 0
+      # Secret scan of the PR's own commits (org-pinned gitleaks), hosted HERE on purpose: this
+      # job's context ("test") is a REQUIRED check on main and runs on every PR without a path
+      # filter, so the scan cannot be skipped past by auto-merge and needs no new job. This repo
+      # is PUBLIC, so GitHub's native secret scanning and push protection are on as well; this
+      # step is the org's own layer, the same one every private Signlo repo carries.
+      # Range-scoped, so it needs no suppression list. SHA-pinned: a step-level `uses: ...@main`
+      # startup-fails under the org's sha_pinning_required policy. Doctrine and the org-wide
+      # check that keeps this step here: signlo-platform-ops docs/operations/repo-posture.md
+      # (oss-borrow W3.1, 2026-09-13).
+      - name: Secret scan (commit range)
+        uses: Signlo/signlo-platform-ops/.github/actions/secret-scan-range@39ee58c3c32ddbf541dff25b571cc6c9c1dc7e00 # main @ 2026-09-13
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: 22

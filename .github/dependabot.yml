@@ -1,0 +1,40 @@
+# Dependabot version-updates, the org convention (see signlo-platform-ops/.github/dependabot.yml
+# and docs/operations/repo-posture.md there). Security updates flow via Dependabot alerts
+# regardless of this file; `automated-security-fixes` is enabled on the repo.
+#   - github-actions (/): weekly, ALL grouped, keeps action SHAs current under the org's
+#     sha_pinning_required policy.
+#   - npm (/): the TypeScript toolchain, weekly minor+patch grouped; MAJORS ignored (deliberate,
+#     human-reviewed). The published SDK has no runtime dependencies.
+version: 2
+updates:
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    groups:
+      github-actions:
+        patterns: ["*"]
+    ignore:
+      # Cross-repo private composite action. Dependabot's github-actions updater cannot reach
+      # another private repo's ref to check for updates (git_dependencies_not_reachable), so this
+      # pseudo-dependency would permanently fail the weekly job. Same fix as deaflare-app,
+      # signlo-admin#34 and diplosint#1197.
+      - dependency-name: "Signlo/signlo-platform-ops/*"
+    commit-message:
+      prefix: "ci"
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 5
+    groups:
+      npm:
+        patterns: ["*"]
+        update-types: ["minor", "patch"]
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+    commit-message:
+      prefix: "deps"
