@@ -50,7 +50,7 @@ jobs:
     #
     # This was an unconditional `ubuntu-24.04-arm` while its four siblings
     # (autofix-on-failure, issue-auto-triage, agentic-pr-rescue, conflict-labeler,
-    # dependabot-auto-approve) all run free on minuit-micro, and it fires on
+    # dependabot-auto-approve) all run free on the self-hosted runner, and it fires on
     # `pull_request` in EVERY repo, so it was the single largest billed line in the
     # automation family.
     #
@@ -59,8 +59,11 @@ jobs:
     # PUBLIC. On a public repo a `pull_request` from a fork supplies both this file and
     # the code the steps run, and the steps below execute `pre-commit run --all-files`
     # whose hooks come from the PR's own .pre-commit-config.yaml. That is arbitrary
-    # code execution; on minuit (the fleet's only >4GB box, also hosting the Supabase
-    # dev/CI stack) it would be RCE on our own hardware.
+    # code execution; on signlo-hetzner1 it would be RCE on the box that carries the
+    # Claude seats, the build host, master's DR standby and the four CI runner slots.
+    # (This paragraph named minuit until 2026-09-14. That box was terminated 2026-09-11
+    # and the argument transferred to its successor unchanged, which is the point: the
+    # risk belongs to "our metal", not to one machine.)
     #
     # So the runner is a variable, and THE ABSENCE OF CONFIGURATION IS THE SAFE STATE:
     # unset `vars.AUTOFIX_RUNNER` interpolates as the empty string, which is not
@@ -82,7 +85,16 @@ jobs:
     # invariant: a public repo cannot read it, and a private repo that is later
     # flipped public LOSES access and falls back to hosted automatically.
     # scripts/check_public_runner_exposure.py enforces this shape in CI.
-    runs-on: ${{ vars.AUTOFIX_RUNNER == 'self-hosted' && fromJSON('["self-hosted","minuit-micro"]') || 'ubuntu-24.04-arm' }}
+    # LABEL CORRECTED 2026-09-14: `minuit-micro` -> `hetzner1`. signlo-minuit was terminated
+    # 2026-09-11 and no live runner carries that label (`gh api orgs/Signlo/actions/runners`
+    # returns hetzner1, hetzner-x64, ci-vm/docker, mac-light, android). So the self-hosted branch
+    # of this toggle pointed at nothing: flipping AUTOFIX_RUNNER to `self-hosted`, the documented
+    # fallback lever above, would have QUEUED every autofix job forever, in this repo and in the
+    # fifteen repos this file is synced to. Dormant today only because the org variable reads
+    # `hosted`, which is exactly why nobody noticed. Its two siblings,
+    # `autofix-on-failure.yml` and `alert-issue-reaper.yml`, were re-homed to `hetzner1` on
+    # 2026-09-01 and this one was missed in the same sweep.
+    runs-on: ${{ vars.AUTOFIX_RUNNER == 'self-hosted' && fromJSON('["self-hosted","hetzner1"]') || 'ubuntu-24.04-arm' }}
     timeout-minutes: 15
 
     # A DEPENDABOT PR SKIPS THIS JOB, IT DOES NOT FAIL IT (2026-08-31, signlo-app#2154/#2155).
@@ -325,7 +337,7 @@ jobs:
       - name: Setup Rust toolchain with caching
         if: steps.detect_rust.outputs.detected == 'yes'
         id: setup_rust
-        uses: actions-rust-lang/setup-rust-toolchain@166cdcfd11aee3cb47222f9ddb555ce30ddb9659 # v1.17.0
+        uses: actions-rust-lang/setup-rust-toolchain@ecabd13d1c56bd1345c230e542e9144811ad706f # v2.0.0
         with:
           components: rustfmt, clippy
 
