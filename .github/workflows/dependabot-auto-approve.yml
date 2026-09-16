@@ -21,14 +21,14 @@ concurrency:
 jobs:
   auto-approve:
     name: Auto-approve Dependabot PRs
-    # Self-hosted (2026-08-05): this job does seconds of work but GitHub bills every job
-    # rounded UP to a full minute, and self-hosted minutes are not billed at all. Measured
-    # over ~36h in this repo: Dependabot Auto-Approve 12 jobs = 12 billed min, Docs Link
-    # Check 12 jobs = 12 billed min, which is pure rounding tax. Safe to move because neither is a
-    # REQUIRED check (this one is advisory/non-blocking), so a busy or offline runner delays
-    # it rather than wedging any PR. Required checks deliberately stay GitHub-hosted:
-    # one runner would be a single point of failure for a gate that can block every merge.
-    runs-on: [self-hosted, hetzner1] # re-homed to signlo-hetzner1 2026-09-01 (ROI audit: hosted since the 08-26 minuit teardown at ~1 billed min/run of rounding tax; this family drove the $150-limit freeze). No dispatch inputs on this trigger, so no use_hosted hatch; if the runner is down these queue and runner-health-monitor (kept HOSTED on purpose) pages. NOT safe to copy into any org-synced/public workflow. 2026-09-09: label hetzner1 = the four ephemeral docker slots (was hetzner-x64 = the single legacy runner, which is left to diplosint ingestion and its Playwright host deps; 57 runs queued behind it on 09-08).
+    # HOSTED BY DEFAULT. This file is distributed to every repo in the org, so its runner must
+    # be one every repo can reach: an unset variable is not 'self-hosted', so this resolves to the
+    # GitHub-hosted runner everywhere. The allow-list is the repos whose CI may opt in; adding one
+    # is a reviewed change here, never a variable set elsewhere. Keep both, and never opt in a
+    # public repo. Rationale, measurements and history (kept in the private repo on purpose, this
+    # file is published): docs/operations/dependabot-auto-approve-runner-2026-09-14.md.
+    # Pinned by tests/test_workflow_dependabot_auto_approve.py.
+    runs-on: ${{ vars.DEPENDABOT_APPROVE_RUNNER == 'self-hosted' && contains('|Signlo/signlo-platform-ops|Signlo/signlo-app|Signlo/diplosint|', format('|{0}|', github.repository)) && fromJSON('["self-hosted","hetzner1"]') || 'ubuntu-24.04-arm' }}
     timeout-minutes: 5
     if: github.actor == 'dependabot[bot]'
 
@@ -42,7 +42,22 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               pull_number: context.payload.pull_request.number,
-            }).catch(() => {}); // ignore if already up to date
+            }).catch((e) => {
+              // The comment that used to sit here named ONE benign cause ("ignore if already up to
+              // date") while the code swallowed all of them with no log at all: a 403, a merge
+              // conflict, a base that moved. The PR is then silently left behind its base branch
+              // with nothing to find it by, in EVERY repo this file is synced to. Mirrors the
+              // graphql call below, which has always done this correctly. Found by the 2026-08-19
+              // mode-C/D audit (docs/operations/mode-cd-audit-2026-08-19.md, hearcompanion row);
+              // fixed here rather than downstream because a local edit is reverted by the sync.
+              // Defensive about the rejection VALUE, not only about the call: a diagnostic added to
+              // a catch must not be able to throw, or the graphql auto-merge call below never runs.
+              // `e` is an octokit HttpError in practice, but a rejection can be anything, and a
+              // rejection that says nothing must render as <empty> rather than as `undefined`.
+              const status = e && e.status ? e.status + ' ' : '';
+              const detail = (e && e.message) || (e == null ? '' : String(e));
+              core.warning('pulls.updateBranch: ' + status + (detail || '<empty>'));
+            });
             await github.graphql(`
               mutation EnableAutoMerge($pullRequestId: ID!) {
                 enablePullRequestAutoMerge(input: {
