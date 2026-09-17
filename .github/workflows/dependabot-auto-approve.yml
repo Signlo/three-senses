@@ -28,7 +28,7 @@ jobs:
     # public repo. Rationale, measurements and history (kept in the private repo on purpose, this
     # file is published): docs/operations/dependabot-auto-approve-runner-2026-09-14.md.
     # Pinned by tests/test_workflow_dependabot_auto_approve.py.
-    runs-on: ${{ vars.DEPENDABOT_APPROVE_RUNNER == 'self-hosted' && contains('|Signlo/.github|Signlo/claude-config|Signlo/deaflare-app|Signlo/deaflare-web|Signlo/diplosint|Signlo/hearcompanion-app|Signlo/ideafe-web|Signlo/iptorian|Signlo/signlo-admin|Signlo/signlo-app|Signlo/signlo-brand|Signlo/signlo-codec|Signlo/signlo-platform-ops|Signlo/signlo-studio|Signlo/signlo-web|', format('|{0}|', github.repository)) && fromJSON('["self-hosted","hetzner1"]') || 'ubuntu-24.04-arm' }}
+    runs-on: ${{ vars.FLEET_RUNNER_MODE != 'hosted' && vars.DEPENDABOT_APPROVE_RUNNER == 'self-hosted' && contains('|Signlo/.github|Signlo/claude-config|Signlo/deaflare-app|Signlo/deaflare-web|Signlo/diplosint|Signlo/hearcompanion-app|Signlo/ideafe-web|Signlo/iptorian|Signlo/signlo-admin|Signlo/signlo-app|Signlo/signlo-brand|Signlo/signlo-codec|Signlo/signlo-platform-ops|Signlo/signlo-studio|Signlo/signlo-web|', format('|{0}|', github.repository)) && fromJSON('["self-hosted","hetzner1"]') || 'ubuntu-24.04-arm' }}
     timeout-minutes: 5
     if: github.actor == 'dependabot[bot]'
 
