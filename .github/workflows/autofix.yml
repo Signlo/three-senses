@@ -94,7 +94,23 @@ jobs:
     # `hosted`, which is exactly why nobody noticed. Its two siblings,
     # `autofix-on-failure.yml` and `alert-issue-reaper.yml`, were re-homed to `hetzner1` on
     # 2026-09-01 and this one was missed in the same sweep.
-    runs-on: ${{ vars.AUTOFIX_RUNNER == 'self-hosted' && fromJSON('["self-hosted","hetzner1"]') || 'ubuntu-24.04-arm' }}
+    # FLEET BY DEFAULT FOR PRIVATE REPOS, HOSTED AS THE FALLBACK (DECISION-0060, operator
+    # 2026-09-16: "move all on hetzner except 3sense and use free github as fallback").
+    #
+    # THE POLARITY IS UNCHANGED AND MUST STAY THIS WAY: an UNSET variable still resolves to the
+    # GitHub-hosted runner, so this file is safe the moment it lands in any repo, including a
+    # public one, and `scripts/check_public_runner_exposure.py` (which evaluates every runs-on in
+    # the unconfigured environment) still passes. Turning the fleet on is one org variable.
+    #
+    # THE ALLOW-LIST IS THE SECOND, INDEPENDENT GATE, and it is an allow-list rather than a
+    # deny-list on purpose: a deny-list fails OPEN, so a repo created tomorrow would get fleet
+    # access by default, and a public repo created tomorrow would get it while nobody was looking.
+    # Signlo/three-senses is the only public repo and is deliberately absent. Adding a name here
+    # is a reviewed change in this file; it can never be done by setting a variable elsewhere.
+    #
+    # Pinned by tests/test_fleet_runner_allowlist.py, which holds all three copies identical and
+    # asserts no public repo is ever listed.
+    runs-on: ${{ vars.AUTOFIX_RUNNER == 'self-hosted' && contains('|Signlo/.github|Signlo/claude-config|Signlo/deaflare-app|Signlo/deaflare-web|Signlo/diplosint|Signlo/hearcompanion-app|Signlo/ideafe-web|Signlo/iptorian|Signlo/signlo-admin|Signlo/signlo-app|Signlo/signlo-brand|Signlo/signlo-codec|Signlo/signlo-platform-ops|Signlo/signlo-studio|Signlo/signlo-web|', format('|{0}|', github.repository)) && fromJSON('["self-hosted","hetzner1"]') || 'ubuntu-24.04-arm' }}
     timeout-minutes: 15
 
     # A DEPENDABOT PR SKIPS THIS JOB, IT DOES NOT FAIL IT (2026-08-31, signlo-app#2154/#2155).
