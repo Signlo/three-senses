@@ -34,6 +34,7 @@ jobs:
 
     steps:
       - name: Enable auto-merge
+        id: arm
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
@@ -58,6 +59,55 @@ jobs:
               const detail = (e && e.message) || (e == null ? '' : String(e));
               core.warning('pulls.updateBranch: ' + status + (detail || '<empty>'));
             });
+            // WHY THE METHOD IS CONDITIONAL FROM HERE DOWN (po#6580, measured 2026-09-18/19).
+            // On a base branch whose ruleset carries a MERGE_QUEUE rule the queue OWNS the merge
+            // strategy. An arming that NAMES a method is accepted, records an autoMergeRequest,
+            // and is then never enqueued: the pull request sits CLEAN and armed for ever with
+            // every check green and nothing anywhere saying it is stuck. Naming the queue's OWN
+            // method does not help, which is the part that misleads: signlo-app's queue is
+            // configured SQUASH and this file armed SQUASH. Four signlo-app Dependabot PRs show
+            // the same shape and #2154 is the controlled pair on a single PR: armed by this
+            // workflow at 2026-08-31T05:15:40Z and never enqueued, disarmed at 06:25:45Z,
+            // re-armed with NO method at 2026-09-01T00:02:52Z and added_to_merge_queue at
+            // 00:12:09Z. #2417 and #2419 each sat two days this way, and #2419 is why the
+            // org's security bumps stopped landing.
+            //
+            // The method cannot simply be deleted from the mutation below. GraphQL's
+            // enablePullRequestAutoMerge declares `mergeMethod` with a DEFAULT of MERGE
+            // (`gh api graphql` introspection of EnablePullRequestAutoMergeInput), so an omitted
+            // field still arrives as a named method and stalls identically. Only a caller that
+            // never sends the field enqueues, which is what `gh pr merge --auto` does and what
+            // scripts/agents/lib/merge.mjs has used for queue repos since 2026-08-02. So the
+            // queue case is handed to that same command in the next step.
+            //
+            // The branch is ASKED, never hardcoded: 2 of the 16 repos this file is synced to have
+            // a queue today (signlo-app, diplosint), and a repo that enables one later has to be
+            // right without a second edit to a file it does not own.
+            let hasQueue = false;
+            try {
+              const probe = await github.graphql(`
+                query MergeQueueOnBase($owner: String!, $name: String!, $branch: String!) {
+                  repository(owner: $owner, name: $name) { mergeQueue(branch: $branch) { id } }
+                }
+              `, {
+                owner: context.repo.owner,
+                name: context.repo.repo,
+                branch: context.payload.pull_request.base.ref,
+              });
+              hasQueue = !!(probe && probe.repository && probe.repository.mergeQueue && probe.repository.mergeQueue.id);
+            } catch (e) {
+              // Fail toward the STATUS QUO, which is naming SQUASH below. That is correct for the
+              // 14 synced repos with no queue, and a probe error must never silently hand one of
+              // them the MERGE default. A queue repo that lands here stalls exactly as it does
+              // today, and stalled_merge_intent.py reports it within 30 minutes.
+              const detail = (e && e.message) || (e == null ? '' : String(e));
+              core.warning('mergeQueue probe: ' + (detail || '<empty>'));
+            }
+            core.setOutput('queue', hasQueue ? 'true' : 'false');
+            if (hasQueue) {
+              core.info('base branch has a merge queue: arming with no method in the next step');
+              return;
+            }
             await github.graphql(`
               mutation EnableAutoMerge($pullRequestId: ID!) {
                 enablePullRequestAutoMerge(input: {
@@ -68,3 +118,22 @@ jobs:
             `, { pullRequestId: context.payload.pull_request.node_id }).catch((e) => {
               core.warning('enablePullRequestAutoMerge: ' + e.message);
             });
+
+      - name: Arm auto-merge on a merge-queue branch (no method, the queue owns the strategy)
+        if: steps.arm.outputs.queue == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_URL: ${{ github.event.pull_request.html_url }}
+        run: |
+          set -uo pipefail
+          # Deliberately NOT `set -e`, and the failure is a warning rather than a red job. The org
+          # auto-merge rail's `ciChecksGreen` is name-agnostic, so any failing check-run on this PR
+          # parks it: failing here would trade a silent stall for a louder one on the same PR. The
+          # visibility this state needs is scripts/monitoring/stalled_merge_intent.py, the STILL
+          # rail check written for exactly it (po#6580 scope point 2), which reports a CLEAN and
+          # armed PR that is absent from its queue within 30 minutes.
+          if gh pr merge "$PR_URL" --auto; then
+            echo "armed: native auto-merge with no method, the queue lands it"
+          else
+            echo "::warning::gh pr merge --auto failed; stalled-merge-intent reports it if it sticks"
+          fi
