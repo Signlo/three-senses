@@ -1,0 +1,285 @@
+# Example pipeline for downstream repos.
+# NOTE: Some reusable workflows referenced below are planned but not yet implemented:
+#   reusable-secrets-scan.yml, reusable-privacy-audit.yml,
+#   reusable-pr-labeler.yml, reusable-auto-assign.yml
+name: Pipeline
+
+on:
+  push:
+    branches: [main, dev]
+  pull_request:
+    branches: [main, dev]
+  issue_comment:
+    types: [created]
+
+# 🔒 Least-privilege permissions
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+  security-events: write # Required for CodeQL SARIF upload
+
+# 🔄 Prevent duplicate workflow runs on rapid pushes
+concurrency:
+  group: >-
+    ${{ github.workflow }}-${{ github.event_name }}-
+    ${{ github.event_name == 'issue_comment' && github.event.issue.number || github.ref }}
+  cancel-in-progress: true
+
+# ╔══════════════════════════════════════════════════════════════════════════════╗
+# ║                           SIGNLO CI/CD PIPELINE                              ║
+# ║                                                                              ║
+# ║  This pipeline uses reusable workflows from signlo-platform-ops.          ║
+# ║  All workflows auto-detect language/framework where possible.               ║
+# ║                                                                              ║
+# ║  SUPPORTED REPOSITORIES (15 repos, 6 categories):                           ║
+# ║  ├── Platform:  signlo-platform-ops, signlo-platform-infra, signlo-shared  ║
+# ║  ├── Backend:   signlo-backend (Go monorepo)                               ║
+# ║  ├── Client:    signlo-mobile, signlo-web, signlo-design-system,           ║
+# ║  │              signlo-media-editor                                        ║
+# ║  ├── AI:        signlo-ai-platform                                         ║
+# ║  ├── Testing:   signlo-e2e-tests                                          ║
+# ║  └── SDK:       signlo-sdk-codec, signlo-sdk-liveness, signlo-ime-signboard, ║
+# ║                 signlo-sdk-sensory, signlo-sdk-avatar                    ║
+# ║                                                                              ║
+# ║  NOTE: Auto-detects Node.js, Python, Go, and Terraform                     ║
+# ║                                                                              ║
+# ║  WORKFLOW CATEGORIES:                                                        ║
+# ║  ├── Core:        ci, test, deploy, docker-build                            ║
+# ║  ├── Go:          go-ci                                                     ║
+# ║  ├── Security:    security, secrets-scan, privacy-audit, api-security,      ║
+# ║  │                codeql                                                     ║
+# ║  ├── Mobile:      mobile-build, mobile-e2e, accessibility, app-size,        ║
+# ║  │                testflight                                                 ║
+# ║  ├── Quality:     sonarcloud, performance, lighthouse                        ║
+# ║  ├── Release:     release-mobile, release-please, changelog, rollback       ║
+# ║  ├── Integrations: validate-updates                                         ║
+# ║  ├── DevOps:      healthcheck, preview-deploy, database-migrate, pr-labeler ║
+# ║  ├── Operations:  stale, auto-assign, cache-warm, backup                    ║
+# ║  ├── Docs:        docs, coverage-report, license-check, spell-check         ║
+# ║  └── Advanced:    container-scan, broken-links, size-limit,                 ║
+# ║                   visual-regression                                          ║
+# ╚══════════════════════════════════════════════════════════════════════════════╝
+
+jobs:
+  # ┌──────────────────────────────────────────────────────────────────────────┐
+  # │ AUTOFIX: Automatic Code Formatting                                        │
+  # │ Runs on: Every PR                                                         │
+  # │ Purpose: Auto-format code and push fixes                                  │
+  # │                                                                            │
+  # │ NOTE: autofix.ci is configured not to modify .github/ directory          │
+  # │ To format workflow files, use: @copilot fix-all                          │
+  # │                                                                            │
+  # │ What autofix.ci does:                                                     │
+  # │  ✅ Auto-formats Python, Go, Rust code                                   │
+  # │  ✅ Runs automatically on every PR (Python, Go, Rust)                    │
+  # │  ✅ Prettier runs on push only (not PRs)                                  │
+  # │  ✅ Commits fixes as autofix.ci bot                                       │
+  # │  ❌ Cannot modify .github/ directory                                      │
+  # │                                                                            │
+  # │ What Copilot does (manual trigger):                                       │
+  # │  ✅ Can format .github/ workflow files                                    │
+  # │  ✅ Can format all code files                                             │
+  # │  ✅ Runs with configured permissions to modify .github/ workflows        │
+  # │  ❌ Requires manual trigger: @copilot fix-all                            │
+  # └──────────────────────────────────────────────────────────────────────────┘
+
+  # autofix:
+  #   name: "🔧 Autofix: Format Code"
+  #   if: github.event_name != 'issue_comment'
+  #   permissions:
+  #     contents: write
+  #     pull-requests: write
+  #   # Note: autofix.yml is synced to each repo, not called as a reusable workflow
+  #   # It runs automatically on pull_request_target
+  #   # For configuration, see .github/workflows/autofix.yml in each repository
+
+  # ┌──────────────────────────────────────────────────────────────────────────┐
+  # │ AI ASSISTANT: AI-Assisted PR Review                                       │
+  # │ Runs on: PR comments with @ai-assistant trigger                           │
+  # │ Purpose: Request Copilot review and surface suggestions                   │
+  # └──────────────────────────────────────────────────────────────────────────┘
+
+  copilot-pr-assistant:
+    name: "🤖 AI Assistant"
+    if: |
+      github.event_name == 'issue_comment' &&
+      github.event.issue.pull_request &&
+      (
+        contains(github.event.comment.body, '@ai-assistant') ||
+        contains(github.event.comment.body, '/ai-fix')
+      )
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+    uses: Signlo/signlo-platform-ops/.github/workflows/copilot-pr-assistant.yml@main
+    secrets:
+      WORKFLOW_PAT: ${{ secrets.WORKFLOW_PAT }}
+    with:
+      pr_number: ${{ github.event.issue.number }}
+      comment_body: ${{ github.event.comment.body }}
+      comment_user: ${{ github.event.comment.user.login }}
+
+  # ┌──────────────────────────────────────────────────────────────────────────┐
+  # │ CORE: CI & TEST                                                          │
+  # │ Runs on: Every push and PR                                               │
+  # │ Purpose: Lint, format, and test code                                     │
+  # └──────────────────────────────────────────────────────────────────────────┘
+
+  ci:
+    name: "🔍 CI: Lint & Format"
+    if: github.event_name != 'issue_comment'
+    uses: Signlo/signlo-platform-ops/.github/workflows/reusable-ci.yml@main
+    # Auto-detects: Node.js/React Native (package.json), Python, Go, Terraform
+    # Runs linting and formatting for detected languages
+
+  test:
+    name: "🧪 Test: Unit & Integration"
+    if: github.event_name != 'issue_comment'
+    needs: ci
+    uses: Signlo/signlo-platform-ops/.github/workflows/reusable-test.yml@main
+    # Auto-detects language and runs appropriate test framework
+
+  # ┌──────────────────────────────────────────────────────────────────────────┐
+  # │ GO: Go Service Specific (conditional)                                    │
+  # │ Runs on: Go service repos (signlo-backend, signlo-shared)               │
+  # │ Purpose: golangci-lint, go vet, go test, staticcheck                     │
+  # └──────────────────────────────────────────────────────────────────────────┘
+
+  go-ci:
+    name: "🐹 Go: CI & Static Analysis"
+    if: |
+      (contains(github.repository, 'signlo-backend') || contains(github.repository, 'signlo-shared')) &&
+      github.event_name != 'issue_comment'
+    uses: Signlo/signlo-platform-ops/.github/workflows/reusable-go-ci.yml@main
+    with:
+      run-vet: true
+      run-staticcheck: true
+      coverage: true
+  #     run-staticcheck: true
+  #     run-vet: true
+  #     run-test: true
+  #     coverage-threshold: 80
+  #   secrets: inherit
+
+  # ┌──────────────────────────────────────────────────────────────────────────┐
+  # │ SECURITY: Scans & Compliance                                             │
+  # │ Runs on: Every push and PR                                               │
+  # │ Purpose: Security scanning, secrets detection, compliance                │
+  # └──────────────────────────────────────────────────────────────────────────┘
+
+  security:
+    name: "🔒 Security: Dependency Scan"
+    if: github.event_name != 'issue_comment'
+    uses: Signlo/signlo-platform-ops/.github/workflows/reusable-security.yml@main
+    # Runs: npm audit, pip-audit, Gitleaks, Trivy
+
+  codeql:
+    name: "🔬 Security: CodeQL Analysis"
+    if: github.event_name != 'issue_comment'
+    uses: Signlo/signlo-platform-ops/.github/workflows/reusable-codeql.yml@main
+    # Auto-detects language for CodeQL
+
+  secrets-scan:
+    name: "🔑 Security: Secrets Detection"
+    if: github.event_name != 'issue_comment'
+    uses: Signlo/signlo-platform-ops/.github/workflows/reusable-secrets-scan.yml@main
+    # Detects leaked API keys, passwords, tokens
+
+  privacy:
+    name: "🛡️ Compliance: Privacy Audit"
+    if: github.event_name != 'issue_comment'
+    uses: Signlo/signlo-platform-ops/.github/workflows/reusable-privacy-audit.yml@main
+    # GDPR/CCPA compliance checks
+
+  # ┌──────────────────────────────────────────────────────────────────────────┐
+  # │ QUALITY: Code Quality & Performance                                       │
+  # │ Runs on: Every push and PR                                               │
+  # │ Purpose: SonarCloud, performance testing                                  │
+  # └──────────────────────────────────────────────────────────────────────────┘
+
+  sonarcloud:
+    name: "☁️ Quality: SonarCloud"
+    if: github.event_name != 'issue_comment'
+    needs: [ci, test]
+    uses: Signlo/signlo-platform-ops/.github/workflows/reusable-sonarcloud.yml@main
+    secrets: inherit
+
+  # ┌──────────────────────────────────────────────────────────────────────────┐
+  # │ MOBILE: iOS/Android Specific (conditional)                               │
+  # │ Runs on: signlo-mobile only (React Native)                               │
+  # │ Purpose: Mobile builds, E2E tests, accessibility                         │
+  # └──────────────────────────────────────────────────────────────────────────┘
+
+  accessibility:
+    name: "♿ Mobile: Accessibility"
+    if: contains(github.repository, 'signlo-mobile') && github.event_name != 'issue_comment'
+    uses: Signlo/signlo-platform-ops/.github/workflows/reusable-accessibility.yml@main
+    # Critical for Signlo's Deaf community users
+
+  app-size:
+    name: "📊 Mobile: Bundle Size"
+    if: contains(github.repository, 'signlo-mobile') && github.event_name != 'issue_comment'
+    uses: Signlo/signlo-platform-ops/.github/workflows/reusable-app-size.yml@main
+
+  # ┌──────────────────────────────────────────────────────────────────────────┐
+  # │ INTEGRATIONS: PR Management                                               │
+  # │ Runs on: PRs only                                                         │
+  # │ Purpose: Auto-label PRs, auto-assign reviewers                            │
+  # └──────────────────────────────────────────────────────────────────────────┘
+
+  pr-labeler:
+    name: "🏷️ Integration: Auto-Label PR"
+    if: github.event_name == 'pull_request'
+    uses: Signlo/signlo-platform-ops/.github/workflows/reusable-pr-labeler.yml@main
+    # Labels by: file path, PR size, branch name
+
+  auto-assign:
+    name: "👥 Integration: Auto-Assign Reviewers"
+    if: github.event_name == 'pull_request'
+    uses: Signlo/signlo-platform-ops/.github/workflows/reusable-auto-assign.yml@main
+    # Assigns based on CODEOWNERS
+
+  # ┌──────────────────────────────────────────────────────────────────────────┐
+  # │ DEPLOY: Deployment to Staging                                             │
+  # │ Runs on: Push to main only                                                │
+  # │ Purpose: Deploy to staging environment                                     │
+  # └──────────────────────────────────────────────────────────────────────────┘
+
+  deploy-staging:
+    name: "🚀 Deploy: Staging Environment"
+    timeout-minutes: 30
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    needs: [ci, test, security, codeql]
+    uses: Signlo/signlo-platform-ops/.github/workflows/reusable-deploy.yml@main
+    with:
+      environment: staging
+    secrets: inherit
+    # Auto-detects: Docker/EKS deployment for signlo-backend (monorepo)
+
+  # ┌──────────────────────────────────────────────────────────────────────────┐
+  # │ POST-DEPLOY: Health Check & Cache Warm                                    │
+  # │ Runs on: After successful deploy                                          │
+  # │ Purpose: Verify deployment, warm caches                                   │
+  # └──────────────────────────────────────────────────────────────────────────┘
+
+  healthcheck:
+    name: "🏥 Post-Deploy: Health Check"
+    if: github.event_name != 'issue_comment'
+    timeout-minutes: 10
+    needs: deploy-staging
+    uses: Signlo/signlo-platform-ops/.github/workflows/reusable-healthcheck.yml@main
+    with:
+      url: https://staging-api.signlo.com/health
+    # Retries up to 5 times with 10s delay
+
+  cache-warm:
+    name: "🔥 Post-Deploy: Cache Warm"
+    if: github.event_name != 'issue_comment'
+    timeout-minutes: 10
+    needs: healthcheck
+    uses: Signlo/signlo-platform-ops/.github/workflows/reusable-cache-warm.yml@main
+    with:
+      environment: staging
+    # Warms: Node.js builds, Django static files
