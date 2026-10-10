@@ -221,6 +221,60 @@ gain what today's alarms lack, the ability to say not only that danger
 exists but which way to run. Device profiles will be specified in a later
 draft.
 
+### Surface rules S1 to S4 (normative, proposed)
+
+Proposed 2026-10-10 for the next draft; not yet in force, and not yet part of
+`conformance/vectors.json`. The identifiers S1 to S4 are deliberately distinct
+from the machine-checked requirements R1 through R8. These rules apply to
+surfaces the phone-centred text above does not describe: a television, a
+public display, a graphics overlay, and any relay that passes an authority's
+alert on.
+
+In these rules the FULL PRESENTATION is the complete visual answer to the five
+questions: the sign-language video carried as the alert's CAP resource, large,
+with the signer fully in frame and never cropped or covered; one large
+pictogram for the hazard family; the hazard in one word and the protective
+action in simple words a child can understand, on high-contrast caption bands;
+the severity as a color wash behind everything, never alone, always with white
+triangles whose count is the severity and with the severity word; a light cue
+under S4; the sender and the time. The authority's full text, the area, and
+the source are further detail and are not part of the full presentation.
+All-clear is a green wash, a circle mark, and the word, delivered affirmatively.
+
+S1. Surfaces without controls. Where the surface offers no replay control and
+no "tell me more" control (linear television, signage, public displays),
+conformance is met by repetition on a schedule: the full presentation repeats
+while the alert is active, at an interval the operator of the surface declares
+and that is never longer than five minutes, and each cycle shows the
+authority's full text, either as a second screen in the cycle or as a crawl,
+so that "tell me more" is replaced by "it comes back with everything". An
+all-clear is shown at least twice. A streaming or IPTV surface that can offer
+controls keeps the controls and need not repeat on a schedule.
+
+S2. The overlay profile. A graphics overlay that cannot add sound to the
+programme audio conforms when it carries the complete visual channel, that is
+the full presentation, and declares the sound channel to be the decision of the
+broadcaster. The touch channel is handed to a paired phone or watch, which acts
+on the same CAP `identifier`, `sender` and `sent` as the overlay, so the
+devices stay in step without a link between them. The standard is emitted on
+three senses and survivable on one; that is why an overlay can conform. An
+overlay MUST NOT reduce the visual channel to a text crawl.
+
+S3. Relays never rewrite. A relay shows the authority's text unchanged. The
+protective action in simple words comes from the alerting authority's
+pre-approved template for that hazard family and action, identified in the CAP
+message by a template identifier or by the event code, and never from a
+downstream rewrite. Where no template exists, the relay shows the authority's
+`instruction` field verbatim and MUST NOT simplify it. The remedy for hard
+words is a better template upstream, never an edit downstream.
+
+S4. Light on large displays. The light cue on a television or a public display
+MUST NOT become full-screen flashing. It flashes at most three times per second
+(the general flash threshold of WCAG 2.3.1; broadcasters also observe
+ITU-R BT.1702 and national rules), covers a bounded area rather than the whole
+screen, and a steady or slow pulse is preferred to any strobe. The light
+follows the shared rhythm of the three channels rather than competing with it.
+
 ## 6. Conformance
 
 `conformance/vectors.json` contains the machine-checkable event vectors and
