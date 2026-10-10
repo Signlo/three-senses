@@ -18,10 +18,14 @@ FEMA's IPAWS Program Management Office for the IPAWS-OPEN test environment.
    defined here MUST pass it through byte-intact, and one that re-serves CAP passes the
    ORIGINAL XML byte-intact (the IPAWS rule: a received message is never changed,
    manipulated, or filtered).
-3. NEVER GUESS. A composer attaches an ASL resource only on an exact template match; a
-   renderer applies a Three Senses parameter only when the value parses exactly. Broken
-   or unknown values are ignored in favor of local inference: a wrong-hazard video or a
-   wrong-family rhythm is worse than none.
+3. NEVER GUESS, NEVER REWRITE. A composer attaches an ASL resource only on an exact
+   template match; a renderer applies a Three Senses parameter only when the value parses
+   exactly. Broken or unknown values are ignored in favor of local inference: a wrong-hazard
+   video or a wrong-family rhythm is worse than none. A relay never rewrites: it shows the
+   authority's text unchanged, and the protective action in simple words comes from the
+   authority's pre-approved template (see "Template identifier" below), never from a
+   downstream simplification. Where no template exists, the relay shows the `<instruction>`
+   verbatim (rule S3 of THE-STANDARD.md, proposed).
 4. HONESTY IN THE LABEL. An FCC template video explains what an alert TYPE means in ASL.
    It is never presented as a translation of the specific message (47 CFR 10.500(e)(3)
    leaves agency, location, and time to the text channels). The `resourceDesc` written by
@@ -48,6 +52,20 @@ One `<resource>` block per `<info>`:
 - The normative source of template-to-video pairings is `wea-asl-templates.json` in this
   repository (Apache-2.0, compiled from FCC DA 25-12 Appendix C and the FCC's official
   ASL template page, with the mismatches between the two sets recorded honestly).
+
+### Template identifier (proposed)
+
+An authority that issues pre-approved templates identifies the template a message uses,
+so that a relay can select the matching signed clip and the matching simple-words action
+without interpreting free text. The identifier is the CAP `<eventCode>` of the `<info>`
+block (the three-letter SAME code, for United States WEA templates) or, where the authority
+publishes its own template list, an identifier the authority defines in a `<parameter>` of
+its own namespace. This annex defines no new element and no new valueName for it. A relay
+that finds no template, or an identifier it does not recognize, shows the `<instruction>`
+field verbatim and attaches no clip (design rule 3). A clip stored in advance on the receiver
+is played only when the `<digest>` of the alert's resource matches the stored copy; otherwise
+the receiver fetches the resource. The non-normative guide `docs/signed-template-library.md`
+describes how an authority builds such a library.
 
 ## 3. Three Senses metadata as CAP parameters
 
