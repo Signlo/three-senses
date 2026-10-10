@@ -1,6 +1,6 @@
 # The Three Senses Alerting Standard
 
-Draft 0.10.3 (September 2026). Published by International Deaf Emergency (IDE),
+Draft 0.11.0 (October 2026). Published by International Deaf Emergency (IDE),
 a Deaf-led United States 501(c)(3) nonprofit. Contact: Emmanuel Jacq,
 President, emmanuel.jacq@ideafe.org. Canonical page: https://ideafe.org/standard
 (also reachable at https://alertsforall.org).
@@ -221,10 +221,11 @@ gain what today's alarms lack, the ability to say not only that danger
 exists but which way to run. Device profiles will be specified in a later
 draft.
 
-### Surface rules S1 to S4 (normative, proposed)
+### Surface rules S1 to S4 (normative)
 
-Proposed 2026-10-10 for the next draft; not yet in force, and not yet part of
-`conformance/vectors.json`. The identifiers S1 to S4 are deliberately distinct
+In force from draft 0.11.0 (10 October 2026). They are not part of
+`conformance/vectors.json`: a surface rule is checked by review of the surface, not by the
+vector suite. The identifiers S1 to S4 are deliberately distinct
 from the machine-checked requirements R1 through R8. These rules apply to
 surfaces the phone-centred text above does not describe: a television, a
 public display, a graphics overlay, and any relay that passes an authority's
@@ -307,6 +308,13 @@ nothing in the licensing blocks a standards body from doing its work.
 
 ## 8. Status and lineage
 
+Draft 0.11.0 adds the surface rules S1 to S4 (section 5): repetition on a schedule
+where a surface has no controls, the overlay profile, relays that never rewrite, and
+light limits on large displays. They answer the questions a broadcaster designing a
+CAP overlay for linear television put to the author in October 2026, and they were
+written from the author's answers. The CAP annex's design rule 3 became "never guess,
+never rewrite", with a template identifier that defines no new CAP element, and a
+non-normative guide to building a signed template library was added.
 Draft 0.10.3 is implemented in Deaflare (the reference implementation).
 0.9.0 is the alignment release, after a second external FCC-style audit:
 it removed a leftover sentence contradicting the attention/language split,

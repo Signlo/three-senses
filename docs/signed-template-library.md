@@ -2,7 +2,7 @@
 
 Part of the Three Senses Alerting Standard. This guide binds no conformance requirement.
 It describes how an alerting authority, with its national Deaf community, can build the
-library of signed clips that rules S2 and S3 of THE-STANDARD.md (proposed) and section 2
+library of signed clips that rules S2 and S3 of THE-STANDARD.md and section 2
 of CAP-PROFILE.md rely on.
 
 A signed clip in such a library explains what an alert TYPE means. It is not a translation

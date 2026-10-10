@@ -25,7 +25,7 @@ FEMA's IPAWS Program Management Office for the IPAWS-OPEN test environment.
    authority's text unchanged, and the protective action in simple words comes from the
    authority's pre-approved template (see "Template identifier" below), never from a
    downstream simplification. Where no template exists, the relay shows the `<instruction>`
-   verbatim (rule S3 of THE-STANDARD.md, proposed).
+   verbatim (rule S3 of THE-STANDARD.md).
 4. HONESTY IN THE LABEL. An FCC template video explains what an alert TYPE means in ASL.
    It is never presented as a translation of the specific message (47 CFR 10.500(e)(3)
    leaves agency, location, and time to the text channels). The `resourceDesc` written by
@@ -53,7 +53,7 @@ One `<resource>` block per `<info>`:
   repository (Apache-2.0, compiled from FCC DA 25-12 Appendix C and the FCC's official
   ASL template page, with the mismatches between the two sets recorded honestly).
 
-### Template identifier (proposed)
+### Template identifier
 
 An authority that issues pre-approved templates identifies the template a message uses,
 so that a relay can select the matching signed clip and the matching simple-words action

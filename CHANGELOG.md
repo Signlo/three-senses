@@ -4,10 +4,11 @@ Governance events and proposals for the Three Senses Alerting Standard. Releases
 Zenodo deposit are recorded here when they happen. Section 8 of THE-STANDARD.md keeps the
 lineage of the drafts.
 
-## Proposed, 2026-10-10: surface rules S1 to S4
+## 0.11.0, 2026-10-10: surface rules S1 to S4 in force
 
-Not released. No version bump, no tag, and the DOI record is untouched; the release and the
-Zenodo deposit follow the maintainer's merge.
+Proposed on 2026-10-10 (Signlo/three-senses#21) and put in force the same day by the
+maintainer's decision; released as v0.11.0 with the Zenodo deposit under the concept DOI
+10.5281/zenodo.21977982.
 
 - THE-STANDARD.md, section 5: surface rules S1 (surfaces without controls: repetition on a
   schedule, never longer than five minutes, the authority's full text in each cycle, an
