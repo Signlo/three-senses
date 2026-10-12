@@ -23,6 +23,12 @@ if (!logPath) {
 }
 const input = JSON.parse(readFileSync(logPath, "utf8"));
 const logs = Array.isArray(input) ? input : [input];
+// Nothing checked is not a pass: an empty list would otherwise exit 0 and
+// read as "conformant" in any pipeline that only looks at the exit code.
+if (logs.length === 0) {
+  console.error("FAIL: the log list is empty; nothing was validated");
+  process.exit(1);
+}
 
 let failures = 0;
 for (const log of logs) {

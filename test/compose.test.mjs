@@ -13,6 +13,9 @@ import {
 const rootMap = JSON.parse(
   readFileSync(new URL("../wea-asl-templates.json", import.meta.url)),
 );
+const vocabulary = JSON.parse(
+  readFileSync(new URL("../vocabulary.json", import.meta.url)),
+);
 
 const BASE = {
   identifier: "IDE-TEST-0001",
@@ -159,11 +162,20 @@ test("compose: a valid input yields IPAWS-profile CAP with template resource and
   assert.ok(
     xml.includes("ideafe:threeSenses:family</valueName><value>STORM</value>"),
   );
-  assert.ok(
-    xml.includes(
-      `ideafe:threeSenses:version</valueName><value>${rootMap.version}</value>`,
-    ),
+  // CAP-PROFILE.md section 3: the parameter carries the STANDARD draft
+  // (vocabulary.json), not the template map. The fixture is only meaningful
+  // while the two differ, so that is asserted too.
+  assert.notEqual(
+    vocabulary.version,
+    rootMap.version,
+    "standard and template-map versions coincide: this test can no longer tell them apart, so give it a fixture where they differ",
   );
+  const versionParam = xml.match(
+    /ideafe:threeSenses:version<\/valueName><value>([^<]*)<\/value>/,
+  );
+  assert.ok(versionParam, "the version parameter is present");
+  assert.equal(versionParam[1], vocabulary.version);
+  assert.notEqual(versionParam[1], rootMap.version);
   assert.ok(
     xml.includes("https://www.youtube.com/watch?v=a59VLxN82uI"),
     "the official TOR video",

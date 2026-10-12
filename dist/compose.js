@@ -30,7 +30,7 @@
  * Determinism: the caller supplies `identifier` and `sent`; this module
  * never reads a clock, so composed XML is byte-reproducible in tests.
  */
-import { WEA_ASL_DATA } from "./data.js";
+import { VOCABULARY_DATA, WEA_ASL_DATA } from "./data.js";
 // Runtime twins of the closed lists above (CAP 1.2 xsd enumerations).
 const STATUSES = ["Actual", "Exercise", "System", "Test", "Draft"];
 const MSG_TYPES = ["Alert", "Update", "Cancel", "Ack", "Error"];
@@ -422,7 +422,9 @@ export function composeCap(input) {
         for (const p of input.parameters ?? [])
             x += parameter(p.valueName, p.value);
         x += parameter("ideafe:threeSenses:family", family);
-        x += parameter("ideafe:threeSenses:version", WEA_ASL_DATA.version);
+        // CAP-PROFILE.md section 3: the STANDARD draft the originator mapped
+        // against (vocabulary.json "version"), never the template map's version.
+        x += parameter("ideafe:threeSenses:version", VOCABULARY_DATA.version);
         if (template?.asl) {
             x += `    <resource>\n`;
             x += `      <resourceDesc>${esc(`American Sign Language video: what a ${template.name} means (official FCC WEA template video; not a translation of this specific message)`)}</resourceDesc>\n`;
