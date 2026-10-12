@@ -13,7 +13,7 @@ const BANNED = [
   /each be answerable through sight alone/i,
   /MUST each be answerable through sight/i,
   /each channel enough to act on/i,
-  /field.tested/i,
+  /field[ _-]?test(ed|ing|s)?/i,
   /readable by sight, touch, or hearing alone, each/i,
 ];
 const root = process.cwd();
@@ -28,6 +28,15 @@ const files = [];
   }
 })(root);
 
+// R3: the all-clear is an affirmative RELEASE cue, never silence. Any
+// "all-clear" within 40 characters of "silence"/"silent" (either order,
+// across line breaks) is drift from the pre-0.7.0 model, UNLESS the span
+// between them negates it ("silence alone is never an all-clear"). This is
+// how R3's own prose passes while a table cell "all clear | silence" fails.
+const ALL_CLEAR_SILENCE =
+  /\bsilen(?:ce|t)\b[\s\S]{0,40}?\ball[-_ ]?clear|\ball[-_ ]?clear[\s\S]{0,40}?\bsilen(?:ce|t)\b/gi;
+const NEGATION = /\b(?:never|not|no|cannot)\b/i;
+
 let failures = 0;
 for (const f of files) {
   const text = readFileSync(f, "utf8");
@@ -37,6 +46,13 @@ for (const f of files) {
       console.error(`BANNED ${f}: "${m[0]}"`);
       failures++;
     }
+  }
+  for (const m of text.matchAll(ALL_CLEAR_SILENCE)) {
+    if (NEGATION.test(m[0])) continue;
+    console.error(
+      `R3 ${f}: "${m[0].replace(/\s+/g, " ")}" (the all-clear is a release cue, never silence)`,
+    );
+    failures++;
   }
 }
 
@@ -56,6 +72,27 @@ if (!std.includes(`Draft ${v}`)) {
 const readme = readFileSync("README.md", "utf8");
 if (!readme.includes(`draft ${v}`) && !readme.includes(`Draft ${v}`)) {
   console.error(`VERSION README missing ${v}`);
+  failures++;
+}
+// The annexes name the standard draft they belong to, and the CAP annex's
+// example version parameter is the standard draft (CAP-PROFILE.md section 3).
+for (const annex of ["CAP-PROFILE.md", "SMS-PROFILE.md"]) {
+  const text = readFileSync(annex, "utf8").replace(/\s+/g, " ");
+  const want = new RegExp(
+    `Alerting Standard, draft ${v.replace(/\./g, "\\.")}\\b`,
+  );
+  if (!want.test(text)) {
+    console.error(`VERSION ${annex} missing "Alerting Standard, draft ${v}"`);
+    failures++;
+  }
+}
+const capExample = readFileSync("CAP-PROFILE.md", "utf8").match(
+  /ideafe:threeSenses:version<\/valueName><value>([^<]*)</,
+);
+if (!capExample || capExample[1] !== v) {
+  console.error(
+    `VERSION CAP-PROFILE.md example ideafe:threeSenses:version ${capExample?.[1]} != ${v}`,
+  );
   failures++;
 }
 const vectors = JSON.parse(readFileSync("conformance/vectors.json", "utf8"));
