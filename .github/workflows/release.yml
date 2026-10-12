@@ -49,6 +49,25 @@ jobs:
             echo "tag $GITHUB_REF_NAME does not match package.json $pkg" >&2
             exit 1
           fi
+      # A v* tag can be pushed on ANY commit (a side branch, a fork PR head
+      # fetched locally), and this job would publish it with signed
+      # provenance. Only a commit already reviewed onto main may ship.
+      # Full main history: the checkout above is depth 1, and a depth-limited
+      # fetch could miss an older tagged commit. --unshallow refuses to run on
+      # a complete clone, so it is used only when the clone is shallow (a
+      # later fetch-depth: 0 on the checkout must not break every release).
+      - name: Tagged commit is on main
+        run: |
+          if [ "$(git rev-parse --is-shallow-repository)" = "true" ]; then
+            git fetch --no-tags --unshallow origin +refs/heads/main:refs/remotes/origin/main
+          else
+            git fetch --no-tags origin +refs/heads/main:refs/remotes/origin/main
+          fi
+          git merge-base --is-ancestor "$GITHUB_SHA" origin/main || {
+            echo "::error::tag $GITHUB_REF_NAME ($GITHUB_SHA) is not on main"
+            exit 1
+          }
+          echo "tagged commit $GITHUB_SHA is on main"
       - name: OIDC preflight (the token URL must be injected, or publish cannot authenticate)
         run: |
           node --version
