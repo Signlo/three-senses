@@ -145,4 +145,39 @@ test("conformance() passes on itself, and its negative control can fail", () => 
   assert.equal(pass, true);
   assert.ok(results.length >= families().length * 3);
   assert.ok(results.every((r) => r.pass));
+
+  // NEGATIVE CONTROL: corrupt the embedded WATER vector in memory (one pulse
+  // 100 ms late, cycle 100 ms short) and conformance() must reject it, naming
+  // the rules it broke. Restored in finally so no other test sees it.
+  const water = VECTORS.vectors.WATER;
+  const saved = { steps: water.steps, totalMs: water.totalMs };
+  try {
+    water.steps = water.steps.map((s, i) =>
+      i === 1 ? { ...s, at: s.at + 100 } : s,
+    );
+    water.totalMs = saved.totalMs - 100;
+    const bad = conformance();
+    assert.equal(bad.pass, false);
+    const failed = bad.results.filter((r) => !r.pass);
+    assert.ok(
+      failed.some(
+        (r) =>
+          r.family === "WATER" &&
+          r.requirement === "R1 rhythm-identity" &&
+          /expected/.test(r.detail ?? ""),
+      ),
+      "the R1 failure names the family and the rule",
+    );
+    assert.ok(
+      failed.some(
+        (r) => r.family === "WATER" && r.requirement === "R8 loop-seamlessness",
+      ),
+      "the R8 failure names the family and the rule",
+    );
+    assert.ok(failed.every((r) => r.family === "WATER"));
+  } finally {
+    water.steps = saved.steps;
+    water.totalMs = saved.totalMs;
+  }
+  assert.equal(conformance().pass, true, "restored");
 });

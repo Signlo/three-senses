@@ -51,3 +51,11 @@ test("NEGATIVE CONTROL: a wrong rhythm FAILS R1", () => {
   assert.equal(code, 1);
   assert.match(out, /R1 rhythm-identity/);
 });
+
+test("NEGATIVE CONTROL: an empty log list FAILS (nothing checked is not a pass)", () => {
+  const file = join(dir, "empty.json");
+  writeFileSync(file, "[]");
+  const { code, out } = run(file);
+  assert.equal(code, 1);
+  assert.match(out, /log list is empty/);
+});
