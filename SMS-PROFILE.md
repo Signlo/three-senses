@@ -1,7 +1,7 @@
 # The Three Senses SMS Profile (Annex, informative)
 
-Draft 1, August 2026. Part of the Three Senses Alerting Standard
-(github.com/Signlo/three-senses). This annex is INFORMATIVE: it does not
+Annex draft 1, August 2026. Part of the Three Senses Alerting Standard,
+draft 0.11.0 (github.com/Signlo/three-senses). This annex is INFORMATIVE: it does not
 change the vocabulary, and implementing it is optional.
 
 ## Why an SMS profile exists
@@ -38,11 +38,15 @@ SEVERITY, one digit:
 
 | Digit | Step                 | Touch level |
 | ----- | -------------------- | ----------- |
-| 0     | SAFE NOW (all clear) | silence     |
+| 0     | SAFE NOW (all clear) | 25%         |
 | 1     | BE CAREFUL           | 25%         |
 | 2     | DANGER COMING        | 50%         |
 | 3     | ACT NOW (Severe)     | 75%         |
 | 4     | ACT NOW (Extreme)    | 100%        |
+
+SAFE NOW is an affirmative release, never an absence: with `A` it plays the
+all-clear RELEASE cue of THE-STANDARD.md requirement R3 at its fixed gentle
+level (`severity.touchLevels.allClear` in vocabulary.json, 25%).
 
 Examples:
 
@@ -56,10 +60,12 @@ Examples:
    digit, case-insensitive, matched at a word boundary. First match wins.
 2. `T` (TEST) renders at the TEST family's fixed gentle level whatever the
    digit says: a drill must never feel like an emergency.
-3. `A` (ALL_CLEAR) renders no alarm rhythm whatever the digit says. An
-   all-clear code MUST accompany an affirmative textual all-clear in the
-   message body; a bare code, and silence generally, is never evidence of
-   safety.
+3. `A` (ALL_CLEAR) renders the all-clear RELEASE cue (requirement R3: one
+   long soft press, a breath, a short settling press, at the fixed gentle
+   level, self-terminating) and never an alarm rhythm, whatever the digit
+   says. An all-clear code MUST accompany an affirmative textual all-clear
+   in the message body; a bare code, and silence generally, is never
+   evidence of safety.
 4. A malformed or absent code means this profile does not apply: fall back
    to the message's plain text. Never guess a family from a broken code.
 5. The code grants no authority. Receivers decide which SENDERS to trust

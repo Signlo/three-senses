@@ -240,7 +240,7 @@ export interface ConformanceResult {
 
 /**
  * Prove this SDK against the PUBLISHED conformance vectors: R1 rhythm
- * identity, R3 all-clear silence, R5 photosensitivity, R6 test gentleness,
+ * identity, R3 all-clear release, R5 photosensitivity, R6 test gentleness,
  * R8 loop seamlessness. Returns every check; `pass` is the conjunction.
  */
 export function conformance(): { pass: boolean; results: ConformanceResult[] } {

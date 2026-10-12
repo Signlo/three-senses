@@ -155,7 +155,7 @@ negative controls (a wrong rhythm and a trimmed loop both fail).
 ## Versioning
 
 Rhythm changes are major versions and governance events, never code tweaks.
-Draft 0.1.0 reflected field testing with the standard's Deaf author. Draft
+Draft 0.1.0 was the first proposal by the standard's Deaf author. Draft
 0.2.0 (the day after) came from the author's repetition review: urgent
 alerts loop with no pause, and the 0.1.0 patterns fused across the loop
 boundary (two long waves became one). Every family except GROUND now ends

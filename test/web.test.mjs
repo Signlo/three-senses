@@ -1,6 +1,7 @@
 // The web renderer's promise: every edge on the shared clock, cycles at
-// exactly t0 + n * cycleMs (R8), severity as level only, silence for
-// ALL_CLEAR, and a stop() that actually stops.
+// exactly t0 + n * cycleMs (R8), severity as level only, the RELEASE cue
+// played once and never looped for ALL_CLEAR (R3), and a stop() that
+// actually stops.
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { startAlert } from "../dist/web.js";

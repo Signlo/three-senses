@@ -14,8 +14,11 @@ function scheduleTimeline(name, t0, loop, onEdge, onCycleStart) {
     const t = timeline(name);
     const cycle = cycleMs(name);
     const state = { timer: null };
+    // A timeline with no steps schedules nothing. No family in this vocabulary
+    // has that shape: ALL_CLEAR plays its own RELEASE cue (R3) like any other
+    // timeline. Only the pre-0.7.0 all-clear had no steps.
     if (t.steps.length === 0)
-        return state; // ALL_CLEAR: silence (R3)
+        return state;
     let cycleIndex = 0;
     let stepIndex = 0;
     const fire = () => {

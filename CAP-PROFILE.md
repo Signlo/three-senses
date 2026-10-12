@@ -1,6 +1,6 @@
 # CAP origination annex: accessibility at the source (informative)
 
-Part of the Three Senses Alerting Standard, draft 0.10.0. Informative annex: it binds no
+Part of the Three Senses Alerting Standard, draft 0.11.0. Informative annex: it binds no
 conformance requirement (R1 to R8 live in THE-STANDARD.md); it specifies how an alert
 ORIGINATOR carries accessibility inside a standard OASIS CAP 1.2 message so that any
 receiving device can render it, with no coordination beyond this page.
@@ -73,7 +73,7 @@ Two `<parameter>` blocks per `<info>`, namespaced so they can never collide:
 
 ```xml
 <parameter><valueName>ideafe:threeSenses:family</valueName><value>STORM</value></parameter>
-<parameter><valueName>ideafe:threeSenses:version</valueName><value>0.10.0</value></parameter>
+<parameter><valueName>ideafe:threeSenses:version</valueName><value>0.11.0</value></parameter>
 ```
 
 - `ideafe:threeSenses:family` is one of the standard's family names (GROUND, WATER,
