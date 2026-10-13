@@ -13,6 +13,10 @@ on:
 permissions:
   contents: write
   pull-requests: write
+  # Read-only, for the merge-queue green probe below (po#7832): check runs and commit statuses on
+  # the PR head. Without them the probe 403s, reads as "not green", and never arms.
+  checks: read
+  statuses: read
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
@@ -28,12 +32,13 @@ jobs:
     # public repo. Rationale, measurements and history (kept in the private repo on purpose, this
     # file is published): docs/operations/dependabot-auto-approve-runner-2026-09-14.md.
     # Pinned by tests/test_workflow_dependabot_auto_approve.py.
-    runs-on: ${{ vars.DEPENDABOT_APPROVE_RUNNER == 'self-hosted' && contains('|Signlo/.github|Signlo/claude-config|Signlo/deaflare-app|Signlo/deaflare-web|Signlo/diplosint|Signlo/hearcompanion-app|Signlo/ideafe-web|Signlo/iptorian|Signlo/signlo-admin|Signlo/signlo-app|Signlo/signlo-brand|Signlo/signlo-codec|Signlo/signlo-platform-ops|Signlo/signlo-studio|Signlo/signlo-web|', format('|{0}|', github.repository)) && fromJSON('["self-hosted","hetzner1"]') || 'ubuntu-24.04-arm' }}
+    runs-on: ${{ vars.FLEET_RUNNER_MODE != 'hosted' && vars.DEPENDABOT_APPROVE_RUNNER == 'self-hosted' && contains('|Signlo/.github|Signlo/claude-config|Signlo/deaflare-app|Signlo/deaflare-web|Signlo/diplosint|Signlo/hearcompanion-app|Signlo/ideafe-web|Signlo/iptorian|Signlo/signlo-admin|Signlo/signlo-app|Signlo/signlo-brand|Signlo/signlo-codec|Signlo/signlo-platform-ops|Signlo/signlo-studio|Signlo/signlo-web|', format('|{0}|', github.repository)) && fromJSON('["self-hosted","hetzner1"]') || 'ubuntu-24.04-arm' }}
     timeout-minutes: 5
     if: github.actor == 'dependabot[bot]'
 
     steps:
       - name: Enable auto-merge
+        id: arm
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
@@ -58,6 +63,95 @@ jobs:
               const detail = (e && e.message) || (e == null ? '' : String(e));
               core.warning('pulls.updateBranch: ' + status + (detail || '<empty>'));
             });
+            // WHY THE METHOD IS CONDITIONAL FROM HERE DOWN (po#6580, measured 2026-09-18/19).
+            // On a base branch whose ruleset carries a MERGE_QUEUE rule the queue OWNS the merge
+            // strategy. An arming that NAMES a method is accepted, records an autoMergeRequest,
+            // and is then never enqueued: the pull request sits CLEAN and armed for ever with
+            // every check green and nothing anywhere saying it is stuck. Naming the queue's OWN
+            // method does not help, which is the part that misleads: signlo-app's queue is
+            // configured SQUASH and this file armed SQUASH. Four signlo-app Dependabot PRs show
+            // the same shape and #2154 is the controlled pair on a single PR: armed by this
+            // workflow at 2026-08-31T05:15:40Z and never enqueued, disarmed at 06:25:45Z,
+            // re-armed with NO method at 2026-09-01T00:02:52Z and added_to_merge_queue at
+            // 00:12:09Z. #2417 and #2419 each sat two days this way, and #2419 is why the
+            // org's security bumps stopped landing.
+            //
+            // The method cannot simply be deleted from the mutation below. GraphQL's
+            // enablePullRequestAutoMerge declares `mergeMethod` with a DEFAULT of MERGE
+            // (`gh api graphql` introspection of EnablePullRequestAutoMergeInput), so an omitted
+            // field still arrives as a named method and stalls identically. Only a caller that
+            // never sends the field enqueues, which is what `gh pr merge --auto` does and what
+            // scripts/agents/lib/merge.mjs has used for queue repos since 2026-08-02. So the
+            // queue case is handed to that same command in the next step.
+            //
+            // The branch is ASKED, never hardcoded: 2 of the 16 repos this file is synced to have
+            // a queue today (signlo-app, diplosint), and a repo that enables one later has to be
+            // right without a second edit to a file it does not own.
+            let hasQueue = false;
+            try {
+              const probe = await github.graphql(`
+                query MergeQueueOnBase($owner: String!, $name: String!, $branch: String!) {
+                  repository(owner: $owner, name: $name) { mergeQueue(branch: $branch) { id } }
+                }
+              `, {
+                owner: context.repo.owner,
+                name: context.repo.repo,
+                branch: context.payload.pull_request.base.ref,
+              });
+              hasQueue = !!(probe && probe.repository && probe.repository.mergeQueue && probe.repository.mergeQueue.id);
+            } catch (e) {
+              // Fail toward the STATUS QUO, which is naming SQUASH below. That is correct for the
+              // 14 synced repos with no queue, and a probe error must never silently hand one of
+              // them the MERGE default. A queue repo that lands here stalls exactly as it does
+              // today, and stalled_merge_intent.py reports it within 30 minutes.
+              const detail = (e && e.message) || (e == null ? '' : String(e));
+              core.warning('mergeQueue probe: ' + (detail || '<empty>'));
+            }
+            core.setOutput('queue', hasQueue ? 'true' : 'false');
+            if (hasQueue) {
+              // po#7832: "no method" is safe only once the PR is GREEN. `gh pr merge --auto` run
+              // while checks are still pending records `mergeMethod: MERGE` and stalls exactly like
+              // a named method (signlo-app#2647, 2026-10-09T03:52Z): gh enqueues directly only when
+              // the PR is already mergeable. This job runs seconds after Dependabot pushes, so the
+              // usual answer here is "not green yet", and then nothing is armed: the org auto-merge
+              // rail (scripts/agents/lib/merge.mjs, the fleet's single arming helper) sweeps every
+              // trusted-bot PR every ten minutes and enqueues it with no method once CI is green.
+              // This job's own check run is still in progress, so it is excluded by name.
+              // Any probe error reads as NOT green: the cost is a ten-minute wait for the rail,
+              // the alternative is a stall.
+              let green = false;
+              try {
+                const sha = context.payload.pull_request.head.sha;
+                const runs = await github.paginate(github.rest.checks.listForRef, {
+                  owner: context.repo.owner, repo: context.repo.repo, ref: sha, per_page: 100,
+                });
+                const others = runs.filter((r) => r.name !== 'Auto-approve Dependabot PRs');
+                const ok = new Set(['success', 'neutral', 'skipped']);
+                const status = await github.rest.repos.getCombinedStatusForRef({
+                  owner: context.repo.owner, repo: context.repo.repo, ref: sha,
+                });
+                const statusOk = status.data.total_count === 0 || status.data.state === 'success';
+                // A job gated on `needs:` has no check run until its prerequisite finishes, so
+                // "every run so far is green" can hold while required checks do not exist yet.
+                // `clean` is GitHub's own answer that the REQUIRED checks have passed.
+                const fresh = await github.rest.pulls.get({
+                  owner: context.repo.owner, repo: context.repo.repo,
+                  pull_number: context.payload.pull_request.number,
+                });
+                green = others.length > 0 && statusOk && fresh.data.mergeable_state === 'clean' &&
+                  others.every((r) => r.status === 'completed' && ok.has(r.conclusion));
+              } catch (e) {
+                const detail = (e && e.message) || (e == null ? '' : String(e));
+                core.warning('check-run probe: ' + (detail || '<empty>'));
+              }
+              core.setOutput('green', green ? 'true' : 'false');
+              if (green) {
+                core.info('merge-queue base and CI green: arming with no method in the next step');
+              } else {
+                core.notice('merge-queue base and CI not green yet: not arming (it would record MERGE and stall); the org auto-merge rail enqueues it once green');
+              }
+              return;
+            }
             await github.graphql(`
               mutation EnableAutoMerge($pullRequestId: ID!) {
                 enablePullRequestAutoMerge(input: {
@@ -68,3 +162,22 @@ jobs:
             `, { pullRequestId: context.payload.pull_request.node_id }).catch((e) => {
               core.warning('enablePullRequestAutoMerge: ' + e.message);
             });
+
+      - name: Arm auto-merge on a merge-queue branch (no method, the queue owns the strategy)
+        if: steps.arm.outputs.queue == 'true' && steps.arm.outputs.green == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_URL: ${{ github.event.pull_request.html_url }}
+        run: |
+          set -uo pipefail
+          # Deliberately NOT `set -e`, and the failure is a warning rather than a red job. The org
+          # auto-merge rail's `ciChecksGreen` is name-agnostic, so any failing check-run on this PR
+          # parks it: failing here would trade a silent stall for a louder one on the same PR. The
+          # visibility this state needs is scripts/monitoring/stalled_merge_intent.py, the STILL
+          # rail check written for exactly it (po#6580 scope point 2), which reports a CLEAN and
+          # armed PR that is absent from its queue within 30 minutes.
+          if gh pr merge "$PR_URL" --auto; then
+            echo "armed: native auto-merge with no method, the queue lands it"
+          else
+            echo "::warning::gh pr merge --auto failed; stalled-merge-intent reports it if it sticks"
+          fi

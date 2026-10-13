@@ -110,7 +110,7 @@ jobs:
     #
     # Pinned by tests/test_fleet_runner_allowlist.py, which holds all three copies identical and
     # asserts no public repo is ever listed.
-    runs-on: ${{ vars.AUTOFIX_RUNNER == 'self-hosted' && contains('|Signlo/.github|Signlo/claude-config|Signlo/deaflare-app|Signlo/deaflare-web|Signlo/diplosint|Signlo/hearcompanion-app|Signlo/ideafe-web|Signlo/iptorian|Signlo/signlo-admin|Signlo/signlo-app|Signlo/signlo-brand|Signlo/signlo-codec|Signlo/signlo-platform-ops|Signlo/signlo-studio|Signlo/signlo-web|', format('|{0}|', github.repository)) && fromJSON('["self-hosted","hetzner1"]') || 'ubuntu-24.04-arm' }}
+    runs-on: ${{ vars.FLEET_RUNNER_MODE != 'hosted' && vars.AUTOFIX_RUNNER == 'self-hosted' && contains('|Signlo/.github|Signlo/claude-config|Signlo/deaflare-app|Signlo/deaflare-web|Signlo/diplosint|Signlo/hearcompanion-app|Signlo/ideafe-web|Signlo/iptorian|Signlo/signlo-admin|Signlo/signlo-app|Signlo/signlo-brand|Signlo/signlo-codec|Signlo/signlo-platform-ops|Signlo/signlo-studio|Signlo/signlo-web|', format('|{0}|', github.repository)) && fromJSON('["self-hosted","hetzner1"]') || 'ubuntu-24.04-arm' }}
     timeout-minutes: 15
 
     # A DEPENDABOT PR SKIPS THIS JOB, IT DOES NOT FAIL IT (2026-08-31, signlo-app#2154/#2155).
@@ -182,6 +182,27 @@ jobs:
         with:
           app-id: ${{ secrets.SIGNLO_BOT_APP_ID }}
           private-key: ${{ secrets.SIGNLO_BOT_PRIVATE_KEY }}
+          # Scope, 2026-09-17 (#6416). NO `owner:` and NO `repositories:`, deliberately and
+          # unchanged: with both unset the action scopes the token to the RUNNING repository,
+          # which is what this needs, and this file is distributed verbatim into every Signlo
+          # repo by scripts/sync_autofix.py, so any literal repository name here would ship to
+          # all of them and be wrong in every one but this.
+          # This token has exactly ONE consumer, the checkout below, and the push that inherits
+          # it through `persist-credentials: true`:
+          #   actions/checkout with token:            contents: read
+          #   git push origin HEAD:$TARGET_BRANCH     contents: write
+          # Nothing else. In particular the `Post diagnostic report to PR` step is an
+          # actions/github-script with NO `github-token:` input, so its comment calls run on
+          # ${{ github.token }} under this workflow's own `permissions:` block, not on this
+          # token. `issues: write` was in an earlier draft of this step for those calls and is
+          # deliberately absent: it would have been privilege nothing measured a need for, and
+          # this file is distributed verbatim, so the over-grant would have shipped 15 times.
+          # `workflows: write` is deliberately NOT here either: the safety checkpoint below reverts
+          # any change under `.github/` before committing, and `git add -u` stages tracked
+          # files only, so no workflow file can ever enter the push.
+          # Worth knowing before trimming this further: the push step carries
+          # `continue-on-error: true`, so a 403 there is a GREEN run that pushed nothing.
+          permission-contents: write
 
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
