@@ -1,1 +1,5 @@
 node_modules/
+
+# Per-agent scratch dirs must never be committed (cc#2014 shipped 11 of their files to main,
+# two carrying token-shaped fixtures; fleet-queue po#6680).
+.agent-scratch*/
