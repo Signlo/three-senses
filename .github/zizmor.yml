@@ -1,0 +1,32 @@
+# zizmor baseline for Signlo/three-senses, generated 2026-10-18 for the workflow-lint gate
+# (signlo-platform-ops docs/audits/workflows-audit-2026-10.md section 6, rolled out by po#8998).
+# The gate runs `zizmor --config .github/zizmor.yml --persona regular .github/workflows` and fails
+# on any finding NOT listed here: a new file, or a rule firing in a file it never flagged. Each
+# ignore below is DEBT, not an exemption: remove a line once the file is fixed, and never add one
+# to make a new finding go away without a why-comment next to it. 7 findings, 7 (rule, file) lines.
+rules:
+  unpinned-uses:
+    config:
+      policies:
+        # Same-org reusable workflows are called @main on purpose: signlo-platform-ops main is
+        # ruleset-protected (merge queue, required checks, reviewer identity), so a SHA would add
+        # one bump PR per repo per change and no trust the branch does not carry.
+        "Signlo/*": ref-pin
+        "*": hash-pin
+  adhoc-packages:
+    ignore:
+      - autofix.yml
+      - release.yml
+  artipacked:
+    ignore:
+      - ci.yml
+      - release.yml
+  bot-conditions:
+    ignore:
+      - dependabot-auto-approve.yml
+  cache-poisoning:
+    ignore:
+      - release.yml
+  dangerous-triggers:
+    ignore:
+      - dependabot-auto-approve.yml

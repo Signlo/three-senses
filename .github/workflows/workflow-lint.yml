@@ -1,0 +1,145 @@
+name: 🧹 Workflow Lint
+
+# actionlint plus zizmor over .github/workflows, failing only on a finding outside the baseline
+# `.github/zizmor.yml` (signlo-platform-ops docs/audits/workflows-audit-2026-10.md, section 6;
+# rolled out by po#8998). A COPY of the job in signlo-platform-ops reusable-workflow-lint.yml, not
+# a call to it: this repository is PUBLIC and cannot call a reusable workflow of a private one. Keep
+# the versions and the pinned hashes in step with that file; the platform-ops one is the source.
+#
+# GitHub-hosted on purpose: a public repository never gets a fleet runner (a fork PR would run on
+# it), and hosted minutes are free for public repositories.
+#
+# Not a required check: it becomes one only when this repository's owner asks (po#8998).
+# Retires: nothing (there was no workflow linter here). Registry: an Actions schedule, not cron.
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/**'
+      - '.github/zizmor.yml'
+      - '.github/actionlint.yaml'
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/**'
+      - '.github/zizmor.yml'
+      - '.github/actionlint.yaml'
+  schedule:
+    - cron: '20 7 * * 1' # Mondays 07:20 UTC, the same slot as signlo-platform-ops
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: workflow-lint-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  workflow-lint:
+    name: Workflow lint (actionlint, zizmor)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    env:
+      ACTIONLINT_VERSION: '1.7.7'
+      ZIZMOR_VERSION: '1.31.1'
+      # sha256 of zizmor-<arch>-unknown-linux-gnu.tar.gz at v1.31.1, computed 2026-10-17.
+      ZIZMOR_SHA256_X86_64: 'd185f726bdaf92df78273217dfdd24ebcd6b0ef48cf3ce776ff5762b6e138c99'
+      ZIZMOR_SHA256_AARCH64: '37eebbd5762a44f262d94875431b14a6d2402991e90a685113ea97b8b41be833'
+      # Not ZIZMOR_CONFIG: zizmor reads that name itself.
+      ZIZMOR_BASELINE: '.github/zizmor.yml'
+      ACTIONLINT_CONFIG: '.github/actionlint.yaml'
+      LINT_PATHS: '.github/workflows'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Install actionlint (pinned, checksum-verified)
+        run: |
+          set -euo pipefail
+          BIN="$RUNNER_TEMP/lint-bin"; mkdir -p "$BIN"
+          case "$(uname -m)" in
+            aarch64 | arm64) ARCH="arm64" ;;
+            *) ARCH="amd64" ;;
+          esac
+          BASE="https://github.com/rhysd/actionlint/releases/download/v${ACTIONLINT_VERSION}"
+          ARCHIVE="actionlint_${ACTIONLINT_VERSION}_linux_${ARCH}.tar.gz"
+          curl -sSfL --retry 3 --retry-all-errors --retry-delay 2 --max-time 60 "${BASE}/${ARCHIVE}" -o "$BIN/${ARCHIVE}"
+          curl -sSfL --retry 3 --retry-all-errors --retry-delay 2 --max-time 30 "${BASE}/actionlint_${ACTIONLINT_VERSION}_checksums.txt" -o "$BIN/checksums.txt"
+          (cd "$BIN" && sha256sum -c <(grep "  ${ARCHIVE}\$" checksums.txt))
+          tar -xzf "$BIN/${ARCHIVE}" -C "$BIN" actionlint
+          "$BIN/actionlint" --version | head -1
+          echo "$BIN" >> "$GITHUB_PATH"
+
+      - name: Install zizmor (pinned, checksum-verified)
+        run: |
+          set -euo pipefail
+          BIN="$RUNNER_TEMP/lint-bin"; mkdir -p "$BIN"
+          case "$(uname -m)" in
+            aarch64 | arm64) ARCH="aarch64"; SHA="$ZIZMOR_SHA256_AARCH64" ;;
+            *) ARCH="x86_64"; SHA="$ZIZMOR_SHA256_X86_64" ;;
+          esac
+          ARCHIVE="zizmor-${ARCH}-unknown-linux-gnu.tar.gz"
+          curl -sSfL --retry 3 --retry-all-errors --retry-delay 2 --max-time 60 \
+            "https://github.com/zizmorcore/zizmor/releases/download/v${ZIZMOR_VERSION}/${ARCHIVE}" -o "$BIN/${ARCHIVE}"
+          echo "${SHA}  $BIN/${ARCHIVE}" | sha256sum -c -
+          # The archive holds one top-level member, `zizmor`; a nested layout is tolerated, a missing
+          # binary is not. No `mv` onto itself: the first version did that and failed every run
+          # (review finding, 2026-10-17).
+          tar -xzf "$BIN/${ARCHIVE}" -C "$BIN"
+          Z="$(find "$BIN" -type f -name zizmor | head -1)"
+          [ -n "$Z" ] || { echo "::error::zizmor binary not found in the release archive"; exit 1; }
+          [ "$Z" = "$BIN/zizmor" ] || mv "$Z" "$BIN/zizmor"
+          chmod +x "$BIN/zizmor"
+          "$BIN/zizmor" --version
+          echo "$BIN" >> "$GITHUB_PATH"
+
+      - name: actionlint
+        run: |
+          set -uo pipefail
+          CFG=()
+          if [ -f "$ACTIONLINT_CONFIG" ]; then CFG=(-config-file "$ACTIONLINT_CONFIG"); fi
+          # shellcheck and pyflakes are external tools whose presence differs per runner image;
+          # disabled so the verdict is the same on every pool.
+          shopt -s nullglob
+          FILES=("$LINT_PATHS"/*.yml "$LINT_PATHS"/*.yaml)
+          [ "${#FILES[@]}" -gt 0 ] || { echo "::error::no workflow file under ${LINT_PATHS}: nothing was linted"; echo "⛔ actionlint: no workflow file under ${LINT_PATHS}" >> "$GITHUB_STEP_SUMMARY"; exit 1; }
+          actionlint "${CFG[@]}" -shellcheck= -pyflakes= -no-color "${FILES[@]}" 2> "$RUNNER_TEMP/actionlint.err" | tee "$RUNNER_TEMP/actionlint.txt"
+          RC=${PIPESTATUS[0]}
+          N=$(grep -c . "$RUNNER_TEMP/actionlint.txt" || true)
+          if [ "$RC" -eq 0 ]; then
+            echo "✅ actionlint ${ACTIONLINT_VERSION}: no finding" >> "$GITHUB_STEP_SUMMARY"
+          elif [ "$RC" -eq 1 ]; then
+            { echo "⛔ actionlint ${ACTIONLINT_VERSION}: ${N} line(s) of findings"; echo; echo '```'; cat "$RUNNER_TEMP/actionlint.txt"; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+            exit 1
+          else
+            { echo "⛔ actionlint did not run (exit ${RC}): no lint verdict exists for this change"; echo '```'; tail -20 "$RUNNER_TEMP/actionlint.err"; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+            tail -20 "$RUNNER_TEMP/actionlint.err"
+            exit "$RC"
+          fi
+
+      - name: zizmor
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -uo pipefail
+          CFG=()
+          BASELINE_NOTE="the baseline ${ZIZMOR_BASELINE}"
+          if [ -f "$ZIZMOR_BASELINE" ]; then CFG=(--config "$ZIZMOR_BASELINE"); else echo "::warning::no ${ZIZMOR_BASELINE}: every finding counts"; BASELINE_NOTE="no baseline file (every finding counts)"; fi
+          zizmor "${CFG[@]}" --persona regular --no-progress --format plain "$LINT_PATHS" > "$RUNNER_TEMP/zizmor.txt" 2> "$RUNNER_TEMP/zizmor.err"
+          RC=$?
+          # Exit codes: 0 clean; 10 to 14 findings (by highest severity); anything else (1 a config or
+          # tool error, 3 no inputs collected) is the tool failing, reported as such and never as a clean scan.
+          if [ "$RC" -eq 0 ]; then
+            echo "✅ zizmor ${ZIZMOR_VERSION}: no finding beyond ${BASELINE_NOTE}" >> "$GITHUB_STEP_SUMMARY"
+          elif [ "$RC" -ge 10 ] && [ "$RC" -le 14 ]; then
+            { echo "⛔ zizmor ${ZIZMOR_VERSION}: findings NOT in ${BASELINE_NOTE} (fix them, or add the file to its rule's ignore list with a why-comment)"; echo; echo '```'; cat "$RUNNER_TEMP/zizmor.txt"; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+            cat "$RUNNER_TEMP/zizmor.txt"
+            exit 1
+          else
+            { echo "⛔ zizmor did not run (exit ${RC}): no lint verdict exists for this change"; echo '```'; tail -20 "$RUNNER_TEMP/zizmor.err"; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+            tail -20 "$RUNNER_TEMP/zizmor.err"
+            exit "$RC"
+          fi
