@@ -3,7 +3,7 @@
 # Managed by: Signlo/signlo-platform-ops
 # ===========================================
 
-# GitHub configuration directory (autofix-ci blocks .github modifications)
+# GitHub configuration directory (autofix.yml never commits under .github/)
 .github/
 
 # Helm charts and Kubernetes templates (contain Go templates that break Prettier)
