@@ -36,9 +36,12 @@ on:
         type: boolean
         default: false
 
+# READ-ONLY BY DEFAULT (2026-10-12, po#8208, org audit SA1 second vector). Each job widens
+# only what it needs: `autofix` adds `pull-requests: write` for its PR comment, and `push`
+# writes through the App token it mints itself, so neither ever holds `contents: write` on
+# the GITHUB_TOKEN. See the `push` job's header for why the token lives in a second job.
 permissions:
-  contents: write
-  pull-requests: write
+  contents: read
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -171,44 +174,28 @@ jobs:
     # tests/test_workflow_autofix.py::TestFormatKillSwitch.
     if: github.actor != 'dependabot[bot]' && vars.AUTOFIX_FORMAT != 'off'
 
-    steps:
-      # Mint a GitHub App token so the formatting commit (below) is pushed as
-      # the App, not GITHUB_TOKEN: GITHUB_TOKEN pushes do NOT trigger workflows,
-      # so the required CI/Test checks never ran on the format commit and
-      # auto-merge stayed blocked. The App token re-triggers them.
-      - name: Mint GitHub App token
-        id: app-token
-        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
-        with:
-          app-id: ${{ secrets.SIGNLO_BOT_APP_ID }}
-          private-key: ${{ secrets.SIGNLO_BOT_PRIVATE_KEY }}
-          # Scope, 2026-09-17 (#6416). NO `owner:` and NO `repositories:`, deliberately and
-          # unchanged: with both unset the action scopes the token to the RUNNING repository,
-          # which is what this needs, and this file is distributed verbatim into every Signlo
-          # repo by scripts/sync_autofix.py, so any literal repository name here would ship to
-          # all of them and be wrong in every one but this.
-          # This token has exactly ONE consumer, the checkout below, and the push that inherits
-          # it through `persist-credentials: true`:
-          #   actions/checkout with token:            contents: read
-          #   git push origin HEAD:$TARGET_BRANCH     contents: write
-          # Nothing else. In particular the `Post diagnostic report to PR` step is an
-          # actions/github-script with NO `github-token:` input, so its comment calls run on
-          # ${{ github.token }} under this workflow's own `permissions:` block, not on this
-          # token. `issues: write` was in an earlier draft of this step for those calls and is
-          # deliberately absent: it would have been privilege nothing measured a need for, and
-          # this file is distributed verbatim, so the over-grant would have shipped 15 times.
-          # `workflows: write` is deliberately NOT here either: the safety checkpoint below reverts
-          # any change under `.github/` before committing, and `git add -u` stages tracked
-          # files only, so no workflow file can ever enter the push.
-          # Worth knowing before trimming this further: the push step carries
-          # `continue-on-error: true`, so a 403 there is a GREEN run that pushed nothing.
-          permission-contents: write
+    # This job runs the PR's own tree (prettier and eslint load a JS config from the repo root,
+    # ruff, cargo, go and pre-commit read repo config too), so it holds NO write token: the
+    # GITHUB_TOKEN reads contents and may comment on the PR, and nothing else. Its only output
+    # toward a push is a patch artefact, which the `push` job validates as untrusted data.
+    permissions:
+      contents: read
+      pull-requests: write
+    outputs:
+      has_patch: ${{ steps.export_patch.outputs.has_patch }}
+      base_sha: ${{ steps.export_patch.outputs.base_sha }}
 
+    steps:
+      # No App token in this job, and none persisted (po#8208). Until 2026-10-12 this step
+      # checked out with a `contents: write` App token and `persist-credentials: true`, so every
+      # tool below ran with a token in .git/config that could push to any unprotected branch of
+      # the repo, other open PR branches included. A PR adding `prettier.config.js` was enough.
+      # The default GITHUB_TOKEN here is read-only for contents (job `permissions:` above) and
+      # `persist-credentials: false` keeps even that out of .git/config.
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ inputs.ref || github.head_ref || github.sha }}
-          token: ${{ steps.app-token.outputs.token }}
-          persist-credentials: true
+          persist-credentials: false
 
       # Initialize diagnostic tracking system for Signlo reporting
       - name: Initialize Signlo diagnostic system
@@ -260,8 +247,11 @@ jobs:
         if: steps.detect_python.outputs.detected == 'yes' && steps.install_ruff.outputs.status == 'ok'
         run: |
           echo "Running Ruff linter with auto-fix..." | tee -a /tmp/signlo_diagnostics/session.log
-          ruff check --fix --exit-zero --exclude ".github" . || echo "Ruff check encountered issues"
-          ruff format --exclude ".github" . || echo "Ruff format encountered issues"
+          # `--extend-exclude`, never `--exclude`: a CLI `--exclude` REPLACES the repo's own
+          # `[tool.ruff] exclude` (and ruff's defaults), so the old form reformatted the
+          # byte-for-byte copies of hetzner1 files that PR #9222 excludes, and pushed that.
+          ruff check --fix --exit-zero --extend-exclude ".github" . || echo "Ruff check encountered issues"
+          ruff format --extend-exclude ".github" . || echo "Ruff format encountered issues"
           COUNT=$(($(cat /tmp/signlo_diagnostics/tool_count.txt 2>/dev/null || echo 0) + 1))
           echo "$COUNT" > /tmp/signlo_diagnostics/tool_count.txt
         continue-on-error: true
@@ -310,7 +300,7 @@ jobs:
         id: setup_node_runtime
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          node-version: "22"
+          node-version: "24"
 
       - name: Cache global npm directory for Prettier
         if: steps.detect_js_ts.outputs.detected == 'yes'
@@ -581,7 +571,7 @@ jobs:
             echo "## ✅ Auto-Fixed Files"
             echo ""
             echo "All non-.github files have been automatically formatted and fixed."
-            echo "Review the commit from \`autofix-ci[bot]\` to see the changes."
+            echo "Review the commit from \`signlo-platform-bot[bot]\` to see the changes."
           } >> "$REPORT_FILE"
 
           echo "Report generated at: $REPORT_FILE" | tee -a /tmp/signlo_diagnostics/session.log
@@ -655,25 +645,31 @@ jobs:
             echo "No formatting changes to commit" | tee -a /tmp/signlo_diagnostics/session.log
           fi
 
-      - name: Commit and push formatting changes
+      # The commit and push moved to the `push` job (po#8208). This job hands over a patch of
+      # TRACKED files only (`git add -u` semantics, as before), with mode changes dropped, plus
+      # the exact commit it formatted, so the push lands on that commit or is rejected as
+      # non-fast-forward if the branch moved meanwhile.
+      - name: Export the formatting patch for the push job
+        id: export_patch
         if: steps.check_changes.outputs.has_changes == 'yes' && inputs.dry_run != true
-        env:
-          TARGET_BRANCH: ${{ inputs.ref || github.head_ref || github.ref_name }}
-          APP_SLUG: ${{ steps.app-token.outputs.app-slug }}
         run: |
-          git config user.name "${APP_SLUG}[bot]"
-          git config user.email "${APP_SLUG}[bot]@users.noreply.github.com"
-          git add -u
-          if git diff --cached --quiet; then
-            echo "Nothing to commit"
-            exit 0
+          git -c core.fileMode=false diff --binary > "$RUNNER_TEMP/autofix.patch"
+          if [ -s "$RUNNER_TEMP/autofix.patch" ]; then
+            echo "has_patch=yes" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_patch=no" >> "$GITHUB_OUTPUT"
+            echo "Only untracked files changed - nothing to push" | tee -a /tmp/signlo_diagnostics/session.log
           fi
-          # No [skip ci]: pushed via the App token, this commit re-triggers the
-          # required CI/Test checks so auto-merge can complete (formatting is
-          # idempotent, so the re-run finds nothing to commit, so no loop).
-          git commit -m "style: apply automated formatting fixes"
-          git push origin HEAD:"${TARGET_BRANCH}"
-        continue-on-error: true
+          echo "base_sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
+      - name: Upload the formatting patch
+        if: steps.export_patch.outputs.has_patch == 'yes'
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: autofix-patch
+          path: ${{ runner.temp }}/autofix.patch
+          retention-days: 1
+          if-no-files-found: error
 
       - name: Report dry-run results
         if: steps.check_changes.outputs.has_changes == 'yes' && inputs.dry_run == true
@@ -689,3 +685,145 @@ jobs:
             echo ""
             echo "**Note:** No changes were committed because dry_run mode is enabled."
           } >> "$GITHUB_STEP_SUMMARY"
+
+  push:
+    # THE ONLY JOB THAT HOLDS A WRITE TOKEN, AND IT RUNS NO REPO CODE (2026-10-12, po#8208).
+    #
+    # Org deep audit 2026-10, finding SA1 second vector (docs/audits/org-audit-2026-10/
+    # signlo-app.md): the formatting job ran the PR's own tree while a `contents: write` App
+    # token sat in .git/config. Moving the mint to the end of the SAME job would not close
+    # that, because a step that runs repo code can still reach every later step of its job:
+    # it can append BASH_ENV, NODE_OPTIONS or a PATH entry to $GITHUB_ENV / $GITHUB_PATH, or
+    # write core.hooksPath / core.fsmonitor into .git/config, and the push step would then run
+    # attacker code with the token in its environment. A second job starts from a fresh
+    # checkout, a fresh environment and a fresh .git/config, so the only thing crossing the
+    # boundary is the patch and the sha it applies to. The patch is DATA, validated below before
+    # anything is minted; the sha is checked against the LIVE tip of the branch being pushed
+    # (checked out by name here), so a formatting job that lies about it is refused rather than
+    # trusted to pick which commit the bot pushes.
+    #
+    # The App token (not GITHUB_TOKEN) is still what pushes: GITHUB_TOKEN pushes do not
+    # trigger workflows, so the required CI/Test checks would never run on the format commit
+    # and auto-merge would stay blocked.
+    #
+    # Same runner expression as `autofix`, so a repo's AUTOFIX_RUNNER choice decides both and
+    # this job adds no hosted minutes to a repo that opted onto the fleet. It runs only when
+    # there is a patch to push. Residual, stated rather than hidden: on a persistent SELF-HOSTED
+    # runner a previous job can leave files outside the workspace (a ~/.gitconfig hook that the
+    # checkout action below would run, for one), which no job layout can rule out; that is the
+    # general self-hosted trust question, not this file's. GIT_CONFIG_GLOBAL=/dev/null and
+    # GIT_CONFIG_NOSYSTEM=1 in the two `run:` steps narrow it for the apply, commit and push,
+    # and are deliberately not job-level, because actions/checkout writes `--global` config.
+    needs: autofix
+    # The actor clause repeats the autofix job's Dependabot exclusion: `needs:` already skips this
+    # job whenever that one is skipped, but scripts/check_dependabot_secret_scope.py grades each
+    # job that consumes the App secrets on its OWN `if:`, and so should a reader.
+    if: github.actor != 'dependabot[bot]' && needs.autofix.outputs.has_patch == 'yes'
+    runs-on: ${{ vars.FLEET_RUNNER_MODE != 'hosted' && vars.AUTOFIX_RUNNER == 'self-hosted' && contains('|Signlo/.github|Signlo/claude-config|Signlo/deaflare-app|Signlo/deaflare-web|Signlo/diplosint|Signlo/hearcompanion-app|Signlo/ideafe-web|Signlo/iptorian|Signlo/signlo-admin|Signlo/signlo-app|Signlo/signlo-brand|Signlo/signlo-codec|Signlo/signlo-platform-ops|Signlo/signlo-studio|Signlo/signlo-web|', format('|{0}|', github.repository)) && fromJSON('["self-hosted","hetzner1"]') || 'ubuntu-24.04-arm' }}
+    timeout-minutes: 5
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ inputs.ref || github.head_ref || github.ref_name }}
+          persist-credentials: false
+
+      - name: Download the formatting patch
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: autofix-patch
+          path: ${{ runner.temp }}/autofix-patch
+
+      # The patch was produced by a job that ran untrusted code, so it is checked as data:
+      # in-place edits of tracked files only (no create, delete, rename, mode, symlink or
+      # submodule change), nothing under .github/ (the safety checkpoint's invariant, re-enforced here
+      # because the job that enforced it is the one being distrusted), and applied onto the
+      # exact commit that job formatted. Staged here; no token exists yet in this job.
+      - name: Validate and stage the formatting patch
+        env:
+          PATCH_FILE: ${{ runner.temp }}/autofix-patch/autofix.patch
+          EXPECTED_SHA: ${{ needs.autofix.outputs.base_sha }}
+        run: |
+          set -euo pipefail
+          export GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_NOSYSTEM=1
+          if ! printf '%s' "$EXPECTED_SHA" | grep -Eq '^[0-9a-f]{40}$'; then
+            echo "refusing: the formatted commit is not a 40-hex sha"
+            exit 1
+          fi
+          if [ "$(git rev-parse HEAD)" != "$EXPECTED_SHA" ]; then
+            echo "refusing: the checkout is not the commit the autofix job formatted (branch moved, or a forged sha)"
+            exit 1
+          fi
+          summary="$(git apply --summary "$PATCH_FILE")"
+          if [ -n "$summary" ]; then
+            echo "refusing: the patch creates, deletes, renames or re-modes a file:"
+            printf '%s\n' "$summary"
+            exit 1
+          fi
+          paths="$(git apply --numstat -z "$PATCH_FILE" | tr '\0' '\n' | cut -f3-)"
+          if [ -z "$paths" ]; then
+            echo "refusing: the patch changes no file"
+            exit 1
+          fi
+          if printf '%s\n' "$paths" | grep -E '^\.github/'; then
+            echo "refusing: the patch touches .github/, which autofix never commits"
+            exit 1
+          fi
+          git -c core.hooksPath=/dev/null apply --index "$PATCH_FILE"
+          # Judged on what was STAGED, not on the patch text: `git apply` takes a file's mode
+          # from the index when the patch has no `index` line, so a text check is bypassable.
+          # Every entry must be a regular file before and after, modified in place.
+          bad="$(git diff --cached --raw --no-renames | awk '$1 !~ /^:100(644|755)$/ || $2 !~ /^100(644|755)$/ || $5 != "M"')"
+          if [ -n "$bad" ]; then
+            echo "refusing: the patch changes a symlink, a submodule or a non-regular entry:"
+            printf '%s\n' "$bad"
+            git reset -q --hard HEAD
+            exit 1
+          fi
+          git diff --cached --stat
+
+      # Minted only now, after the last step that reads anything the PR supplied.
+      - name: Mint GitHub App token
+        id: app-token
+        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
+        with:
+          app-id: ${{ secrets.SIGNLO_BOT_APP_ID }}
+          private-key: ${{ secrets.SIGNLO_BOT_PRIVATE_KEY }}
+          # Scope, 2026-09-17 (#6416). NO `owner:` and NO `repositories:`, deliberately and
+          # unchanged: with both unset the action scopes the token to the RUNNING repository,
+          # which is what this needs, and this file is distributed verbatim into every Signlo
+          # repo by scripts/sync_autofix.py, so any literal repository name here would ship to
+          # all of them and be wrong in every one but this.
+          # This token has exactly ONE consumer, the push in the next step, which is
+          # contents: write. The PR comment runs in the `autofix` job on github.token.
+          # `workflows: write` is deliberately NOT here: the step above refuses any patch
+          # under `.github/`, so no workflow file can ever enter the push.
+          # Worth knowing before trimming this further: the push step carries
+          # `continue-on-error: true`, so a 403 there is a GREEN run that pushed nothing.
+          permission-contents: write
+
+      # The token reaches git through GIT_CONFIG_* environment entries for this one command:
+      # never .git/config, never argv (where `ps` on a self-hosted box would show it).
+      - name: Commit and push formatting changes
+        env:
+          APP_TOKEN: ${{ steps.app-token.outputs.token }}
+          APP_SLUG: ${{ steps.app-token.outputs.app-slug }}
+          TARGET_BRANCH: ${{ inputs.ref || github.head_ref || github.ref_name }}
+        run: |
+          set -euo pipefail
+          export GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_NOSYSTEM=1
+          # No [skip ci]: pushed via the App token, this commit re-triggers the
+          # required CI/Test checks so auto-merge can complete (formatting is
+          # idempotent, so the re-run finds nothing to commit, so no loop).
+          git -c core.hooksPath=/dev/null -c user.name="${APP_SLUG}[bot]" \
+            -c user.email="${APP_SLUG}[bot]@users.noreply.github.com" \
+            commit --no-verify -q -m "style: apply automated formatting fixes"
+          auth="$(printf 'x-access-token:%s' "$APP_TOKEN" | base64 -w0)"
+          echo "::add-mask::${auth}"
+          GIT_CONFIG_COUNT=1 \
+            GIT_CONFIG_KEY_0="http.https://github.com/.extraheader" \
+            GIT_CONFIG_VALUE_0="AUTHORIZATION: basic ${auth}" \
+            git -c core.hooksPath=/dev/null push origin HEAD:"${TARGET_BRANCH}"
+        continue-on-error: true
