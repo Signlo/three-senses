@@ -34,7 +34,11 @@ jobs:
     # Pinned by tests/test_workflow_dependabot_auto_approve.py.
     runs-on: ${{ vars.FLEET_RUNNER_MODE != 'hosted' && vars.DEPENDABOT_APPROVE_RUNNER == 'self-hosted' && contains('|Signlo/.github|Signlo/claude-config|Signlo/deaflare-app|Signlo/deaflare-web|Signlo/diplosint|Signlo/hearcompanion-app|Signlo/ideafe-web|Signlo/iptorian|Signlo/signlo-admin|Signlo/signlo-app|Signlo/signlo-brand|Signlo/signlo-codec|Signlo/signlo-platform-ops|Signlo/signlo-studio|Signlo/signlo-web|', format('|{0}|', github.repository)) && fromJSON('["self-hosted","hetzner1"]') || 'ubuntu-24.04-arm' }}
     timeout-minutes: 5
-    if: github.actor == 'dependabot[bot]'
+    # BOTH identities, never one (po#8993). The PR author alone would approve and arm commits
+    # anyone with write access pushed onto a Dependabot branch; the event actor alone can be
+    # Dependabot on a pull request someone else opened. Dependabot must have opened the pull
+    # request AND caused this event.
+    if: github.event.pull_request.user.login == 'dependabot[bot]' && github.actor == 'dependabot[bot]'
 
     steps:
       - name: Enable auto-merge
@@ -43,26 +47,6 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            await github.rest.pulls.updateBranch({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              pull_number: context.payload.pull_request.number,
-            }).catch((e) => {
-              // The comment that used to sit here named ONE benign cause ("ignore if already up to
-              // date") while the code swallowed all of them with no log at all: a 403, a merge
-              // conflict, a base that moved. The PR is then silently left behind its base branch
-              // with nothing to find it by, in EVERY repo this file is synced to. Mirrors the
-              // graphql call below, which has always done this correctly. Found by the 2026-08-19
-              // mode-C/D audit (docs/operations/mode-cd-audit-2026-08-19.md, hearcompanion row);
-              // fixed here rather than downstream because a local edit is reverted by the sync.
-              // Defensive about the rejection VALUE, not only about the call: a diagnostic added to
-              // a catch must not be able to throw, or the graphql auto-merge call below never runs.
-              // `e` is an octokit HttpError in practice, but a rejection can be anything, and a
-              // rejection that says nothing must render as <empty> rather than as `undefined`.
-              const status = e && e.status ? e.status + ' ' : '';
-              const detail = (e && e.message) || (e == null ? '' : String(e));
-              core.warning('pulls.updateBranch: ' + status + (detail || '<empty>'));
-            });
             // WHY THE METHOD IS CONDITIONAL FROM HERE DOWN (po#6580, measured 2026-09-18/19).
             // On a base branch whose ruleset carries a MERGE_QUEUE rule the queue OWNS the merge
             // strategy. An arming that NAMES a method is accepted, records an autoMergeRequest,
@@ -152,6 +136,17 @@ jobs:
               }
               return;
             }
+            // NO BRANCH UPDATE ON ANY PATH (po#8642, 2026-10-16). Until then the queue-less path
+            // called pulls.updateBranch, which runs under GITHUB_TOKEN, so the merge-from-main commit
+            // it wrote was AUTHORED BY github-actions[bot]: GitHub's squash credits that author with a
+            // Co-authored-by line on main, scripts/check_squash_trailer.py refuses it (po#7463), and
+            // po#8273, #8274 and #8277 went red on exactly such commits (2026-10-13: CI ran on the
+            // update's head and failed Static Checks). It bought nothing either: no queue-less repo
+            // enforces an up-to-date branch (measured 2026-10-16, `rules/branches/main` strict is false
+            // on all 13; claude-config's legacy strict flag is inert, its required status checks are
+            // off), so an armed SQUASH merges a BEHIND branch anyway. A Dependabot branch carrying a
+            // foreign merge commit is also one Dependabot refuses to rebase.
+            // Pinned by tests/test_workflow_dependabot_auto_approve.py.
             await github.graphql(`
               mutation EnableAutoMerge($pullRequestId: ID!) {
                 enablePullRequestAutoMerge(input: {
@@ -167,6 +162,14 @@ jobs:
         if: steps.arm.outputs.queue == 'true' && steps.arm.outputs.green == 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Explicit repository targeting. `gh` resolves the repository from the URL argument
+          # below, so this is not what makes the call work; it is what makes the step pass the
+          # class gate that two synced repos run on every workflow ("every `gh` step carries
+          # GH_REPO or --repo, or the alert dies on a failed checkout": diplosint
+          # tests/unit/workflow-alert-conditions.test.ts). Without it, the 2026-09-21 sync
+          # (diplosint#1706) was red on exactly this step and never landed; this file is
+          # distributed verbatim, so the fix belongs here, not in the receiving repo.
+          GH_REPO: ${{ github.repository }}
           PR_URL: ${{ github.event.pull_request.html_url }}
         run: |
           set -uo pipefail
