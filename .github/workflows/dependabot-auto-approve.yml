@@ -34,7 +34,11 @@ jobs:
     # Pinned by tests/test_workflow_dependabot_auto_approve.py.
     runs-on: ${{ vars.FLEET_RUNNER_MODE != 'hosted' && vars.DEPENDABOT_APPROVE_RUNNER == 'self-hosted' && contains('|Signlo/.github|Signlo/claude-config|Signlo/deaflare-app|Signlo/deaflare-web|Signlo/diplosint|Signlo/hearcompanion-app|Signlo/ideafe-web|Signlo/iptorian|Signlo/signlo-admin|Signlo/signlo-app|Signlo/signlo-brand|Signlo/signlo-codec|Signlo/signlo-platform-ops|Signlo/signlo-studio|Signlo/signlo-web|', format('|{0}|', github.repository)) && fromJSON('["self-hosted","hetzner1"]') || 'ubuntu-24.04-arm' }}
     timeout-minutes: 5
-    if: github.actor == 'dependabot[bot]'
+    # BOTH identities, never one (po#8993). The PR author alone would approve and arm commits
+    # anyone with write access pushed onto a Dependabot branch; the event actor alone can be
+    # Dependabot on a pull request someone else opened. Dependabot must have opened the pull
+    # request AND caused this event.
+    if: github.event.pull_request.user.login == 'dependabot[bot]' && github.actor == 'dependabot[bot]'
 
     steps:
       - name: Enable auto-merge
