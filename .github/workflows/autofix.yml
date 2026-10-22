@@ -14,16 +14,19 @@ on:
       - '**.yaml'
       - '**.yml'
       - '**.json'
-  push:
-    branches: [main]
-    paths:
-      - '**.py'
-      - '**.go'
-      - '**.js'
-      - '**.ts'
-      - '**.yaml'
-      - '**.yml'
-      - '**.json'
+  # NO `push: main` TRIGGER (2026-10-22, filler-fleet-20261022-3). The org ruleset
+  # `signlo-protection-all-repos-main` puts a `pull_request` rule on every default branch with no
+  # bypass actor, so the push job's `git push origin HEAD:main` is refused with GH013 every time
+  # (claude-config run 39707995900: "push declined due to repository rule violations"), and its
+  # `continue-on-error: true` turned that into a green run that pushed nothing. Measured over the 7
+  # days to 2026-10-22: 1,476 push-to-main runs across the 15 repos carrying it (about 210 a day, each a
+  # formatting job on a fleet runner or a hosted image), not one able to land, and 34 of them red
+  # (the copies older than po#9522 refuse a moved main with exit 1, which pages
+  # `main-build-failure`; config/incident-classes.yaml has four in one morning). Main is formatted by the PRs
+  # that reach it. The Prettier, pre-commit and push-diagnostics steps below still read
+  # `event_name == 'push'`, so they are inert until a later change decides whether they belong on
+  # pull requests.
+  # tests/test_workflow_autofix.py::TestNoPushToMainTrigger pins this.
   workflow_dispatch:  # Manual execution with configurable options
     inputs:
       ref:
@@ -78,8 +81,7 @@ jobs:
     # (`inputs.use_hosted == true && 'ubuntu-24.04-arm' || fromJSON(self-hosted)`),
     # whose unconfigured default is self-hosted. That is fine in a workflow that is
     # never distributed to a public repo, and wrong here. `vars.` rather than `inputs.`
-    # because this workflow's hot path is `pull_request`/`push`, which have no inputs
-    # at all.
+    # because this workflow's hot path is `pull_request`, which has no inputs at all.
     #
     # Deliberately NOT `github.repository == 'Signlo/three-senses'`: a hardcoded repo
     # name stops protecting anything the day a second public repo appears, and fails
@@ -113,7 +115,7 @@ jobs:
     #
     # Pinned by tests/test_fleet_runner_allowlist.py, which holds all three copies identical and
     # asserts no public repo is ever listed.
-    runs-on: ${{ vars.FLEET_RUNNER_MODE != 'hosted' && vars.AUTOFIX_RUNNER == 'self-hosted' && contains('|Signlo/.github|Signlo/claude-config|Signlo/deaflare-app|Signlo/deaflare-web|Signlo/diplosint|Signlo/hearcompanion-app|Signlo/ideafe-web|Signlo/iptorian|Signlo/signlo-admin|Signlo/signlo-app|Signlo/signlo-brand|Signlo/signlo-codec|Signlo/signlo-platform-ops|Signlo/signlo-studio|Signlo/signlo-web|', format('|{0}|', github.repository)) && fromJSON('["self-hosted","hetzner1"]') || 'ubuntu-24.04-arm' }}
+    runs-on: ${{ vars.FLEET_RUNNER_MODE != 'hosted' && vars.AUTOFIX_RUNNER == 'self-hosted' && contains('|Signlo/.github|Signlo/claude-config|Signlo/deaflare-app|Signlo/deaflare-web|Signlo/diplosint|Signlo/hearcompanion-app|Signlo/ideafe-web|Signlo/iptorian|Signlo/signlo-admin|Signlo/signlo-app|Signlo/signlo-brand|Signlo/signlo-codec|Signlo/signlo-platform-ops|Signlo/signlo-studio|Signlo/signlo-web|', format('|{0}|', github.repository)) && fromJSON('["self-hosted","fleet-x64"]') || 'ubuntu-24.04-arm' }}
     timeout-minutes: 15
 
     # A DEPENDABOT PR SKIPS THIS JOB, IT DOES NOT FAIL IT (2026-08-31, signlo-app#2154/#2155).
@@ -719,7 +721,7 @@ jobs:
     # job whenever that one is skipped, but scripts/check_dependabot_secret_scope.py grades each
     # job that consumes the App secrets on its OWN `if:`, and so should a reader.
     if: github.actor != 'dependabot[bot]' && needs.autofix.outputs.has_patch == 'yes'
-    runs-on: ${{ vars.FLEET_RUNNER_MODE != 'hosted' && vars.AUTOFIX_RUNNER == 'self-hosted' && contains('|Signlo/.github|Signlo/claude-config|Signlo/deaflare-app|Signlo/deaflare-web|Signlo/diplosint|Signlo/hearcompanion-app|Signlo/ideafe-web|Signlo/iptorian|Signlo/signlo-admin|Signlo/signlo-app|Signlo/signlo-brand|Signlo/signlo-codec|Signlo/signlo-platform-ops|Signlo/signlo-studio|Signlo/signlo-web|', format('|{0}|', github.repository)) && fromJSON('["self-hosted","hetzner1"]') || 'ubuntu-24.04-arm' }}
+    runs-on: ${{ vars.FLEET_RUNNER_MODE != 'hosted' && vars.AUTOFIX_RUNNER == 'self-hosted' && contains('|Signlo/.github|Signlo/claude-config|Signlo/deaflare-app|Signlo/deaflare-web|Signlo/diplosint|Signlo/hearcompanion-app|Signlo/ideafe-web|Signlo/iptorian|Signlo/signlo-admin|Signlo/signlo-app|Signlo/signlo-brand|Signlo/signlo-codec|Signlo/signlo-platform-ops|Signlo/signlo-studio|Signlo/signlo-web|', format('|{0}|', github.repository)) && fromJSON('["self-hosted","fleet-x64"]') || 'ubuntu-24.04-arm' }}
     timeout-minutes: 5
     permissions:
       contents: read
@@ -729,6 +731,10 @@ jobs:
         with:
           ref: ${{ inputs.ref || github.head_ref || github.ref_name }}
           persist-credentials: false
+          # Bounded history for the moved-branch test in the validate step: the formatted
+          # commit must be found among the last 50 commits of the branch. Anything older,
+          # missing or unrelated stays a refusal (a failed run), never a pass.
+          fetch-depth: 50
 
       - name: Download the formatting patch
         uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
@@ -741,19 +747,41 @@ jobs:
       # submodule change), nothing under .github/ (the safety checkpoint's invariant, re-enforced here
       # because the job that enforced it is the one being distrusted), and applied onto the
       # exact commit that job formatted. Staged here; no token exists yet in this job.
+      #
+      # A BRANCH THAT MOVED IS NOT A FAILED BUILD (2026-10-20, alert-noise-1020). On a busy main a
+      # merge lands between the formatting job and this one, the live tip is no longer the
+      # formatted commit, and the refusal used to exit 1: four repos paged `main-build-failure`
+      # critical in one morning for a run that had correctly declined to push. So the refusal
+      # now has two outcomes. The formatted sha is an ANCESTOR of the live tip (within the 50
+      # commits fetched above): the branch moved, nothing is applied or pushed, the step ends
+      # green with a notice and writes `base=moved`, and the next push to the branch formats
+      # again. Anything else (a sha not in the fetched history, not an ancestor, or a git
+      # error) is a forged or unknown sha and stays a FAILED run, which still pages. Only
+      # `base=current` lets the mint and the push run.
       - name: Validate and stage the formatting patch
+        id: validate
         env:
           PATCH_FILE: ${{ runner.temp }}/autofix-patch/autofix.patch
           EXPECTED_SHA: ${{ needs.autofix.outputs.base_sha }}
         run: |
           set -euo pipefail
           export GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_NOSYSTEM=1
-          if ! printf '%s' "$EXPECTED_SHA" | grep -Eq '^[0-9a-f]{40}$'; then
+          if ! printf '%s' "$EXPECTED_SHA" | grep >/dev/null -E '^[0-9a-f]{40}$'; then
             echo "refusing: the formatted commit is not a 40-hex sha"
             exit 1
           fi
-          if [ "$(git rev-parse HEAD)" != "$EXPECTED_SHA" ]; then
-            echo "refusing: the checkout is not the commit the autofix job formatted (branch moved, or a forged sha)"
+          head_sha="$(git rev-parse HEAD)"
+          if [ "$head_sha" != "$EXPECTED_SHA" ]; then
+            # Ancestry, not equality: `cat-file -e` and `merge-base --is-ancestor` both return
+            # non-zero for a sha absent from the fetched history, and is-ancestor returns 1 for
+            # a commit that is present but off this branch, so every unknown case lands below.
+            if git cat-file -e "${EXPECTED_SHA}^{commit}" 2>/dev/null \
+              && git merge-base --is-ancestor "$EXPECTED_SHA" "$head_sha"; then
+              echo "::notice::branch moved: the formatted commit ${EXPECTED_SHA} is an ancestor of the live tip ${head_sha}, nothing pushed; the next push to this branch formats again"
+              echo "base=moved" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+            echo "refusing: the checkout ${head_sha} is not the commit the autofix job formatted (${EXPECTED_SHA}) nor a descendant of it within the fetched history (a forged or unknown sha)"
             exit 1
           fi
           summary="$(git apply --summary "$PATCH_FILE")"
@@ -774,19 +802,25 @@ jobs:
           git -c core.hooksPath=/dev/null apply --index "$PATCH_FILE"
           # Judged on what was STAGED, not on the patch text: `git apply` takes a file's mode
           # from the index when the patch has no `index` line, so a text check is bypassable.
-          # Every entry must be a regular file before and after, modified in place.
-          bad="$(git diff --cached --raw --no-renames | awk '$1 !~ /^:100(644|755)$/ || $2 !~ /^100(644|755)$/ || $5 != "M"')"
+          # Every entry must be a regular file before and after, modified in place, with its mode
+          # unchanged: a lone `new mode 100755` header prints nothing under `--summary` (it
+          # reports a mode change only when the patch carries both modes) and `git apply` still
+          # stages the flip, so the old and new modes are compared here, on what was staged.
+          bad="$(git diff --cached --raw --no-renames | awk '$1 !~ /^:100(644|755)$/ || $2 !~ /^100(644|755)$/ || substr($1, 2) != $2 || $5 != "M"')"
           if [ -n "$bad" ]; then
-            echo "refusing: the patch changes a symlink, a submodule or a non-regular entry:"
+            echo "refusing: the patch changes a symlink, a submodule, a file mode or a non-regular entry:"
             printf '%s\n' "$bad"
             git reset -q --hard HEAD
             exit 1
           fi
           git diff --cached --stat
+          echo "base=current" >> "$GITHUB_OUTPUT"
 
-      # Minted only now, after the last step that reads anything the PR supplied.
+      # Minted only now, after the last step that reads anything the PR supplied, and only when
+      # the validate step confirmed the live tip IS the formatted commit (`base=moved` skips it).
       - name: Mint GitHub App token
         id: app-token
+        if: steps.validate.outputs.base == 'current'
         uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
         with:
           app-id: ${{ secrets.SIGNLO_BOT_APP_ID }}
@@ -807,6 +841,7 @@ jobs:
       # The token reaches git through GIT_CONFIG_* environment entries for this one command:
       # never .git/config, never argv (where `ps` on a self-hosted box would show it).
       - name: Commit and push formatting changes
+        if: steps.validate.outputs.base == 'current'
         env:
           APP_TOKEN: ${{ steps.app-token.outputs.token }}
           APP_SLUG: ${{ steps.app-token.outputs.app-slug }}
