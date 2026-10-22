@@ -17,6 +17,10 @@ permissions:
   # the PR head. Without them the probe 403s, reads as "not green", and never arms.
   checks: read
   statuses: read
+  # The semver-major hold labels the PR `dependabot-major`; GitHub creates a missing label from
+  # addLabels only with issues: write, and without the label claude-config's merge shepherd reads a
+  # group major (whose title names no versions) as ready and arms it (Signlo/iptorian#456 review).
+  issues: write
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
@@ -32,7 +36,7 @@ jobs:
     # public repo. Rationale, measurements and history (kept in the private repo on purpose, this
     # file is published): docs/operations/dependabot-auto-approve-runner-2026-09-14.md.
     # Pinned by tests/test_workflow_dependabot_auto_approve.py.
-    runs-on: ${{ vars.FLEET_RUNNER_MODE != 'hosted' && vars.DEPENDABOT_APPROVE_RUNNER == 'self-hosted' && contains('|Signlo/.github|Signlo/claude-config|Signlo/deaflare-app|Signlo/deaflare-web|Signlo/diplosint|Signlo/hearcompanion-app|Signlo/ideafe-web|Signlo/iptorian|Signlo/signlo-admin|Signlo/signlo-app|Signlo/signlo-brand|Signlo/signlo-codec|Signlo/signlo-platform-ops|Signlo/signlo-studio|Signlo/signlo-web|', format('|{0}|', github.repository)) && fromJSON('["self-hosted","hetzner1"]') || 'ubuntu-24.04-arm' }}
+    runs-on: ${{ vars.FLEET_RUNNER_MODE != 'hosted' && vars.DEPENDABOT_APPROVE_RUNNER == 'self-hosted' && contains('|Signlo/.github|Signlo/claude-config|Signlo/deaflare-app|Signlo/deaflare-web|Signlo/diplosint|Signlo/hearcompanion-app|Signlo/ideafe-web|Signlo/iptorian|Signlo/signlo-admin|Signlo/signlo-app|Signlo/signlo-brand|Signlo/signlo-codec|Signlo/signlo-platform-ops|Signlo/signlo-studio|Signlo/signlo-web|', format('|{0}|', github.repository)) && fromJSON('["self-hosted","fleet-x64"]') || 'ubuntu-24.04-arm' }}
     timeout-minutes: 5
     # BOTH identities, never one (po#8993). The PR author alone would approve and arm commits
     # anyone with write access pushed onto a Dependabot branch; the event actor alone can be
@@ -41,12 +45,177 @@ jobs:
     if: github.event.pull_request.user.login == 'dependabot[bot]' && github.actor == 'dependabot[bot]'
 
     steps:
+      # A SEMVER-MAJOR UPDATE NEVER RIDES AN AUTO-MERGED PR (Signlo/iptorian#456, 2026-10-19). A
+      # Dependabot group PR carried 36 updates, one of them @sentry/nextjs 10 -> 11; this job armed
+      # it once green, Vercel built it READY, and iptorian.ai answered 500 on every request for
+      # 2 h 18 min. Build, types and tests do not start the production server, so green CI says nothing
+      # about a major's runtime break. The PR title of a group names no versions, so the title
+      # cannot tell either: the update type of EVERY dependency is read from Dependabot's own commit
+      # metadata. A major anywhere in the PR, or metadata that cannot be read (fail closed), means:
+      # no arming on any path below, an armed PR is disarmed, the PR is labelled `dependabot-major`
+      # (claude-config bin/priority-pr-watch.py holds a PR carrying it) and gets one comment.
+      # Pinned by tests/test_workflow_dependabot_auto_approve.py, which runs the script below.
+      - name: Read every dependency's update type
+        id: metadata
+        continue-on-error: true
+        uses: dependabot/fetch-metadata@25dd0e34f4fe68f24cc83900b1fe3fe149efef98 # v3.1.0
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Hold a semver-major update for a person or a lane
+        id: major
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        env:
+          METADATA_OUTCOME: ${{ steps.metadata.outcome }}
+          UPDATE_TYPE: ${{ steps.metadata.outputs.update-type }}
+          UPDATED_DEPENDENCIES: ${{ steps.metadata.outputs.updated-dependencies-json }}
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const MAJOR = 'version-update:semver-major';
+            let majors = [];
+            let reason = '';
+            if (process.env.METADATA_OUTCOME !== 'success') {
+              reason = 'the Dependabot metadata could not be read (' + (process.env.METADATA_OUTCOME || 'no outcome') + ')';
+            } else {
+              let deps = null;
+              try {
+                deps = JSON.parse(process.env.UPDATED_DEPENDENCIES || '');
+              } catch (e) {
+                const detail = (e && e.message) || (e == null ? '' : String(e));
+                core.warning('updated-dependencies-json: ' + (detail || '<empty>'));
+              }
+              if (!Array.isArray(deps) || deps.length === 0) {
+                reason = 'the Dependabot metadata lists no dependency';
+              } else {
+                majors = deps.filter((d) => d && d.updateType === MAJOR).map((d) => String(d.dependencyName));
+                if (majors.length === 0 && process.env.UPDATE_TYPE === MAJOR) majors = ['(named in update-type)'];
+                if (majors.length) reason = 'semver-major: ' + majors.join(', ');
+              }
+            }
+            const pr = context.payload.pull_request;
+            const issue = { owner: context.repo.owner, repo: context.repo.repo, issue_number: pr.number };
+            const LABEL = 'dependabot-major';
+            const labelled = (pr.labels || []).some((l) => l && l.name === LABEL);
+            if (!reason) {
+              core.setOutput('hold', 'false');
+              core.info('no semver-major update in this PR: arming continues');
+              // A hold from an earlier push (or a passing metadata glitch) is lifted once the PR
+              // carries no major, or the shepherd would keep it on needs-operator forever.
+              if (labelled) {
+                try {
+                  await github.rest.issues.removeLabel({ ...issue, name: LABEL });
+                } catch (e) {
+                  const detail = (e && e.message) || (e == null ? '' : String(e));
+                  core.warning('removeLabel dependabot-major: ' + (detail || '<empty>'));
+                }
+              }
+              return;
+            }
+            core.setOutput('hold', 'true');
+            core.notice('not arming: ' + reason);
+            if (pr.auto_merge) {
+              try {
+                await github.graphql(`
+                  mutation DisableAutoMerge($pullRequestId: ID!) {
+                    disablePullRequestAutoMerge(input: { pullRequestId: $pullRequestId }) { clientMutationId }
+                  }
+                `, { pullRequestId: pr.node_id });
+                core.notice('disarmed the auto-merge this PR already carried');
+              } catch (e) {
+                const detail = (e && e.message) || (e == null ? '' : String(e));
+                core.warning('disablePullRequestAutoMerge: ' + (detail || '<empty>'));
+              }
+            }
+            // The label is what holds the PR on the shepherd's side too, so a failure to set it is
+            // a red run, not a warning (after the comment below is still attempted).
+            let labelError = '';
+            try {
+              await github.rest.issues.addLabels({ ...issue, labels: [LABEL] });
+            } catch (e) {
+              const detail = (e && e.message) || (e == null ? '' : String(e));
+              labelError = 'addLabels dependabot-major: ' + (detail || '<empty>');
+              core.warning(labelError);
+            }
+            const marker = '<!-- dependabot-major-hold -->';
+            try {
+              const comments = await github.paginate(github.rest.issues.listComments, { ...issue, per_page: 100 });
+              if (!comments.some((c) => String(c.body || '').includes(marker))) {
+                await github.rest.issues.createComment({ ...issue, body: marker + 'Not auto-merged (' + reason + '): a human or a lane must test it on a preview deployment before it merges.' });
+              }
+            } catch (e) {
+              const detail = (e && e.message) || (e == null ? '' : String(e));
+              core.warning('hold comment: ' + (detail || '<empty>'));
+            }
+            if (labelError) core.setFailed(labelError);
+
       - name: Enable auto-merge
         id: arm
+        if: steps.major.outputs.hold == 'false'
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
+            // A REPO WHOSE MERGES ANOTHER AUTHORITY OWNS IS NEVER ARMED HERE (merge-bot trial,
+            // DECISION-0126). For the trial Mergify is the ONLY arming authority on a repo that
+            // carries `.mergify.yml` on its default branch, and its native merge-queue rule is
+            // removed, so an arming here would be a second authority and, with no queue, a direct
+            // squash. This job runs in Actions with no claude-config checkout, so the repo's own
+            // `.mergify.yml` is the switch: present, the PR is labelled merge/arm-when-green (how a
+            // PR is handed to Mergify) and nothing is armed; absent (404), arming continues below
+            // exactly as before; any other answer arms nothing and fails this step, because we
+            // cannot tell whether a second authority is live.
+            // Pinned by tests/test_workflow_dependabot_auto_approve.py, which runs this script.
+            const HAND_OFF_LABEL = 'merge/arm-when-green';
+            const defaultBranch = (context.payload.repository && context.payload.repository.default_branch) ||
+              (context.payload.pull_request.base.repo && context.payload.pull_request.base.repo.default_branch) || '';
+            let otherAuthority = 'unread';
+            let switchError = '';
+            if (!defaultBranch) {
+              switchError = 'the default branch is not in the event payload';
+            } else {
+              // Every path Mergify reads its config from (review of the switch PR): any one present is
+              // the switch; all three absent (404) is "none"; any other error arms nothing.
+              otherAuthority = 'none';
+              for (const path of ['.mergify.yml', '.mergify/config.yml', '.github/mergify.yml']) {
+                try {
+                  await github.rest.repos.getContent({
+                    owner: context.repo.owner, repo: context.repo.repo, path, ref: defaultBranch,
+                  });
+                  otherAuthority = 'mergify';
+                  break;
+                } catch (e) {
+                  if (!(e && e.status === 404)) {
+                    const detail = (e && e.message) || (e == null ? '' : String(e));
+                    switchError = 'reading ' + path + ': ' + (detail || '<empty>');
+                    otherAuthority = 'unread';
+                    break;
+                  }
+                }
+              }
+            }
+            // No `queue` or `green` output on this path: unset, they never read 'true', so the
+            // methodless arming step below cannot run after a hand-off either.
+            if (otherAuthority !== 'none') {
+              if (switchError) {
+                core.setOutput('handoff', 'unread');
+                core.setFailed('not arming: the merge-arming switch could not be read (' + switchError + '); nothing is armed this run');
+                return;
+              }
+              core.setOutput('handoff', otherAuthority);
+              try {
+                await github.rest.issues.addLabels({
+                  owner: context.repo.owner, repo: context.repo.repo,
+                  issue_number: context.payload.pull_request.number, labels: [HAND_OFF_LABEL],
+                });
+                core.notice('not arming: this repo carries .mergify.yml, so Mergify owns its merges; labelled ' + HAND_OFF_LABEL);
+              } catch (e) {
+                const detail = (e && e.message) || (e == null ? '' : String(e));
+                core.setFailed('not arming (Mergify owns this repo), and the hand-off label failed: ' + (detail || '<empty>'));
+              }
+              return;
+            }
+            core.setOutput('handoff', 'none');
             // WHY THE METHOD IS CONDITIONAL FROM HERE DOWN (po#6580, measured 2026-09-18/19).
             // On a base branch whose ruleset carries a MERGE_QUEUE rule the queue OWNS the merge
             // strategy. An arming that NAMES a method is accepted, records an autoMergeRequest,
@@ -97,9 +266,12 @@ jobs:
               // while checks are still pending records `mergeMethod: MERGE` and stalls exactly like
               // a named method (signlo-app#2647, 2026-10-09T03:52Z): gh enqueues directly only when
               // the PR is already mergeable. This job runs seconds after Dependabot pushes, so the
-              // usual answer here is "not green yet", and then nothing is armed: the org auto-merge
-              // rail (scripts/agents/lib/merge.mjs, the fleet's single arming helper) sweeps every
-              // trusted-bot PR every ten minutes and enqueues it with no method once CI is green.
+              // usual answer here is "not green yet", and then nothing is armed: claude-config
+              // bin/priority-pr-watch.py (on signlo-hetzner1, every ten minutes, through
+              // bin/lib/pr_states.py) enqueues it with no method once CI is green and never arms a
+              // PR labelled dependabot-major. platform-ops' own merge-ready sweep has not been
+              // scheduled since 2026-10-15 (DECISION-0087), and its chokepoint refuses that label too
+              // (po#9441).
               // This job's own check run is still in progress, so it is excluded by name.
               // Any probe error reads as NOT green: the cost is a ten-minute wait for the rail,
               // the alternative is a stall.
@@ -132,7 +304,7 @@ jobs:
               if (green) {
                 core.info('merge-queue base and CI green: arming with no method in the next step');
               } else {
-                core.notice('merge-queue base and CI not green yet: not arming (it would record MERGE and stall); the org auto-merge rail enqueues it once green');
+                core.notice('merge-queue base and CI not green yet: not arming (it would record MERGE and stall); claude-config priority-pr-watch enqueues it once green');
               }
               return;
             }
@@ -159,7 +331,7 @@ jobs:
             });
 
       - name: Arm auto-merge on a merge-queue branch (no method, the queue owns the strategy)
-        if: steps.arm.outputs.queue == 'true' && steps.arm.outputs.green == 'true'
+        if: steps.major.outputs.hold == 'false' && steps.arm.outputs.queue == 'true' && steps.arm.outputs.green == 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           # Explicit repository targeting. `gh` resolves the repository from the URL argument
