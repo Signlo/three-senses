@@ -221,6 +221,65 @@ jobs:
           echo "Signlo Autofix Diagnostic System Initialized" > /tmp/signlo_diagnostics/session.log
 
       # ===================================================================
+      # THE PR's OWN FILES - the only paths any formatter below may touch
+      # ===================================================================
+      # SCOPED TO THE PR's DIFF (2026-10-22 images, 2026-10-23 every formatter, po#9829). The
+      # formatters used to walk the WHOLE checkout (`ruff format .`, `find . -name "*.go" -exec
+      # gofmt`, `find . -name "*.png" -exec optipng`), so one unformatted file on main made every
+      # later PR, whatever it touched, carry a `style: apply automated formatting fixes` commit
+      # rewriting that file: outside the PR's diff, after its review, which staled the approval
+      # and blocked arming. This step lists the files the PR ADDS or MODIFIES
+      # (`git diff --diff-filter=AM BASE...HEAD`) once; each formatter reads that list, and the
+      # scope checkpoint near the end reverts any edit to a file not on it (the guard for a tool
+      # that cannot be scoped per file: rustfmt follows `mod` declarations, clippy --fix edits
+      # the crate). BASE is the FRESH base branch, `origin/<pull_request.base.ref>` (the checkout
+      # fetched every branch), and the payload's `base.sha` only when that ref does not resolve:
+      # a RE-RUN keeps the old payload, so after the author merged main into the branch,
+      # `base.sha...HEAD` would list every file main gained meanwhile. A manual dispatch diffs
+      # against the default branch. Two NUL-delimited lists, so a name with spaces or a newline
+      # stays one path: `autofix-changed.z` is the raw diff (what the checkpoint keeps), and
+      # `autofix-files.z` the subset a formatter may be handed: regular files, not symlinks (a
+      # tool would rewrite their target, which need not be in the diff), outside `.github/`,
+      # `node_modules/` and `vendor/`, each prefixed `./` so no name reads as an option. A
+      # failed diff lists nothing, so nothing is formatted and the checkpoint reverts every
+      # edit, never the whole tree. Pinned by tests/test_workflow_autofix_image_scope.py and
+      # tests/test_workflow_autofix_format_scope.py, which run these scripts against a git repo.
+      - name: List the PR's own changed files
+        id: changed_files
+        env:
+          BASE_REF: ${{ github.event.pull_request.base.ref }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+        run: |
+          CHANGED_LIST="$RUNNER_TEMP/autofix-changed.z"
+          FILE_LIST="$RUNNER_TEMP/autofix-files.z"
+          : > "$CHANGED_LIST"
+          : > "$FILE_LIST"
+          BASE=""
+          if [ -n "$BASE_REF" ] && git rev-parse -q --verify "origin/$BASE_REF^{commit}" > /dev/null; then
+            BASE="origin/$BASE_REF"
+          elif [ -n "$BASE_SHA" ]; then
+            BASE="$BASE_SHA"
+          elif [ -n "$DEFAULT_BRANCH" ]; then
+            BASE="origin/$DEFAULT_BRANCH"
+          fi
+          if [ -z "$BASE" ]; then
+            echo "No base to diff against - formatting no file" | tee -a /tmp/signlo_diagnostics/session.log
+          elif ! git diff -z --name-only --no-renames --diff-filter=AM "$BASE...HEAD" > "$CHANGED_LIST"; then
+            : > "$CHANGED_LIST"
+            echo "Could not diff against $BASE - formatting no file" | tee -a /tmp/signlo_diagnostics/session.log
+          fi
+          while IFS= read -r -d '' f; do
+            case "$f" in
+              .github/*|node_modules/*|vendor/*) continue ;;
+            esac
+            if [ -f "$f" ] && [ ! -L "$f" ]; then
+              printf './%s\0' "$f" >> "$FILE_LIST"
+            fi
+          done < "$CHANGED_LIST"
+          echo "The PR changes $(tr -cd '\0' < "$FILE_LIST" | wc -c) formattable file(s)" | tee -a /tmp/signlo_diagnostics/session.log
+
+      # ===================================================================
       # PYTHON ECOSYSTEM - Ruff Analysis & Formatting
       # ===================================================================
       - name: Detect Python codebase
@@ -253,17 +312,51 @@ jobs:
           echo "status=ok" >> "$GITHUB_OUTPUT"
         continue-on-error: true
 
-      - name: Execute Ruff on codebase (excluding .github)
+      - name: Execute Ruff on the PR's own Python files
         if: steps.detect_python.outputs.detected == 'yes' && steps.install_ruff.outputs.status == 'ok'
         run: |
-          echo "Running Ruff linter with auto-fix..." | tee -a /tmp/signlo_diagnostics/session.log
-          # `--extend-exclude`, never `--exclude`: a CLI `--exclude` REPLACES the repo's own
-          # `[tool.ruff] exclude` (and ruff's defaults), so the old form reformatted the
-          # byte-for-byte copies of hetzner1 files that PR #9222 excludes, and pushed that.
-          ruff check --fix --exit-zero --extend-exclude ".github" . || echo "Ruff check encountered issues"
-          ruff format --extend-exclude ".github" . || echo "Ruff format encountered issues"
+          # Only the PR's own .py/.pyi files (the changed-files step above). `--force-exclude`
+          # applies the repo's own `[tool.ruff] exclude` to paths named on the command line too,
+          # so the byte-for-byte copies of hetzner1 files that PR #9222 excludes stay untouched;
+          # never `--exclude`, which REPLACES that list. `.github/` is already off the list.
+          # LOUD ON A RUFF FAILURE (2026-10-23, po#9829). This step used to end each call in
+          # `|| echo "... encountered issues"`, and from 2026-10-18 to 2026-10-23 every run died
+          # on `ruff format --extend-exclude` (an argument ruff 0.15.12's `format` refuses) while
+          # the step read green and formatted nothing. `ruff check --fix --exit-zero` and
+          # `ruff format` exit 0 whatever they fixed. `ruff format` also exits 2 on a PR file it
+          # cannot parse (a work-in-progress syntax error) while still formatting the rest, and
+          # xargs reports that as 123: when every `error:` line is `Failed to parse`, each one is
+          # a warning naming the file. Any other non-zero rc is an error annotation quoting
+          # ruff's own first words (or `<empty>`) and a red step (continue-on-error keeps the job
+          # going), never a log line.
+          PY_LIST="$RUNNER_TEMP/autofix-py.z"
+          grep -z -E '\.pyi?$' "$RUNNER_TEMP/autofix-files.z" > "$PY_LIST" || true
+          if [ ! -s "$PY_LIST" ]; then
+            echo "No Python file changed by this PR - skipping Ruff" | tee -a /tmp/signlo_diagnostics/session.log
+            exit 0
+          fi
+          echo "Running Ruff linter with auto-fix on the PR's Python files..." | tee -a /tmp/signlo_diagnostics/session.log
+          RUFF_RC=0
+          xargs -0 -r ruff check --fix --exit-zero --force-exclude < "$PY_LIST" || RUFF_RC=$?
+          RUFF_ERR="$RUNNER_TEMP/autofix-ruff-format.err"
+          FMT_RC=0
+          xargs -0 -r ruff format --force-exclude < "$PY_LIST" 2> "$RUFF_ERR" || FMT_RC=$?
+          cat "$RUFF_ERR" >&2
+          if [ "$FMT_RC" -ne 0 ] && grep -q '^error: Failed to parse ' "$RUFF_ERR" \
+            && ! grep '^error:' "$RUFF_ERR" | grep -qv '^error: Failed to parse '; then
+            grep '^error: Failed to parse ' "$RUFF_ERR" | while IFS= read -r line; do
+              echo "::warning title=autofix ruff skipped a file it cannot parse::${line#error: }"
+            done
+            FMT_RC=0
+          fi
+          [ "$FMT_RC" -eq 0 ] || RUFF_RC=$FMT_RC
           COUNT=$(($(cat /tmp/signlo_diagnostics/tool_count.txt 2>/dev/null || echo 0) + 1))
           echo "$COUNT" > /tmp/signlo_diagnostics/tool_count.txt
+          if [ "$RUFF_RC" -ne 0 ]; then
+            CAUSE=$(head -c 300 "$RUFF_ERR" | tr '\n' ' ')
+            echo "::error title=autofix ruff failed::ruff exited $RUFF_RC (not a lint finding) and said: ${CAUSE:-<empty>}; the PR's Python files were not all formatted"
+            exit "$RUFF_RC"
+          fi
         continue-on-error: true
 
       - name: Scan .github directory for Python issues (read-only)
@@ -428,20 +521,26 @@ jobs:
           echo "status=ok" >> "$GITHUB_OUTPUT"
         continue-on-error: true
 
-      - name: Execute gofmt on codebase
+      - name: Execute gofmt on the PR's own Go files
         if: steps.detect_go.outputs.detected == 'yes'
         run: |
           echo "Running gofmt..." | tee -a /tmp/signlo_diagnostics/session.log
-          find . -name "*.go" -not -path "./.git/*" -not -path "./.github/*" -exec gofmt -w {} \; || echo "gofmt encountered issues"
+          # Only the PR's own .go files (the changed-files step), never `find .` (po#9829).
+          GO_LIST="$RUNNER_TEMP/autofix-go.z"
+          grep -z '\.go$' "$RUNNER_TEMP/autofix-files.z" > "$GO_LIST" || true
+          xargs -0 -r gofmt -w < "$GO_LIST" || echo "::warning title=autofix gofmt::gofmt exited non-zero on the PR's Go files"
           COUNT=$(($(cat /tmp/signlo_diagnostics/tool_count.txt 2>/dev/null || echo 0) + 1))
           echo "$COUNT" > /tmp/signlo_diagnostics/tool_count.txt
         continue-on-error: true
 
-      - name: Execute goimports on codebase
+      - name: Execute goimports on the PR's own Go files
         if: steps.detect_go.outputs.detected == 'yes' && steps.install_goimports.outputs.status == 'ok'
         run: |
           echo "Running goimports..." | tee -a /tmp/signlo_diagnostics/session.log
-          find . -name "*.go" -not -path "./.git/*" -not -path "./.github/*" -exec goimports -w {} \; || echo "goimports encountered issues"
+          # Only the PR's own .go files (the changed-files step), never `find .` (po#9829).
+          GO_LIST="$RUNNER_TEMP/autofix-go.z"
+          grep -z '\.go$' "$RUNNER_TEMP/autofix-files.z" > "$GO_LIST" || true
+          xargs -0 -r goimports -w < "$GO_LIST" || echo "::warning title=autofix goimports::goimports exited non-zero on the PR's Go files"
           COUNT=$(($(cat /tmp/signlo_diagnostics/tool_count.txt 2>/dev/null || echo 0) + 1))
           echo "$COUNT" > /tmp/signlo_diagnostics/tool_count.txt
         continue-on-error: true
@@ -449,56 +548,25 @@ jobs:
       # ===================================================================
       # IMAGE OPTIMIZATION - PNG, JPEG (the PR's OWN images only)
       # ===================================================================
-      # SCOPED TO THE PR's DIFF (2026-10-22, po#9829). These steps used to walk the WHOLE
-      # checkout (`find . -name "*.png" ... -exec optipng`), so one unoptimized image on main
-      # made every later PR, whatever it touched, carry a `style: apply automated formatting
-      # fixes` commit rewriting that image: outside the PR's diff, after its review, which
-      # staled the approval and blocked arming. Now only images the PR ADDS or MODIFIES
-      # (`git diff --diff-filter=AM BASE...HEAD`) are listed. BASE is the FRESH base branch,
-      # `origin/<pull_request.base.ref>` (the checkout fetched every branch), and the payload's
-      # `base.sha` only when that ref does not resolve: a RE-RUN keeps the old payload, so after
-      # the author merged main into the branch, `base.sha...HEAD` would list every image main
-      # gained meanwhile. A manual dispatch diffs against the default branch. The list is
-      # NUL-delimited so a name with spaces or a newline stays one path, and each optimizer
-      # reads that list and nothing else. A failed diff lists nothing (optimizes nothing),
-      # never the whole tree. Symlinks are skipped: the optimizer would rewrite their target,
-      # which need not be in the diff. Pinned by
-      # tests/test_workflow_autofix_image_scope.py, which runs these scripts against a git repo.
+      # SCOPED TO THE PR's DIFF (2026-10-22, po#9829): only the images the PR ADDS or MODIFIES,
+      # read from the list "List the PR's own changed files" wrote (regular files outside
+      # `.github/`, `node_modules/` and `vendor/`, never a symlink). These steps used to walk the
+      # WHOLE checkout (`find . -name "*.png" ... -exec optipng`), so one unoptimized image on
+      # main made every later PR carry a commit rewriting it. Each optimizer reads this list and
+      # nothing else; an empty or missing file list optimizes nothing, never the whole tree.
+      # Pinned by tests/test_workflow_autofix_image_scope.py, which runs these scripts against a
+      # git repo.
       - name: List the PR's own changed images
         id: detect_images
-        env:
-          BASE_REF: ${{ github.event.pull_request.base.ref }}
-          BASE_SHA: ${{ github.event.pull_request.base.sha }}
-          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
         run: |
           IMAGE_LIST="$RUNNER_TEMP/autofix-images.z"
-          CHANGED_LIST="$RUNNER_TEMP/autofix-changed.z"
           : > "$IMAGE_LIST"
-          BASE=""
-          if [ -n "$BASE_REF" ] && git rev-parse -q --verify "origin/$BASE_REF^{commit}" > /dev/null; then
-            BASE="origin/$BASE_REF"
-          elif [ -n "$BASE_SHA" ]; then
-            BASE="$BASE_SHA"
-          elif [ -n "$DEFAULT_BRANCH" ]; then
-            BASE="origin/$DEFAULT_BRANCH"
-          fi
-          if [ -z "$BASE" ]; then
-            echo "No base to diff against - optimizing no image" | tee -a /tmp/signlo_diagnostics/session.log
-          elif git diff -z --name-only --no-renames --diff-filter=AM "$BASE...HEAD" > "$CHANGED_LIST"; then
+          if [ -f "$RUNNER_TEMP/autofix-files.z" ]; then
             while IFS= read -r -d '' f; do
-              case "$f" in
-                .github/*|node_modules/*|vendor/*) continue ;;
-              esac
               case "${f,,}" in
-                *.png|*.jpg|*.jpeg) ;;
-                *) continue ;;
+                *.png|*.jpg|*.jpeg) printf '%s\0' "$f" >> "$IMAGE_LIST" ;;
               esac
-              if [ -f "$f" ] && [ ! -L "$f" ]; then
-                printf './%s\0' "$f" >> "$IMAGE_LIST"
-              fi
-            done < "$CHANGED_LIST"
-          else
-            echo "Could not diff against $BASE - optimizing no image" | tee -a /tmp/signlo_diagnostics/session.log
+            done < "$RUNNER_TEMP/autofix-files.z"
           fi
           if [ -s "$IMAGE_LIST" ]; then
             echo "detected=yes" >> "$GITHUB_OUTPUT"
@@ -582,6 +650,43 @@ jobs:
           else
             echo "✅ No .github directory modifications detected" | tee -a /tmp/signlo_diagnostics/session.log
           fi
+
+      # The class guard for po#9829: whatever a formatter did, the patch this job exports may
+      # touch ONLY a file the PR itself adds or modifies. The steps above are scoped to that list
+      # where the tool allows it (ruff, gofmt, goimports, the image optimizers); rustfmt follows
+      # `mod` declarations and clippy --fix edits the whole crate, and a tool added later may
+      # forget the list, so this step reverts every modified tracked file that is not on
+      # `autofix-changed.z`, by its exact name (GIT_LITERAL_PATHSPECS: a file named `:!x` is a
+      # path, never the pathspec "everything but x"). A missing or empty list reverts EVERY edit (fails closed):
+      # a PR whose diff could not be read gets no formatting commit, never a whole-tree one.
+      # Pinned by tests/test_workflow_autofix_format_scope.py.
+      - name: Signlo scope checkpoint - keep only the PR's own files
+        run: |
+          declare -A OWN=()
+          if [ -f "$RUNNER_TEMP/autofix-changed.z" ]; then
+            while IFS= read -r -d '' f; do
+              OWN["$f"]=1
+            done < "$RUNNER_TEMP/autofix-changed.z"
+          fi
+          REVERTED=0
+          while IFS= read -r -d '' f; do
+            if [ -z "${OWN["$f"]+set}" ]; then
+              GIT_LITERAL_PATHSPECS=1 git checkout -- "$f"
+              REVERTED=$((REVERTED + 1))
+              echo "Reverted a formatter edit outside the PR's diff: $f" | tee -a /tmp/signlo_diagnostics/session.log
+            fi
+          done < <(git diff -z --name-only --no-renames)
+          echo "Scope checkpoint: $REVERTED out-of-diff file(s) reverted" | tee -a /tmp/signlo_diagnostics/session.log
+          # Measured, not assumed: a checkout an eol or filter rule leaves dirty must not reach
+          # the export, so read the tree again and fail on any out-of-diff edit still in it.
+          LEFT=0
+          while IFS= read -r -d '' f; do
+            if [ -z "${OWN["$f"]+set}" ]; then
+              echo "::error title=autofix scope checkpoint::an out-of-diff edit survived the revert: $f"
+              LEFT=$((LEFT + 1))
+            fi
+          done < <(git diff -z --name-only --no-renames)
+          [ "$LEFT" -eq 0 ]
 
       # ===================================================================
       # REPORTING SYSTEM - Generate PR comment with diagnostics
