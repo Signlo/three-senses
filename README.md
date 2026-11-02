@@ -66,6 +66,13 @@ one, family by family.
   are carried as annotated stubs: no adopted text, no official video.
   ⚠ Maps ≤ v0.10.1 carried prose (and ≤ v0.10.0 carried video IDs) derived
   from the FCC's Feb-2024 DEMO-ONLY set; use v0.10.2+.
+- `docs/signed-template-library.md`: a non-normative guide to building a
+  signed template library
+- `CHANGELOG.md`: governance events and releases
+- `FAQ.md`, `SECURITY.md`, `LICENSE` (Apache-2.0), `LICENSE-SPEC.md`
+  (specification text, BY-ND) and `STANDARDS-GRANT.md`
+- `scripts/check-consistency.mjs`: the repo-wide consistency gate, run by
+  `npm test` and `npm run check`
 - `src/`, `dist/`: the SDK (`@ideafe/three-senses`), TypeScript, zero
   dependencies, conformance-proven against the vectors in CI
 
@@ -141,6 +148,12 @@ And a CLI:
     npx three-senses list
     npx three-senses show FIRE
     npx three-senses conformance   # proves the SDK against the vectors
+    npx three-senses log FIRE      # a render log for conformance/validate.mjs
+    npx three-senses templates     # the FCC WEA template / ASL video map
+    npx three-senses compose in.json   # CAP 1.2 + IPAWS-profile XML ("-" reads stdin)
+
+To work on the SDK itself: `npm install`, then `npm test` (consistency
+gate, build, and the `node --test` suite).
 
 ## Conformance in one command
 
@@ -163,14 +176,21 @@ in a trailing quiet (requirement R8). Draft 0.3.0 refined TEST to a
 quick grouped double tap. Draft 0.4.0 split severity by channel purpose:
 touch grades in four strengths for DeafBlind reading, marks count the
 step, and light and sound deliver at full power from the middle tier.
-Draft 0.9.1, after an external FCC-style audit, reframed the all-clear as
+Draft 0.6.0, after an external FCC-style audit, reframed the all-clear as
 an affirmative calmly-presented message (silence is never evidence of
 safety), split the five questions across attention and language channels,
 and added originator-suppression, timing-tolerance, amplitude-capability,
 and CAP-mapping rules, plus a standards adaptation grant. No rhythm
-changed.
-Deaf and DeafBlind user studies are beginning and will shape the next
-draft.
+changed. Draft 0.7.0 gave the all-clear its own RELEASE cue, and 0.8.0
+refined it after a three-expert panel. Draft 0.9.0 is the alignment
+release after a second external audit, and added the repo-wide
+consistency gate (`scripts/check-consistency.mjs`). Draft 0.11.0 adds the
+surface rules S1 to S4 (repetition on surfaces without controls, the
+overlay profile, relays that never rewrite, light on large displays).
+Section 8 of `THE-STANDARD.md` keeps the full lineage, and `CHANGELOG.md`
+records each governance event and release.
+Structured usability testing with Deaf and DeafBlind participants is
+underway and will shape the next draft.
 
 ## Citing the standard
 
