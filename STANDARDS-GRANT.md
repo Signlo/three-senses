@@ -22,8 +22,8 @@ normative material of the Three Senses Alerting Standard, namely:
 into public standards, technical reports, rules, and regulations, with
 attribution to International Deaf Emergency.
 
-The no-derivatives condition of the CC BY-ND 4.0 license on the
-specification text does not apply to uses within this grant.
+The specification text is licensed under CC BY 4.0, which already allows
+adaptation; this grant stays in force for the uses it lists.
 
 ## What the grant does not cover
 

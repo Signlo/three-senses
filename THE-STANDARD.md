@@ -286,8 +286,9 @@ checks a rendering log against the vectors.
 
 ## 7. Licensing and integrity
 
-- This specification text: Creative Commons BY-ND 4.0. Free to copy,
-  cite, and translate with attribution; no derivative "modified standards."
+- This specification text: Creative Commons BY 4.0. Free to copy, cite,
+  translate and adapt with attribution and a note of any changes. A changed
+  text is not the Three Senses Alerting Standard unless IDE publishes it.
 - The vocabulary data and all code in this repository: Apache License 2.0.
 - The names "Three Senses Alerting Standard" and "Alerts for All" identify
   this standard as published by International Deaf Emergency. Do not use
@@ -299,8 +300,8 @@ organizations a perpetual, worldwide, royalty-free license to reproduce,
 adapt, create derivative works from, and incorporate the normative
 material of this standard (the vocabulary, the conformance requirements,
 and this specification text) into public standards, technical reports,
-and regulations, with attribution. The no-derivatives restriction above
-does not apply to that use. The full grant is in STANDARDS-GRANT.md.
+and regulations, with attribution. CC BY 4.0 already allows that use, and
+the grant stays in force. The full grant is in STANDARDS-GRANT.md.
 
 The point of this arrangement: anyone may implement the standard for free,
 no one may change what FIRE feels like and still call it Three Senses, and

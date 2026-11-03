@@ -70,7 +70,7 @@ one, family by family.
   signed template library
 - `CHANGELOG.md`: governance events and releases
 - `FAQ.md`, `SECURITY.md`, `LICENSE` (Apache-2.0), `LICENSE-SPEC.md`
-  (specification text, BY-ND) and `STANDARDS-GRANT.md`
+  (specification text, CC BY 4.0) and `STANDARDS-GRANT.md`
 - `scripts/check-consistency.mjs`: the repo-wide consistency gate, run by
   `npm test` and `npm run check`
 - `src/`, `dist/`: the SDK (`@ideafe/three-senses`), TypeScript, zero
@@ -91,9 +91,9 @@ families. FEMA lab traffic is rendered under the standard's TEST treatment.
 
 Anyone may implement this standard, free, forever (Apache-2.0 data and
 code). But a warning language only works if it is the same everywhere, like
-the siren. So the specification text is BY-ND, the vocabulary is versioned
-and published only here, and the standard's names identify conformant
-implementations only. Fork the code all you like; if you change what FIRE
+the siren. So the vocabulary is versioned and published only here, the standard's
+names identify conformant implementations only, and the specification text
+is CC BY 4.0 so anyone may quote, translate and build on it. Fork the code all you like; if you change what FIRE
 feels like, it is not Three Senses anymore.
 
 ## The SDK
