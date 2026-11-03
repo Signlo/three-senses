@@ -4,6 +4,15 @@ Governance events and proposals for the Three Senses Alerting Standard. Releases
 Zenodo deposit are recorded here when they happen. Section 8 of THE-STANDARD.md keeps the
 lineage of the drafts.
 
+## Unreleased: specification licence is CC BY 4.0
+
+Decision of the President, 2026-11-03: the specification text (THE-STANDARD.md) moves from
+CC BY-ND 4.0 to CC BY 4.0 so that the whole standard is open under licences that allow
+adaptation. Code and vocabulary stay Apache-2.0. The names and the conformance mark still
+identify material published by IDE. LICENSE-SPEC.md, THE-STANDARD.md section 7, README.md,
+FAQ.md, STANDARDS-GRANT.md and .zenodo.json state the new licence. The vocabulary and the
+rhythm rules are unchanged.
+
 ## 0.11.0, 2026-10-10: surface rules S1 to S4 in force
 
 Proposed on 2026-10-10 (Signlo/three-senses#21) and put in force the same day by the

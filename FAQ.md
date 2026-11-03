@@ -93,7 +93,7 @@ instead: rhythm changes are versioned governance events.
 ## Is it really free?
 
 Yes. The vocabulary and code are Apache-2.0, the specification text is
-CC BY-ND 4.0, there is no membership, no royalty, and no proprietary
+CC BY 4.0, there is no membership, no royalty, and no proprietary
 claim. Releases are archived with a DOI (see the README) so you can cite
 an exact version forever.
 

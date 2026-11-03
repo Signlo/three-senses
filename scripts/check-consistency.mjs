@@ -15,7 +15,10 @@ const BANNED = [
   /each channel enough to act on/i,
   /field[ _-]?test(ed|ing|s)?/i,
   /readable by sight, touch, or hearing alone, each/i,
+  /BY-ND|NoDerivatives|no-derivatives/i,
 ];
+// Historical lines that state the retired licence on purpose.
+const BANNED_ALLOW = ["LICENSE-SPEC.md", "CHANGELOG.md"];
 const root = process.cwd();
 const files = [];
 (function walk(dir) {
@@ -41,6 +44,7 @@ let failures = 0;
 for (const f of files) {
   const text = readFileSync(f, "utf8");
   for (const re of BANNED) {
+    if (re.source.startsWith("BY-ND") && BANNED_ALLOW.some((a) => f.endsWith(a))) continue;
     const m = text.match(re);
     if (m) {
       console.error(`BANNED ${f}: "${m[0]}"`);
