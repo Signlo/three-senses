@@ -192,6 +192,42 @@ records each governance event and release.
 Structured usability testing with Deaf and DeafBlind participants is
 underway and will shape the next draft.
 
+## How this repository was written
+
+This repository was written with AI coding tools, under the direction and review of
+Emmanuel Jacq, who founded International Deaf Emergency (IDE). This is what the git history
+shows, counted on 3 November 2026 with `git log` (the 73 commits from 2026-08-17 until this section was added):
+
+- 69 commits are authored by IDE's automation account, `signlo-platform-bot[bot]`, which
+  commits the work of AI coding agents. The other 4 are Dependabot version bumps. No
+  commit is authored by a human account.
+- 14 commits carry a `Co-authored-by: Claude` trailer (Claude, Anthropic). The other
+  commits of the automation account do not name the tool, so the trailer is a minimum,
+  not a count of AI use.
+- Git cannot tell which lines a person typed. We do not claim that any part of the
+  code or text was written by hand.
+
+| Part | Commits that touched it | With a Claude trailer |
+|---|---|---|
+| `THE-STANDARD.md` (specification) | 17 | 5 |
+| `vocabulary.json` (rhythm vocabulary) | 15 | 4 |
+| `src/` (SDK) | 17 | 5 |
+| `conformance/` (conformance suite) | 15 | 4 |
+| `test/` (tests) | 10 | 4 |
+| `scripts/` | 7 | 2 |
+| `CAP-PROFILE.md` | 6 | 1 |
+| `SMS-PROFILE.md` | 4 | 1 |
+| `README.md` | 26 | 10 |
+
+A commit that touches two parts is counted in both rows. Every commit above went through the
+automation account, which commits the work of AI coding agents; the trailer column only shows
+where the tool is named.
+
+The rule from here on: new code for the Three Senses Notify component, if the NLnet Restack
+Fund proposal is granted, is written by a human developer, not by generative AI. AI may be
+used only to read the code, for example to point out possible bugs, and each such use will be
+stated in this README and in the commit.
+
 ## Citing the standard
 
 Every release is archived on Zenodo. Cite the concept DOI, which always
