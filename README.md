@@ -84,7 +84,7 @@ All-Hazards feed (production and the TDL staging lab) alongside the NWS
 public API, mapping real CAP v1.2 alerts through this vocabulary's hazard
 families. FEMA lab traffic is rendered under the standard's TEST treatment.
 
-## Why the rhythms cannot be modified
+## Why a changed rhythm is not Three Senses
 
 > Morse code gave the world one shared rhythm language, and to this day
 > everyone knows SOS. Nobody owns it. That is why it works.
